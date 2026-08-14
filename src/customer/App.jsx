@@ -34,6 +34,14 @@ function AppShell() {
       setProfileOpen(true);
       return;
     }
+    if (state.orderType === 'delivery' && state.shippingStatus === 'unavailable') {
+      showToast('Alamat kamu di luar jangkauan delivery. Ongkir tidak tersedia.', 'error');
+      return;
+    }
+    if (state.orderType === 'delivery' && !state.selectedShipping) {
+      showToast('Pilih opsi ongkir dulu ya!', 'error');
+      return;
+    }
 
     const rawTotal = cartTotal(state.cart);
     const discount = getDiscountAmount(state.cart, state.activePromo);
