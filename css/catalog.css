@@ -688,6 +688,14 @@
 
 .address-autocomplete-wrap { position: relative; }
 
+.address-map-preview {
+  height: 160px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: 10px;
+  border: 1.5px solid var(--latte-light);
+}
+
 .address-suggestions {
   position: absolute;
   top: 100%;

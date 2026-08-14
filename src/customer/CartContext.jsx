@@ -1,4 +1,6 @@
-import { createContext, useContext, useReducer } from 'react';
+import { createContext, useContext, useEffect, useReducer } from 'react';
+
+const STORAGE_KEY = 'ordi_order_state_v1';
 
 const initialState = {
   step: 1,
@@ -8,7 +10,7 @@ const initialState = {
   cart: {},                // key -> { product, qty, variantLabels?, extraPrice? }
   activePromo: null,
   selectedShipping: null,  // { price, label } | null
-  profile: { name: '', wa: '', address: '', addressNote: '' },
+  profile: { name: '', wa: '', address: '', addressNote: '', lat: null, lng: null },
   isProfileFilled: false,
   note: '',
   // Shipping calc result — displayed by OngkirOptions, set by useShipping (triggered
@@ -141,10 +143,38 @@ function reducer(state, action) {
   }
 }
 
+// Order-in-progress is resumed after a refresh via sessionStorage (cleared when
+// the tab/browser closes, so a customer never comes back days later to a stale
+// cart). 'loading' shipping status can't still be "in flight" after a reload,
+// so it's normalized back to 'idle' on read.
+function loadPersistedState() {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return initialState;
+    const saved = JSON.parse(raw);
+    return {
+      ...initialState,
+      ...saved,
+      shippingStatus: saved.shippingStatus === 'loading' ? 'idle' : (saved.shippingStatus || 'idle'),
+    };
+  } catch {
+    return initialState;
+  }
+}
+
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, undefined, loadPersistedState);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // storage unavailable (private mode, quota) — order just won't survive a refresh
+    }
+  }, [state]);
+
   return (
     <CartContext.Provider value={{ state, dispatch }}>
       {children}

@@ -6,6 +6,7 @@ import { useBodyScrollLock } from '../../shared/hooks/useBodyScrollLock.js';
 import { config } from '../../shared/lib/config.js';
 import { cartCount, cartTotal } from '../../shared/lib/cart.js';
 import AddressAutocomplete from './AddressAutocomplete.jsx';
+import AddressMapPreview from './AddressMapPreview.jsx';
 import ShippingLoadingOverlay from './ShippingLoadingOverlay.jsx';
 
 export default function ProfileModal({ isOpen, onClose }) {
@@ -30,6 +31,8 @@ export default function ProfileModal({ isOpen, onClose }) {
       setWa(state.profile.wa);
       setAddress(state.profile.address);
       setAddressNote(state.profile.addressNote);
+      setDeliveryLat(state.profile.lat ?? null);
+      setDeliveryLng(state.profile.lng ?? null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -48,10 +51,11 @@ export default function ProfileModal({ isOpen, onClose }) {
       return;
     }
 
+    let lat = deliveryLat, lng = deliveryLng;
+
     if (state.orderType === 'delivery') {
       setSaving(true);
 
-      let lat = deliveryLat, lng = deliveryLng;
       if (!lat || !lng) {
         // Safety net in case blur didn't resolve coords before Simpan was clicked
         try {
@@ -60,6 +64,7 @@ export default function ProfileModal({ isOpen, onClose }) {
           const data = res.ok ? await res.json() : [];
           if (data?.length) { lat = parseFloat(data[0].lat); lng = parseFloat(data[0].lon); }
         } catch { /* silent */ }
+        if (lat && lng) { setDeliveryLat(lat); setDeliveryLng(lng); }
       }
 
       if (lat && lng) {
@@ -69,7 +74,14 @@ export default function ProfileModal({ isOpen, onClose }) {
       setSaving(false);
     }
 
-    dispatch({ type: 'SET_PROFILE', profile: { name: name.trim(), wa: wa.trim(), address: address.trim(), addressNote: addressNote.trim() } });
+    dispatch({
+      type: 'SET_PROFILE',
+      profile: {
+        name: name.trim(), wa: wa.trim(), address: address.trim(), addressNote: addressNote.trim(),
+        lat: state.orderType === 'delivery' ? (lat ?? null) : null,
+        lng: state.orderType === 'delivery' ? (lng ?? null) : null,
+      },
+    });
     onClose();
   }
 
@@ -102,6 +114,7 @@ export default function ProfileModal({ isOpen, onClose }) {
                   onCoordsChange={handleCoordsChange}
                   coordsResolved={Boolean(deliveryLat && deliveryLng)}
                 />
+                <AddressMapPreview lat={deliveryLat} lng={deliveryLng} />
               </div>
               <div className="form-group">
                 <label htmlFor="customerAddressNote">Catatan Alamat <span className="label-opt">(opsional)</span></label>
