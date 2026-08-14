@@ -4,13 +4,15 @@ import { formatPrice } from '../../shared/lib/format.js';
 import { useBodyScrollLock } from '../../shared/hooks/useBodyScrollLock.js';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { config } from '../../shared/lib/config.js';
+import QrisViewModal from './QrisViewModal.jsx';
 
-export default function OrderSummaryModal({ order, settings, onClose, onReshowQris }) {
+export default function OrderSummaryModal({ order, settings, onClose }) {
   const { dispatch } = useCart();
   const isOpen = Boolean(order);
   useBodyScrollLock(isOpen);
   const showToast = useToast();
   const [copied, setCopied] = useState(false);
+  const [showQr, setShowQr] = useState(false);
 
   if (!order) return null;
 
@@ -82,7 +84,7 @@ export default function OrderSummaryModal({ order, settings, onClose, onReshowQr
           💬 Kirim Bukti Transfer via WhatsApp
         </button>
 
-        <button className="btn-oss-qr" onClick={() => onReshowQris(order)}>
+        <button className="btn-oss-qr" onClick={() => setShowQr(true)}>
           📷 Tampilkan QR lagi
         </button>
 
@@ -139,6 +141,8 @@ export default function OrderSummaryModal({ order, settings, onClose, onReshowQr
           </div>
         </div>
       </div>
+
+      {showQr && <QrisViewModal order={order} onClose={() => setShowQr(false)} />}
     </div>
   );
 }

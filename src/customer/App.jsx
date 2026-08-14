@@ -76,11 +76,6 @@ function AppShell() {
     setConfirmedOrder(confirmed);
   }
 
-  function handleReshowQris(order) {
-    setConfirmedOrder(null);
-    setPendingOrder(order);
-  }
-
   return (
     <>
       {state.step === 1 && <OrderTypeStep settings={settings} />}
@@ -104,7 +99,6 @@ function AppShell() {
         order={confirmedOrder}
         settings={settings}
         onClose={() => setConfirmedOrder(null)}
-        onReshowQris={handleReshowQris}
       />
     </>
   );
