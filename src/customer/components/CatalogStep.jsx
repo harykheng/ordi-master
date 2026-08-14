@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useCart } from '../CartContext.jsx';
 import { useProducts } from '../../shared/hooks/useProducts.js';
 import { config } from '../../shared/lib/config.js';
@@ -10,6 +10,7 @@ import ProductCard from './ProductCard.jsx';
 export default function CatalogStep({ settings, onPickVariant }) {
   const { state, dispatch } = useCart();
   const { products, loading, error } = useProducts({ onlyVisible: true });
+  const [cartExpanded, setCartExpanded] = useState(false);
 
   const brandName = settings?.brand_name || config.storeName;
   const logoUrl = settings?.logo_url;
@@ -23,6 +24,7 @@ export default function CatalogStep({ settings, onPickVariant }) {
   const total = cartTotal(state.cart);
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
+  useEffect(() => { if (count === 0) setCartExpanded(false); }, [count]);
 
   function goBack() {
     dispatch({ type: 'SET_STEP', step: 1 });
@@ -101,15 +103,33 @@ export default function CatalogStep({ settings, onPickVariant }) {
         </div>
       </main>
 
-      <div className={`catalog-sticky-footer${count > 0 ? ' visible' : ''}`}>
-        <div className="csf-left">
-          <div className="csf-icon">🛒</div>
-          <div className="csf-info">
-            <div className="csf-qty">{count} item</div>
-            <div className="csf-total">{formatPrice(total)}</div>
-          </div>
+      <div className={`catalog-sticky-footer${count > 0 ? ' visible' : ''}${cartExpanded ? ' expanded' : ''}`}>
+        <div className={`csf-list${cartExpanded ? ' open' : ''}`}>
+          {Object.entries(state.cart).map(([key, { product, qty, variantLabels, extraPrice = 0 }]) => (
+            <div className="csf-list-item" key={key}>
+              <div className="csf-list-item-info">
+                <div className="csf-list-item-name">{product.name}</div>
+                {variantLabels?.length > 0 && (
+                  <div className="csf-list-item-var">{variantLabels.join(' · ')}</div>
+                )}
+              </div>
+              <div className="csf-list-item-qty">× {qty}</div>
+              <div className="csf-list-item-price">{formatPrice((product.price + extraPrice) * qty)}</div>
+            </div>
+          ))}
         </div>
-        <button className="csf-cta" onClick={goToStep3}>Lanjutkan →</button>
+
+        <div className="csf-bar" onClick={() => setCartExpanded((v) => !v)} role="button" tabIndex={0} aria-expanded={cartExpanded}>
+          <div className="csf-left">
+            <div className="csf-icon">🛒</div>
+            <div className="csf-info">
+              <div className="csf-qty">{count} item</div>
+              <div className="csf-total">{formatPrice(total)}</div>
+            </div>
+            <span className={`csf-chevron${cartExpanded ? ' open' : ''}`} aria-hidden="true">▲</span>
+          </div>
+          <button className="csf-cta" onClick={(e) => { e.stopPropagation(); goToStep3(); }}>Lanjutkan →</button>
+        </div>
       </div>
     </div>
   );

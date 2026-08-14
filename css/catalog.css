@@ -508,11 +508,6 @@
   right: 0;
   background: var(--white);
   border-top: 1px solid var(--border);
-  padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
   z-index: 200;
   box-shadow: 0 -4px 24px rgba(85,49,37,0.1);
   transform: translateY(100%);
@@ -521,10 +516,56 @@
 
 .catalog-sticky-footer.visible { transform: translateY(0); }
 
+.csf-bar {
+  padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+
 .csf-left  { display: flex; align-items: center; gap: 12px; }
 .csf-icon  { font-size: 26px; flex-shrink: 0; }
 .csf-qty   { font-size: 13px; font-weight: 600; color: var(--text-soft); }
 .csf-total { font-size: 18px; font-weight: 800; color: var(--text-dark); margin-top: 1px; }
+
+.csf-chevron {
+  font-size: 11px;
+  color: var(--text-soft);
+  transform: rotate(0deg);
+  transition: transform 0.25s ease;
+  margin-left: 2px;
+}
+.csf-chevron.open { transform: rotate(180deg); }
+
+/* ---- STICKY FOOTER (cart) — expandable item list ---- */
+.csf-list {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  border-bottom: 1px solid var(--cream);
+}
+
+.csf-list.open {
+  max-height: 45vh;
+  overflow-y: auto;
+}
+
+.csf-list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--cream);
+}
+.csf-list-item:last-child { border-bottom: none; }
+
+.csf-list-item-info { flex: 1; min-width: 0; }
+.csf-list-item-name { font-size: 14px; font-weight: 700; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.csf-list-item-var  { font-size: 12px; font-weight: 600; color: var(--primary); margin-top: 1px; }
+.csf-list-item-qty  { font-size: 13px; font-weight: 500; color: var(--text-soft); flex-shrink: 0; }
+.csf-list-item-price { font-size: 14px; font-weight: 800; color: var(--primary); flex-shrink: 0; }
 
 .csf-cta {
   flex-shrink: 0;
