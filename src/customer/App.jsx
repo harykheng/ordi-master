@@ -39,7 +39,7 @@ function AppShell() {
     const discount = getDiscountAmount(state.cart, state.activePromo);
     const shippingCost = state.selectedShipping?.price || 0;
     const finalTotal = cartFinalTotal(state.cart, state.activePromo, state.selectedShipping);
-    const orderNum = `BRV-${Date.now().toString(36).toUpperCase().slice(-5)}`;
+    const orderNum = `${config.orderPrefix}-${Date.now().toString(36).toUpperCase().slice(-5)}`;
 
     let qrisString;
     try {

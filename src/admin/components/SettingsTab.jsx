@@ -90,7 +90,7 @@ export default function SettingsTab() {
           <div className="settings-section-title">Brand</div>
           <div className="form-group">
             <label htmlFor="settingBrandName">Nama Brand</label>
-            <input type="text" id="settingBrandName" placeholder="Breva Coffee" maxLength={40} value={form.brandName} onChange={(e) => setForm((f) => ({ ...f, brandName: e.target.value }))} />
+            <input type="text" id="settingBrandName" placeholder="Nama Toko Kamu" maxLength={40} value={form.brandName} onChange={(e) => setForm((f) => ({ ...f, brandName: e.target.value }))} />
           </div>
           <div className="form-group">
             <label htmlFor="settingBrandIcon">Ikon / Emoji</label>
@@ -145,7 +145,7 @@ export default function SettingsTab() {
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label htmlFor="settingBannerSub">Subjudul Banner</label>
-            <input type="text" id="settingBannerSub" placeholder="Cek semua menu terbaru Breva Coffee" value={form.bannerSubtitle} onChange={(e) => setForm((f) => ({ ...f, bannerSubtitle: e.target.value }))} />
+            <input type="text" id="settingBannerSub" placeholder="Cek semua menu terbaru" value={form.bannerSubtitle} onChange={(e) => setForm((f) => ({ ...f, bannerSubtitle: e.target.value }))} />
           </div>
         </div>
 

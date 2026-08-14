@@ -1,6 +1,6 @@
-# Breva Coffee — Setup Guide
+# Ordi Master — Setup Guide
 
-Website e-commerce untuk brand kopi Breva. Stack: **React + Vite**, Supabase (database + auth + storage), deploy ke Vercel/Netlify/Cloudflare — project ini sendiri jalan di **Cloudflare** (Workers, static assets lewat `wrangler.jsonc`). Hampir semua logic (QRIS, promo, dsb) jalan di browser tanpa backend server — satu-satunya pengecualian adalah cek ongkir real-time, yang lewat 1 Supabase Edge Function kecil karena butuh menyembunyikan API key Biteship.
+Website e-commerce untuk UMKM (template multi-klien). Stack: **React + Vite**, Supabase (database + auth + storage), deploy ke Vercel/Netlify/Cloudflare — project ini sendiri jalan di **Cloudflare** (Workers, static assets lewat `wrangler.jsonc`). Hampir semua logic (QRIS, promo, dsb) jalan di browser tanpa backend server — satu-satunya pengecualian adalah cek ongkir real-time, yang lewat 1 Supabase Edge Function kecil karena butuh menyembunyikan API key Biteship.
 
 Dua aplikasi React terpisah dalam satu repo (Vite multi-page app): katalog customer di `/`, dashboard admin di `/admin/`. Masing-masing punya bundle sendiri — customer tidak pernah men-download kode dashboard admin dan sebaliknya.
 
@@ -202,12 +202,12 @@ VITE_SUPABASE_ANON_KEY=eyJhbGci...
 VITE_ADMIN_WHATSAPP=6281234567890   # format: 62 + nomor tanpa angka 0 di depan
 
 # Default brand/toko — bisa dioverride dari Admin > Pengaturan setelah tabel `settings` dibuat
-VITE_STORE_NAME=Breva Coffee
+VITE_STORE_NAME=Nama Toko Kamu
 VITE_STORE_ADDRESS=Jl. Contoh No.1, Kota...
 VITE_STORE_MAPS_URL=https://maps.google.com/...   # link share Google Maps, bukan API
 VITE_STORE_OPEN_HOURS=Senin – Minggu, 08.00 – 21.00 WIB
 VITE_BANNER_TITLE=Ada yang baru nih! ✨
-VITE_BANNER_SUBTITLE=Cek semua menu terbaru Breva Coffee
+VITE_BANNER_SUBTITLE=Cek semua menu terbaru
 VITE_INSTAGRAM_URL=https://instagram.com/tokomu
 VITE_TIKTOK_URL=https://tiktok.com/@tokomu
 
@@ -298,7 +298,7 @@ Dashboard Cloudflare sekarang menggabungkan flow "Pages" ke dalam "Workers" (`Cr
 ## 5. Struktur File
 
 ```
-brevacoffee/
+ordi-master/
 ├── index.html                ← Vite entry point aplikasi customer (root div + script module)
 ├── admin/
 │   └── index.html            ← Vite entry point aplikasi admin, di-serve di /admin/
