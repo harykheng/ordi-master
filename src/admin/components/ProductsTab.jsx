@@ -81,6 +81,13 @@ export default function ProductsTab() {
                   {p.is_visible
                     ? <span className="admin-tag tag-visible">👁 Tampil</span>
                     : <span className="admin-tag tag-hidden">🙈 Disembunyikan</span>}
+                  {p.stock_qty == null ? (
+                    <span className="admin-tag tag-stock-unlimited">∞ Stok</span>
+                  ) : p.stock_qty <= 0 ? (
+                    <span className="admin-tag tag-stock-empty">📦 Stok habis</span>
+                  ) : (
+                    <span className="admin-tag tag-stock">📦 Stok {p.stock_qty}</span>
+                  )}
                 </div>
                 <div className="admin-product-actions">
                   <button className="btn-sm btn-edit" onClick={() => openEdit(p)}>✏️ Edit</button>

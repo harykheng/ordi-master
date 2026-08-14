@@ -15,7 +15,7 @@ async function uploadProductImage(file) {
 
 export async function saveProduct({
   productId, name, description, price, isNew, isBestseller, isVisible,
-  variants, imageFile, existingImageUrl,
+  variants, stockQty, imageFile, existingImageUrl,
 }) {
   let imageUrl = existingImageUrl || null;
   if (imageFile) {
@@ -31,6 +31,7 @@ export async function saveProduct({
     is_bestseller: isBestseller,
     is_visible: isVisible,
     variants,
+    stock_qty: stockQty,
   };
 
   if (productId) {

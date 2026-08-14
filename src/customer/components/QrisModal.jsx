@@ -65,12 +65,18 @@ export default function QrisModal({ pendingOrder, onClose, onConfirmed }) {
         total: o.finalTotal,
         qris_string: o.qrisString || null,
         status: 'pending',
-      });
+      }, o.stockItems);
 
       onConfirmed({ ...o, waUrl: waLink(config.adminWhatsapp, waMessage) });
     } catch (err) {
       console.error('Confirm QRIS error:', err);
-      showToast('Gagal menyimpan pesanan. Coba lagi ya!', 'error');
+      const stokHabisMatch = /STOK_HABIS: (.+)/.exec(err.message || '');
+      if (stokHabisMatch) {
+        showToast(stokHabisMatch[1], 'error');
+        onClose();
+      } else {
+        showToast('Gagal menyimpan pesanan. Coba lagi ya!', 'error');
+      }
     } finally {
       setConfirming(false);
     }

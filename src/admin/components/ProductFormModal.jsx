@@ -5,7 +5,7 @@ import { useToast } from '../../shared/components/Toast.jsx';
 import { saveProduct } from '../../shared/lib/products.js';
 
 const EMPTY_FORM = {
-  name: '', description: '', price: '',
+  name: '', description: '', price: '', stockQty: '',
   isNew: false, isBestseller: false, isVisible: true,
   variantGroups: [],
 };
@@ -24,6 +24,7 @@ export default function ProductFormModal({ isOpen, product, onClose, onSaved }) 
         name: product.name,
         description: product.description || '',
         price: product.price,
+        stockQty: product.stock_qty == null ? '' : product.stock_qty,
         isNew: product.is_new,
         isBestseller: product.is_bestseller,
         isVisible: product.is_visible,
@@ -89,6 +90,7 @@ export default function ProductFormModal({ isOpen, product, onClose, onSaved }) 
         name: form.name.trim(),
         description: form.description.trim(),
         price: parseInt(form.price, 10),
+        stockQty: form.stockQty === '' ? null : parseInt(form.stockQty, 10),
         isNew: form.isNew,
         isBestseller: form.isBestseller,
         isVisible: form.isVisible,
@@ -133,6 +135,15 @@ export default function ProductFormModal({ isOpen, product, onClose, onSaved }) 
             type="number" id="productPrice" placeholder="45000" min="0" step="500" required
             value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="productStock">Stok <span style={{ fontWeight: 500, color: 'var(--text-soft)' }}>(opsional)</span></label>
+          <input
+            type="number" id="productStock" placeholder="Kosongkan = tidak dibatasi" min="0" step="1"
+            value={form.stockQty} onChange={(e) => setForm((f) => ({ ...f, stockQty: e.target.value }))}
+          />
+          <p className="form-hint">Otomatis berkurang tiap ada pesanan masuk. Kosongkan kalau stoknya selalu tersedia.</p>
         </div>
 
         <div className="form-group">

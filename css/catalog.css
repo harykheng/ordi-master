@@ -434,6 +434,17 @@
 
 .badge-new        { background: #fff3e0; color: #c05000; }
 .badge-bestseller { background: var(--primary); color: #fff; }
+.badge-oos        { background: #4a4a4a; color: #fff; }
+
+.product-card-oos { opacity: 0.6; }
+.product-card-oos .product-image-wrap img { filter: grayscale(1); }
+
+.product-stock-hint {
+  font-size: 11px;
+  font-weight: 700;
+  color: #c05000;
+  margin-top: 2px;
+}
 
 /* ---- PRODUCT IMAGE ---- */
 .product-image-wrap {
@@ -1081,6 +1092,7 @@
 
 .btn-pick-variant:hover  { background: var(--latte); }
 .btn-pick-variant:active { transform: scale(0.95); }
+.btn-pick-variant:disabled { background: #c9c2ba; cursor: not-allowed; transform: none; }
 
 .vbadge {
   position: absolute;
@@ -1237,6 +1249,9 @@
 .vs-qty-ctrl  { display: flex; align-items: center; gap: 14px; }
 
 .vs-add-btn { width: 100%; justify-content: center; padding: 14px; font-size: 15px; }
+.vs-add-btn:disabled { background: #c9c2ba; cursor: not-allowed; }
+
+.vs-stock-hint { font-size: 12px; font-weight: 700; color: #c05000; }
 
 /* ================================================================
    PRODUCT DESCRIPTION on catalog card

@@ -38,3 +38,13 @@ export function cartSnapshot(cart) {
     sub: (product.price + (extraPrice || 0)) * qty,
   }));
 }
+
+// product_id + qty per cart line, for place_order()'s atomic stock check —
+// separate from cartSnapshot because that's a display-only shape without
+// product ids. Different variants of the same product become separate
+// entries (same product_id, split qty); place_order() decrements them
+// sequentially against the same stock_qty, so the total is still enforced
+// correctly even though it's not pre-summed here.
+export function cartStockItems(cart) {
+  return Object.values(cart).map(({ product, qty }) => ({ product_id: product.id, qty }));
+}

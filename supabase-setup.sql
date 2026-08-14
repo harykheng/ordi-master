@@ -23,8 +23,13 @@ CREATE TABLE IF NOT EXISTS products (
   is_bestseller BOOLEAN     NOT NULL DEFAULT false,
   is_visible    BOOLEAN     NOT NULL DEFAULT true,
   variants      JSONB       DEFAULT '[]'::jsonb,
+  stock_qty     INTEGER,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Safe to re-run on an existing install that predates stock_qty.
+ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_qty INTEGER;
+COMMENT ON COLUMN products.stock_qty IS 'NULL = stok tidak dilacak (selalu tersedia). Angka = stok dikurangi otomatis oleh place_order() tiap ada order.';
 
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 
@@ -164,7 +169,71 @@ CREATE POLICY "Admin full access orders"
 
 
 -- ----------------------------------------------------------------
--- 6. STORAGE BUCKET (foto produk, logo, banner)
+-- 6. FUNCTION place_order() — insert order + kurangi stok, atomic
+-- ----------------------------------------------------------------
+-- Dipanggil dari browser lewat supabase.rpc('place_order', ...) sebagai
+-- pengganti insert langsung ke `orders`. Alasannya WAJIB backend (bukan
+-- sekadar preferensi): cek-lalu-kurangi stok dari JS punya race condition
+-- kalau 2 customer checkout produk yang sama nyaris bersamaan — dua-duanya
+-- bisa lolos cek stok sebelum salah satu sempat nulis hasil kurangnya.
+-- Function ini jalan sebagai satu transaksi Postgres: tiap item di
+-- stock_items dikurangi dari products.stock_qty HANYA kalau stok cukup;
+-- begitu ada satu item yang gagal, seluruh transaksi (termasuk kurang
+-- stok yang sudah sempat jalan di item sebelumnya) di-rollback dan order
+-- TIDAK jadi ke-insert. Produk dengan stock_qty NULL dianggap tak terbatas,
+-- tidak pernah dikurangi/gagal.
+--
+-- SECURITY DEFINER supaya bisa UPDATE products.stock_qty walau anon tidak
+-- (dan sengaja tidak diberi) policy UPDATE langsung ke tabel products —
+-- akses ke situ hanya lewat function sempit ini, bukan policy terbuka.
+CREATE OR REPLACE FUNCTION place_order(order_data JSONB, stock_items JSONB)
+RETURNS SETOF orders
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  item JSONB;
+  affected INTEGER;
+  prod_name TEXT;
+BEGIN
+  FOR item IN SELECT * FROM jsonb_array_elements(stock_items)
+  LOOP
+    UPDATE products
+    SET stock_qty = stock_qty - (item->>'qty')::INTEGER
+    WHERE id = (item->>'product_id')::UUID
+      AND (stock_qty IS NULL OR stock_qty >= (item->>'qty')::INTEGER);
+
+    GET DIAGNOSTICS affected = ROW_COUNT;
+
+    IF affected = 0 THEN
+      SELECT name INTO prod_name FROM products WHERE id = (item->>'product_id')::UUID;
+      RAISE EXCEPTION 'STOK_HABIS: % stoknya tidak cukup', COALESCE(prod_name, 'Produk ini');
+    END IF;
+  END LOOP;
+
+  RETURN QUERY
+  INSERT INTO orders (
+    order_number, customer_name, customer_wa, order_type, order_date, order_date_label,
+    delivery_address, note, items, subtotal, promo_code, discount_amount,
+    shipping_cost, shipping_label, total, qris_string, status
+  )
+  SELECT
+    order_data->>'order_number', order_data->>'customer_name', order_data->>'customer_wa',
+    order_data->>'order_type', (order_data->>'order_date')::DATE, order_data->>'order_date_label',
+    order_data->>'delivery_address', order_data->>'note', order_data->'items',
+    (order_data->>'subtotal')::INTEGER, order_data->>'promo_code', (order_data->>'discount_amount')::INTEGER,
+    (order_data->>'shipping_cost')::INTEGER, order_data->>'shipping_label', (order_data->>'total')::INTEGER,
+    order_data->>'qris_string', COALESCE(order_data->>'status', 'pending')
+  RETURNING *;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION place_order(JSONB, JSONB) TO anon;
+
+
+-- ----------------------------------------------------------------
+-- 7. STORAGE BUCKET (foto produk, logo, banner)
 -- ----------------------------------------------------------------
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('product-images', 'product-images', true)
@@ -202,7 +271,7 @@ CREATE POLICY "Admin update images"
 
 
 -- ----------------------------------------------------------------
--- 7. BUAT AKUN ADMIN
+-- 8. BUAT AKUN ADMIN
 --    Email    : admin@youremail.com
 --    Password : admin123   ← ganti setelah pertama login!
 -- ----------------------------------------------------------------
@@ -278,7 +347,7 @@ END $$;
 
 
 -- ----------------------------------------------------------------
--- 8. VERIFIKASI — cek hasil setup
+-- 9. VERIFIKASI — cek hasil setup
 -- ----------------------------------------------------------------
 SELECT 'products table'   AS item, COUNT(*)::text AS info FROM products
 UNION ALL
@@ -287,6 +356,8 @@ UNION ALL
 SELECT 'settings row',     COALESCE((SELECT 'id=1 ada' FROM settings WHERE id = 1), 'TIDAK ADA')
 UNION ALL
 SELECT 'orders table',     COUNT(*)::text FROM orders
+UNION ALL
+SELECT 'place_order function', COALESCE((SELECT 'ada' FROM pg_proc WHERE proname = 'place_order'), 'TIDAK ADA')
 UNION ALL
 SELECT 'storage bucket',   COALESCE((SELECT name FROM storage.buckets WHERE id = 'product-images'), 'TIDAK ADA')
 UNION ALL

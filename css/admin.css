@@ -291,6 +291,9 @@ img.admin-product-img { font-size: inherit; }
 .admin-tag.tag-bestseller  { background: var(--primary); color: var(--cream); }
 .admin-tag.tag-hidden      { background: var(--latte-xlight); color: var(--text-soft); }
 .admin-tag.tag-visible     { background: #e8f5e9; color: #2e7d32; }
+.admin-tag.tag-stock-unlimited { background: var(--latte-xlight); color: var(--text-soft); }
+.admin-tag.tag-stock       { background: #e3f2fd; color: #1565c0; }
+.admin-tag.tag-stock-empty { background: #fdecea; color: #c0392b; }
 
 .admin-product-actions { display: flex; gap: 8px; }
 

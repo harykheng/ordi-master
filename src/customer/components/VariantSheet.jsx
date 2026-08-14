@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { formatPrice } from '../../shared/lib/format.js';
 import { useCart } from '../CartContext.jsx';
 import { useToast } from '../../shared/components/Toast.jsx';
+import { getProductCartQty } from '../../shared/lib/cart.js';
 
 export default function VariantSheet({ product, onClose }) {
-  const { dispatch } = useCart();
+  const { state, dispatch } = useCart();
   const showToast = useToast();
   const [selected, setSelected] = useState({}); // { groupName: { label, price } }
   const [qty, setQty] = useState(1);
@@ -19,15 +20,24 @@ export default function VariantSheet({ product, onClose }) {
   const extra = Object.values(selected).reduce((s, v) => s + v.price, 0);
   const total = product ? (product.price + extra) * qty : 0;
 
+  // Stock is tracked per product, not per variant — cap by what's left after
+  // whatever's already sitting in the cart across other variants of this product.
+  const alreadyInCart = product ? getProductCartQty(state.cart, product.id) : 0;
+  const maxQty = product?.stock_qty == null ? 20 : Math.max(0, Math.min(20, product.stock_qty - alreadyInCart));
+
   function selectChip(groupName, option) {
     setSelected((prev) => ({ ...prev, [groupName]: { label: option.label, price: option.price || 0 } }));
   }
 
   function changeQty(delta) {
-    setQty((q) => Math.max(1, Math.min(20, q + delta)));
+    setQty((q) => Math.max(1, Math.min(maxQty, q + delta)));
   }
 
   function confirmAdd() {
+    if (maxQty <= 0) {
+      showToast('Stok produk ini sudah habis di keranjang kamu!', 'error');
+      return;
+    }
     for (const g of groups) {
       if (!selected[g.name]) {
         showToast(`Pilih ${g.name} dulu ya!`, 'error');
@@ -85,16 +95,28 @@ export default function VariantSheet({ product, onClose }) {
         </div>
 
         <div className="variant-sheet-footer">
+          {product?.stock_qty != null && (
+            <div className="vs-stock-hint">
+              {maxQty <= 0 ? 'Stok produk ini habis' : `Sisa stok: ${maxQty}`}
+            </div>
+          )}
           <div className="vs-qty-row">
             <span className="vs-qty-label">Jumlah</span>
             <div className="vs-qty-ctrl">
               <button className="qty-btn minus" onClick={() => changeQty(-1)} aria-label="Kurangi">−</button>
               <span className="qty-display">{qty}</span>
-              <button className="qty-btn plus" onClick={() => changeQty(1)} aria-label="Tambah">+</button>
+              <button
+                className={`qty-btn plus${qty >= maxQty ? ' minus-disabled' : ''}`}
+                onClick={() => changeQty(1)}
+                aria-label="Tambah"
+                disabled={qty >= maxQty}
+              >
+                +
+              </button>
             </div>
           </div>
-          <button className="btn btn-primary vs-add-btn" onClick={confirmAdd}>
-            Tambah ke Keranjang — {formatPrice(total)}
+          <button className="btn btn-primary vs-add-btn" onClick={confirmAdd} disabled={maxQty <= 0}>
+            {maxQty <= 0 ? 'Stok Habis' : `Tambah ke Keranjang — ${formatPrice(total)}`}
           </button>
         </div>
       </div>

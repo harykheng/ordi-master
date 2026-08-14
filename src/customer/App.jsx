@@ -3,7 +3,7 @@ import { CartProvider, useCart } from './CartContext.jsx';
 import { useSettings } from '../shared/hooks/useSettings.js';
 import { useToast } from '../shared/components/Toast.jsx';
 import { config } from '../shared/lib/config.js';
-import { cartTotal, getDiscountAmount, cartFinalTotal, cartSnapshot } from '../shared/lib/cart.js';
+import { cartTotal, getDiscountAmount, cartFinalTotal, cartSnapshot, cartStockItems } from '../shared/lib/cart.js';
 import { qrisToDynamic } from '../shared/lib/qris.js';
 import OrderTypeStep from './components/OrderTypeStep.jsx';
 import CatalogStep from './components/CatalogStep.jsx';
@@ -76,6 +76,7 @@ function AppShell() {
       promoCode: state.activePromo?.code || null,
       qrisString,
       cartSnapshot: cartSnapshot(state.cart),
+      stockItems: cartStockItems(state.cart),
     });
   }
 

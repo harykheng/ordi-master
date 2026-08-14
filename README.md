@@ -5,7 +5,7 @@ Website e-commerce untuk UMKM (template multi-klien). Stack: **React + Vite**, S
 Dua aplikasi React terpisah dalam satu repo (Vite multi-page app): katalog customer di `/`, dashboard admin di `/admin/`. Masing-masing punya bundle sendiri — customer tidak pernah men-download kode dashboard admin dan sebaliknya.
 
 **Fitur utama:**
-- Katalog produk dengan varian (ukuran, suhu, dll) dan badge (New/Terlaris)
+- Katalog produk dengan varian (ukuran, suhu, dll), badge (New/Terlaris), dan stok opsional (badge "Habis" otomatis + anti-oversell)
 - Checkout Pickup & Delivery, dengan alamat autocomplete (LocationIQ) dan ongkir real-time (Biteship — GoSend/GrabExpress), fallback ke tarif jarak statis kalau Biteship tidak tersedia
 - Kode promo (persen / nominal, minimum order, tanggal expired)
 - Pembayaran QRIS dinamis — nominal digenerate langsung di browser dari QRIS statis toko, tanpa payment gateway/API berbayar
@@ -39,6 +39,7 @@ CREATE TABLE products (
   is_bestseller BOOLEAN     NOT NULL DEFAULT false,
   is_visible    BOOLEAN     NOT NULL DEFAULT true,
   variants      JSONB       DEFAULT '[]'::jsonb,
+  stock_qty     INTEGER,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -61,6 +62,8 @@ CREATE POLICY "Admin delete products"
 ```
 
 > `variants` menyimpan array grup varian, misalnya `[{ "name": "Ukuran", "options": [{ "label": "S", "extraPrice": 0 }, { "label": "L", "extraPrice": 5000 }] }]`. Diisi lewat form admin, opsional.
+
+> `stock_qty` — `NULL` berarti stok tidak dilacak (produk selalu tersedia, ini default-nya). Diisi angka kalau stoknya terbatas; otomatis dikurangi tiap ada pesanan masuk lewat function `place_order()` (lihat bagian `orders` di bawah), dan katalog customer otomatis nampilin badge "Habis" begitu stoknya 0.
 
 #### `promo_codes` — Kode promo
 
@@ -157,6 +160,12 @@ CREATE POLICY "Admin full access orders"
 
 > `qris_string` menyimpan QRIS dinamis (hasil generate dari QRIS statis toko + nominal) supaya admin/customer bisa menampilkan ulang QR-nya kapan saja lewat tombol "Tampilkan QR lagi" — ini bukan kredensial rahasia, aman disimpan apa adanya.
 
+#### `place_order()` — insert order + kurangi stok, dalam satu transaksi
+
+Frontend **tidak** insert langsung ke `orders` — semua checkout lewat `supabase.rpc('place_order', { order_data, stock_items })`. Alasannya: cek-lalu-kurangi stok dari browser punya race condition kalau 2 customer checkout produk yang sama nyaris bersamaan. Function Postgres ini mengurangi `stock_qty` tiap item (gagal & rollback semuanya kalau ada satu item yang stoknya kurang — order pun tidak jadi ke-insert) dan insert order-nya, semua dalam satu transaksi atomic. Produk dengan `stock_qty NULL` dianggap tak terbatas, tidak pernah gagal/dikurangi.
+
+Definisi lengkapnya ada di `supabase-setup.sql` §6 — copy dari situ kalau setup manual satu-satu, jangan ditulis ulang manual di sini (biar tidak drift).
+
 ### Buat Storage Bucket untuk Foto
 
 1. Di sidebar Supabase, buka **Storage** → **New bucket**
@@ -164,15 +173,23 @@ CREATE POLICY "Admin full access orders"
 3. Centang **Public bucket** (agar foto bisa dilihat pengunjung)
 4. Klik **Create bucket**
 
-Bucket ini dipakai untuk foto produk, logo brand, dan foto banner katalog. Tambahkan policy upload via **SQL Editor**:
+Bucket ini dipakai untuk foto produk, logo brand, dan foto banner katalog. Tambahkan ke-4 policy berikut via **SQL Editor** — jangan cuma insert/delete, `Public read images` dan `Admin update images` juga wajib ada (yang terakhir itu dibutuhkan upload dengan `upsert: true`, dipakai SettingsTab untuk logo/banner — lihat catatan RLS drift di `CLAUDE.md` kalau upload logo/banner gagal padahal upload foto produk normal):
 
 ```sql
+CREATE POLICY "Public read images"
+  ON storage.objects FOR SELECT TO public
+  USING (bucket_id = 'product-images');
+
 CREATE POLICY "Admin upload images"
   ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'product-images');
 
 CREATE POLICY "Admin delete images"
   ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'product-images');
+
+CREATE POLICY "Admin update images"
+  ON storage.objects FOR UPDATE TO authenticated
   USING (bucket_id = 'product-images');
 ```
 
@@ -360,8 +377,10 @@ QRIS di sini **tidak ada masa kedaluwarsa** — karena digenerate secara determi
 Buka: `namawebsite.vercel.app/admin/` → login dengan email + password.
 
 ### Tab Produk
-Klik **+ Tambah Produk** → isi nama, deskripsi, harga, upload foto, atur varian (opsional), badge & visibilitas → **Simpan Produk**.
-Untuk stok habis sementara: edit produk → matikan toggle **"Tampilkan di Katalog"** → data tidak terhapus, cuma disembunyikan.
+Klik **+ Tambah Produk** → isi nama, deskripsi, harga, stok (opsional), upload foto, atur varian (opsional), badge & visibilitas → **Simpan Produk**.
+
+- **Stok** dikosongkan = produk selalu tersedia (default, tidak perlu diisi kalau memang tidak dibatasi). Diisi angka kalau stoknya terbatas — otomatis berkurang tiap ada pesanan masuk, dan begitu habis (0) katalog customer otomatis nampilin badge **"Habis"** (produk tetap kelihatan, cuma tidak bisa dipesan) tanpa perlu admin edit manual.
+- Toggle **"Tampilkan di Katalog"** beda kegunaan dari stok — ini buat sembunyiin produk total dari katalog (misal produk yang sudah tidak dijual lagi), bukan buat stok habis sementara.
 
 ### Tab Promo
 Klik **+ Tambah Promo** → isi kode, tipe diskon (persen/nominal), minimum order, tanggal berlaku (opsional), status aktif → **Simpan Promo**.
