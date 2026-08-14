@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../AuthContext.jsx';
+import { config } from '../../shared/lib/config.js';
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -27,7 +28,7 @@ export default function LoginScreen() {
       <div className="login-card">
         <div className="login-logo">
           <span className="logo-icon">☕</span>
-          <div className="logo-text">Breva</div>
+          <div className="logo-text">{config.storeName}</div>
         </div>
         <p className="login-subtitle">Masuk ke Dashboard Admin</p>
 
@@ -37,7 +38,7 @@ export default function LoginScreen() {
           <div className="form-group">
             <label htmlFor="loginEmail">Email</label>
             <input
-              type="email" id="loginEmail" placeholder="admin@breva.com" required autoComplete="email"
+              type="email" id="loginEmail" placeholder="admin@email.com" required autoComplete="email"
               value={email} onChange={(e) => setEmail(e.target.value)}
             />
           </div>

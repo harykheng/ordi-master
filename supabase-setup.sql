@@ -1,5 +1,5 @@
 -- ================================================================
--- BREVA COFFEE — SETUP LENGKAP
+-- SETUP LENGKAP
 -- Jalankan SEKALI di Supabase SQL Editor
 -- ================================================================
 
@@ -79,7 +79,7 @@ CREATE POLICY "Admin update images"
 
 -- ----------------------------------------------------------------
 -- 4. BUAT AKUN ADMIN
---    Email    : admin@brevacafe.com
+--    Email    : admin@youremail.com
 --    Password : admin123   ← ganti setelah pertama login!
 -- ----------------------------------------------------------------
 DO $$
@@ -87,7 +87,7 @@ DECLARE
   v_uid UUID := gen_random_uuid();
 BEGIN
   -- Hanya buat kalau email belum ada
-  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'admin@brevacafe.com') THEN
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'admin@youremail.com') THEN
 
     INSERT INTO auth.users (
       instance_id,
@@ -110,7 +110,7 @@ BEGIN
       v_uid,
       'authenticated',
       'authenticated',
-      'admin@brevacafe.com',
+      'admin@youremail.com',
       crypt('admin123', gen_salt('bf')),
       now(),                                               -- langsung confirmed, tidak perlu verifikasi email
       '{"provider":"email","providers":["email"]}',
@@ -133,10 +133,10 @@ BEGIN
     ) VALUES (
       v_uid,
       v_uid,
-      'admin@brevacafe.com',
+      'admin@youremail.com',
       jsonb_build_object(
         'sub',            v_uid::text,
-        'email',          'admin@brevacafe.com',
+        'email',          'admin@youremail.com',
         'email_verified', true,
         'provider',       'email'
       ),
@@ -146,7 +146,7 @@ BEGIN
       now()
     );
 
-    RAISE NOTICE 'Akun admin berhasil dibuat: admin@brevacafe.com';
+    RAISE NOTICE 'Akun admin berhasil dibuat: admin@youremail.com';
   ELSE
     RAISE NOTICE 'Akun admin sudah ada, dilewati.';
   END IF;
@@ -160,4 +160,4 @@ SELECT 'products table'   AS item, COUNT(*)::text AS info FROM products
 UNION ALL
 SELECT 'storage bucket',   COALESCE((SELECT name FROM storage.buckets WHERE id = 'product-images'), 'TIDAK ADA')
 UNION ALL
-SELECT 'admin user',       COALESCE((SELECT email FROM auth.users WHERE email = 'admin@brevacafe.com'), 'TIDAK ADA');
+SELECT 'admin user',       COALESCE((SELECT email FROM auth.users WHERE email = 'admin@youremail.com'), 'TIDAK ADA');

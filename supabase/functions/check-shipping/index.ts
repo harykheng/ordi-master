@@ -10,6 +10,7 @@
 // Set secret: supabase secrets set BITESHIP_API_KEY=biteship_xxx...
 
 const BITESHIP_API_KEY = Deno.env.get('BITESHIP_API_KEY');
+const STORE_NAME = Deno.env.get('STORE_NAME') || 'Toko';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -49,7 +50,7 @@ Deno.serve(async (req) => {
         destination_longitude: destLng,
         couriers: 'gosend,grab',
         items: [{
-          name: 'Pesanan Breva Coffee',
+          name: `Pesanan ${STORE_NAME}`,
           description: 'Minuman & makanan',
           value: orderValue || 10000,
           weight: weightGrams || 300,

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { config } from '../shared/lib/config.js';
 import { AuthProvider, useAuth } from './AuthContext.jsx';
 import { ConfirmDialogProvider } from '../shared/components/ConfirmDialog.jsx';
 import LoginScreen from './components/LoginScreen.jsx';
@@ -25,7 +26,7 @@ function Dashboard() {
       <header className="admin-header">
         <div className="logo">
           <span className="logo-icon">☕</span>
-          <div className="logo-text">Breva Admin</div>
+          <div className="logo-text">{config.storeName} Admin</div>
         </div>
         <div className="admin-header-right">
           <span className="admin-user-email">{session.user.email}</span>

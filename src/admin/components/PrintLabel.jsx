@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
 import { formatPrice } from '../../shared/lib/format.js';
+import { config } from '../../shared/lib/config.js';
 
 // Rendered via portal into #printLabel, a direct <body> child declared in
 // admin/index.html — @media print in admin.css hides every other body child
@@ -12,7 +13,7 @@ export default function PrintLabel({ order }) {
 
   return createPortal(
     <div className="print-label-inner">
-      <div className="print-label-brand">☕ Breva Coffee</div>
+      <div className="print-label-brand">{config.storeName}</div>
       <div className="print-label-order">{order.order_number}</div>
       <div className="print-label-section">
         <strong>Untuk:</strong> {order.customer_name}<br />
