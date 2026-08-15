@@ -1,6 +1,9 @@
 import { createContext, useContext, useEffect, useReducer } from 'react';
 
-const STORAGE_KEY = 'ordi_order_state_v1';
+// Only the profile card (name/WA/address/patokan) persists long-term — cart,
+// step, tanggal pemesanan, promo, and shipping are intentionally NOT
+// persisted, they reset on every refresh like before.
+const PROFILE_STORAGE_KEY = 'ordi_customer_profile_v1';
 
 const initialState = {
   step: 1,
@@ -133,9 +136,14 @@ function reducer(state, action) {
       return { ...state, note: action.note };
 
     case 'RESET_ORDER':
+      // Profile stays — it's the one thing meant to survive past this order
+      // (see PROFILE_STORAGE_KEY), so a returning customer doesn't have to
+      // retype name/WA/address for their next order in the same visit.
       return {
         ...initialState,
         step: 1,
+        profile: state.profile,
+        isProfileFilled: state.isProfileFilled,
       };
 
     default:
@@ -143,37 +151,40 @@ function reducer(state, action) {
   }
 }
 
-// Order-in-progress is resumed after a refresh via sessionStorage (cleared when
-// the tab/browser closes, so a customer never comes back days later to a stale
-// cart). 'loading' shipping status can't still be "in flight" after a reload,
-// so it's normalized back to 'idle' on read.
-function loadPersistedState() {
+// Profile persists across refresh AND closing the browser entirely (unlike
+// cart/step/tanggal, which reset every time) — matches what a returning
+// customer expects: name/WA/address/patokan already filled in next visit.
+function loadPersistedProfile() {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return initialState;
-    const saved = JSON.parse(raw);
-    return {
-      ...initialState,
-      ...saved,
-      shippingStatus: saved.shippingStatus === 'loading' ? 'idle' : (saved.shippingStatus || 'idle'),
-    };
+    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (!raw) return initialState.profile;
+    return { ...initialState.profile, ...JSON.parse(raw) };
   } catch {
-    return initialState;
+    return initialState.profile;
   }
+}
+
+function loadInitialState() {
+  const profile = loadPersistedProfile();
+  return {
+    ...initialState,
+    profile,
+    isProfileFilled: Boolean(profile.name && profile.wa),
+  };
 }
 
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, undefined, loadPersistedState);
+  const [state, dispatch] = useReducer(reducer, undefined, loadInitialState);
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(state.profile));
     } catch {
-      // storage unavailable (private mode, quota) — order just won't survive a refresh
+      // storage unavailable (private mode, quota) — profile just won't be remembered
     }
-  }, [state]);
+  }, [state.profile]);
 
   return (
     <CartContext.Provider value={{ state, dispatch }}>
