@@ -4,7 +4,6 @@ import { formatPrice } from '../../shared/lib/format.js';
 import { useBodyScrollLock } from '../../shared/hooks/useBodyScrollLock.js';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { config } from '../../shared/lib/config.js';
-import QrisViewModal from './QrisViewModal.jsx';
 
 export default function OrderSummaryModal({ order, settings, onClose }) {
   const { dispatch } = useCart();
@@ -12,7 +11,6 @@ export default function OrderSummaryModal({ order, settings, onClose }) {
   useBodyScrollLock(isOpen);
   const showToast = useToast();
   const [copied, setCopied] = useState(false);
-  const [showQr, setShowQr] = useState(false);
 
   if (!order) return null;
 
@@ -21,11 +19,11 @@ export default function OrderSummaryModal({ order, settings, onClose }) {
   const storeMapsUrl = settings?.store_maps_url || config.storeMapsUrl;
   const storeOpenHours = settings?.store_hours || config.storeOpenHours;
 
-  function sendWhatsAppProof() {
+  function sendOrderToWhatsApp() {
     if (order.waUrl) window.open(order.waUrl, '_blank');
     dispatch({ type: 'RESET_ORDER' });
     onClose();
-    showToast('Pesanan dikonfirmasi! Kirim bukti bayar via WA ya 🎉', 'success');
+    showToast('Pesanan dikonfirmasi! Kirim pesan ke toko via WA ya 🎉', 'success');
   }
 
   function copyOrderCode() {
@@ -72,20 +70,16 @@ export default function OrderSummaryModal({ order, settings, onClose }) {
         <div className="oss-header">
           <h2 className="oss-title">Satu langkah lagi!</h2>
           <p className="oss-subtitle">
-            Pesanan <strong>#{order.orderNum}</strong> belum kami proses sampai kamu kirim <strong>foto bukti pembayaran QRIS</strong> via WhatsApp.
+            Pesanan <strong>#{order.orderNum}</strong> belum kami proses sampai kamu kirim konfirmasi via WhatsApp.
           </p>
         </div>
 
         <div className="oss-warning">
-          <span>⚠️</span> WAJIB — KIRIM FOTO BUKTI PEMBAYARAN
+          <span>⚠️</span> WAJIB — KIRIM KONFIRMASI VIA WHATSAPP
         </div>
 
-        <button className="btn-oss-wa" onClick={sendWhatsAppProof}>
-          💬 Kirim Bukti Transfer via WhatsApp
-        </button>
-
-        <button className="btn-oss-qr" onClick={() => setShowQr(true)}>
-          📷 Tampilkan QR lagi
+        <button className="btn-oss-wa" onClick={sendOrderToWhatsApp}>
+          💬 Kirim Pesanan via WhatsApp
         </button>
 
         <div className="oss-card">
@@ -144,8 +138,6 @@ export default function OrderSummaryModal({ order, settings, onClose }) {
           </div>
         </div>
       </div>
-
-      {showQr && <QrisViewModal order={order} onClose={() => setShowQr(false)} />}
     </div>
   );
 }

@@ -8,9 +8,10 @@ export function waLink(phone, message) {
   return `https://wa.me/${encodeURIComponent(phone)}?text=${encodeURIComponent(message)}`;
 }
 
-// Message sent to the admin after a customer confirms QRIS payment
-// (ported from confirmQrisPayment in the old catalog.js).
-export function buildQrisConfirmMessage({
+// Message sent to the admin when a customer checks out — no QRIS/online
+// payment in this tier, so this just hands the order details to the admin
+// to confirm and arrange payment separately (cash/transfer via WA chat).
+export function buildOrderConfirmMessage({
   storeName, orderNum, cartSnapshot, rawTotal, discount, promoCode,
   shippingCost, shippingLabel, finalTotal, name, wa, orderType,
   orderDateLabel, address, addressNote, note,
@@ -18,7 +19,7 @@ export function buildQrisConfirmMessage({
   const typeLabel = orderType === 'pickup' ? 'Pickup' : 'Delivery';
 
   let msg = `Halo *${storeName}*! 😊\n\n`;
-  msg += `✅ Saya sudah bayar via QRIS untuk pesanan berikut:\n\n`;
+  msg += `Saya mau pesan:\n\n`;
   msg += `*Pesanan #${orderNum}:*\n`;
   cartSnapshot.forEach((it, i) => {
     const v = it.vl?.length ? ` (${it.vl.join(', ')})` : '';
@@ -43,6 +44,7 @@ export function buildQrisConfirmMessage({
     if (shippingLabel) msg += `Kurir: ${shippingLabel}\n`;
   }
   if (note) msg += `Catatan: ${note}\n`;
+  msg += `\nMohon info cara pembayarannya ya. Terima kasih! 🙏`;
 
   return msg;
 }

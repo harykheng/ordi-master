@@ -6,7 +6,7 @@ import { cartTotal, getDiscountAmount, cartFinalTotal } from '../../shared/lib/c
 import { fetchActivePromoByCode } from '../../shared/lib/promos.js';
 import OngkirOptions from './OngkirOptions.jsx';
 
-export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris }) {
+export default function CheckoutStep({ settings, onOpenProfile, onCheckout, checkingOut }) {
   const { state, dispatch } = useCart();
   const [promoInput, setPromoInput] = useState('');
   const [promoResult, setPromoResult] = useState(null); // { type: 'success'|'error', msg }
@@ -234,8 +234,8 @@ export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris }) 
         </div>
 
         <div className="co-submit">
-          <button className="btn-wa-send" onClick={onSubmitQris}>
-            Bayar via QRIS 💳
+          <button className="btn-wa-send" onClick={onCheckout} disabled={checkingOut}>
+            {checkingOut ? 'Memproses...' : 'Checkout via WhatsApp 💬'}
           </button>
         </div>
 
