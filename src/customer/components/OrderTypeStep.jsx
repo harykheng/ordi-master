@@ -10,6 +10,7 @@ export default function OrderTypeStep({ settings }) {
 
   const brandName = settings?.brand_name || config.storeName;
   const logoUrl = settings?.logo_url;
+  const logoTextUrl = settings?.logo_text_url;
   const brandIcon = settings?.brand_icon || '☕';
   const instagramUrl = settings?.instagram_url || config.instagramUrl;
   const tiktokUrl = settings?.tiktok_url || config.tiktokUrl;
@@ -47,7 +48,11 @@ export default function OrderTypeStep({ settings }) {
             ) : (
               <span className="ob-brand-icon">{brandIcon}</span>
             )}
-            <span className="ob-brand-name">{brandName}</span>
+            {logoTextUrl ? (
+              <img className="ob-brand-name-logo" src={logoTextUrl} alt={brandName} />
+            ) : (
+              <span className="ob-brand-name">{brandName}</span>
+            )}
           </div>
           <a className="btn-wa-help" href={waHelpUrl} target="_blank" rel="noopener noreferrer">
             💬 Butuh bantuan?

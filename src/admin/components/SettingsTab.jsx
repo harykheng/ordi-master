@@ -15,6 +15,8 @@ export default function SettingsTab() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [logoFile, setLogoFile] = useState(null);
   const [existingLogoUrl, setExistingLogoUrl] = useState(null);
+  const [logoTextFile, setLogoTextFile] = useState(null);
+  const [existingLogoTextUrl, setExistingLogoTextUrl] = useState(null);
   const [bannerImageFile, setBannerImageFile] = useState(null);
   const [existingBannerImageUrl, setExistingBannerImageUrl] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -33,6 +35,7 @@ export default function SettingsTab() {
       tiktokUrl: settings.tiktok_url || '',
     });
     setExistingLogoUrl(settings.logo_url || null);
+    setExistingLogoTextUrl(settings.logo_text_url || null);
     setExistingBannerImageUrl(settings.banner_image_url || null);
   }, [settings]);
 
@@ -51,11 +54,14 @@ export default function SettingsTab() {
         instagramUrl: form.instagramUrl.trim(),
         tiktokUrl: form.tiktokUrl.trim(),
         logoFile,
+        logoTextFile,
         bannerImageFile,
         existingLogoUrl,
+        existingLogoTextUrl,
         existingBannerImageUrl,
       });
       setLogoFile(null);
+      setLogoTextFile(null);
       setBannerImageFile(null);
       showToast('Pengaturan berhasil disimpan! ✅', 'success');
       await refetch();
@@ -97,8 +103,8 @@ export default function SettingsTab() {
             <input type="text" id="settingBrandIcon" placeholder="☕" maxLength={4} style={{ maxWidth: 90 }} value={form.brandIcon} onChange={(e) => setForm((f) => ({ ...f, brandIcon: e.target.value }))} />
             <p className="form-hint">Tampil di header kalau tidak ada logo gambar</p>
           </div>
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label>Logo (Gambar — opsional)</label>
+          <div className="form-group">
+            <label>Logo Ikon (Gambar — opsional)</label>
             <ImageUploadDropzone
               existingUrl={existingLogoUrl}
               onFileSelect={setLogoFile}
@@ -106,6 +112,18 @@ export default function SettingsTab() {
               maxSizeMB={2}
               hint="PNG, JPG, WEBP, SVG — Maks 2 MB"
             />
+            <p className="form-hint">Mascot/ikon kecil di header. Tampil kalau tidak ada logo ikon, fallback ke emoji di atas.</p>
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Logo Teks / Wordmark (Gambar — opsional)</label>
+            <ImageUploadDropzone
+              existingUrl={existingLogoTextUrl}
+              onFileSelect={setLogoTextFile}
+              onRemove={() => { setLogoTextFile(null); setExistingLogoTextUrl(null); }}
+              maxSizeMB={2}
+              hint="PNG, JPG, WEBP, SVG — Maks 2 MB"
+            />
+            <p className="form-hint">Ganti tulisan "Nama Brand" di header dengan gambar logo teks kamu sendiri. Kalau kosong, tampil sebagai teks biasa.</p>
           </div>
         </div>
 

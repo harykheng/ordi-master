@@ -98,6 +98,7 @@ CREATE TABLE settings (
   brand_name       TEXT,
   brand_icon       TEXT,
   logo_url         TEXT,
+  logo_text_url    TEXT,
   store_address    TEXT,
   store_hours      TEXT,
   store_maps_url   TEXT,
@@ -445,7 +446,7 @@ Terjadi kalau Cloudflare project dibuat lewat alur **Workers** (bukan Pages) —
 Env var `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` belum diisi di platform hosting (Vercel/Netlify/Cloudflare Environment Variables). Ingat: Vite meng-inline semua `VITE_*` ke bundle **saat build**, bukan saat runtime — jadi setelah menambah/mengubah env var, harus **trigger rebuild/redeploy**, restart server saja tidak cukup.
 
 **Logo brand tampil kegedean di header**
-Kalau custom logo (`logo_url` dari tab Pengaturan) dipasang tapi CSS class `brand-icon-logo` ketinggalan dari `className` elemen `<img>`-nya, logo cuma kena style default (`object-fit` dsb tidak ke-apply) jadi tampil raw-size. Class ini wajib ada berbarengan dengan class icon-nya (`ob-brand-icon brand-icon-logo` di `OrderTypeStep.jsx`, `topbar-icon brand-icon-logo` di `CatalogStep.jsx`) — kalau nambah tempat baru yang bisa nampilin logo custom, jangan lupa pasang keduanya.
+Kalau custom logo (`logo_url` dari tab Pengaturan) dipasang tapi CSS class `brand-icon-logo` ketinggalan dari `className` elemen `<img>`-nya, logo cuma kena style default (`object-fit` dsb tidak ke-apply) jadi tampil raw-size. Class ini wajib ada berbarengan dengan class icon-nya (`ob-brand-icon brand-icon-logo` di `OrderTypeStep.jsx`, `topbar-icon brand-icon-logo` di `CatalogStep.jsx`) — kalau nambah tempat baru yang bisa nampilin logo custom, jangan lupa pasang keduanya. Logo teks (`logo_text_url`) punya class sizing sendiri (`ob-brand-name-logo`/`topbar-brand-name-logo`) — jangan ketuker sama class logo ikon.
 
 **Edge Function `check-shipping` gagal dengan `TypeError: Invalid header value: "biteship_test...\neyJ..."`**
 Ada newline literal ke-paste di tengah secret `BITESHIP_API_KEY` — lihat catatan lengkap di §3.
