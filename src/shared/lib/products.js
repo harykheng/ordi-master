@@ -47,3 +47,21 @@ export async function deleteProduct(productId) {
   const { error } = await supabase.from('products').delete().eq('id', productId);
   if (error) throw error;
 }
+
+// Bulk create from CSV import (see ProductImportModal.jsx). Rows are already
+// validated/parsed by the caller — this just inserts. No image_url/variants:
+// those aren't representable in a flat CSV row, admin adds them after via
+// the normal edit form.
+export async function importProducts(rows) {
+  const payload = rows.map((r) => ({
+    name: r.name,
+    description: r.description || null,
+    price: r.price,
+    is_new: r.isNew,
+    is_bestseller: r.isBestseller,
+    is_visible: r.isVisible,
+    stock_qty: r.stockQty,
+  }));
+  const { error } = await supabase.from('products').insert(payload);
+  if (error) throw error;
+}

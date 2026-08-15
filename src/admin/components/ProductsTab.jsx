@@ -5,6 +5,7 @@ import { useToast } from '../../shared/components/Toast.jsx';
 import { useConfirmDialog } from '../../shared/components/ConfirmDialog.jsx';
 import { deleteProduct } from '../../shared/lib/products.js';
 import ProductFormModal from './ProductFormModal.jsx';
+import ProductImportModal from './ProductImportModal.jsx';
 
 export default function ProductsTab() {
   const { products, loading, refetch } = useProducts();
@@ -12,6 +13,7 @@ export default function ProductsTab() {
   const showToast = useToast();
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   function openCreate() {
     setEditingProduct(null);
@@ -44,7 +46,10 @@ export default function ProductsTab() {
           <h2 className="admin-page-title">Daftar Produk</h2>
           <p className="admin-page-subtitle">{loading ? 'Memuat...' : `${products.length} produk`}</p>
         </div>
-        <button className="btn btn-primary" onClick={openCreate}>+ Tambah Produk</button>
+        <div className="admin-page-header-actions">
+          <button className="btn btn-secondary" onClick={() => setImportOpen(true)}>⬆ Import CSV</button>
+          <button className="btn btn-primary" onClick={openCreate}>+ Tambah Produk</button>
+        </div>
       </div>
 
       {loading && (
@@ -104,6 +109,12 @@ export default function ProductsTab() {
         product={editingProduct}
         onClose={() => setFormOpen(false)}
         onSaved={refetch}
+      />
+
+      <ProductImportModal
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={refetch}
       />
     </div>
   );

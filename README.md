@@ -394,6 +394,8 @@ Klik **+ Tambah Produk** → isi nama, deskripsi, harga, stok (opsional), upload
 - **Stok** dikosongkan = produk selalu tersedia (default, tidak perlu diisi kalau memang tidak dibatasi). Diisi angka kalau stoknya terbatas — otomatis berkurang tiap ada pesanan masuk, dan begitu habis (0) katalog customer otomatis nampilin badge **"Habis"** (produk tetap kelihatan, cuma tidak bisa dipesan) tanpa perlu admin edit manual.
 - Toggle **"Tampilkan di Katalog"** beda kegunaan dari stok — ini buat sembunyiin produk total dari katalog (misal produk yang sudah tidak dijual lagi), bukan buat stok habis sementara.
 
+**⬆ Import CSV** — tambah banyak produk sekaligus dari file CSV (kolom: Nama, Deskripsi, Harga, Stok, Badge New, Badge Terlaris, Tampil di Katalog). Ada tombol **Download Template CSV** buat mulai dari format yang benar. Baris yang nama/harga/stoknya tidak valid otomatis dilewati (bukan bikin seluruh import gagal) dan ditampilkan alasannya sebelum kamu konfirmasi. Foto & varian tidak bisa lewat CSV — tambahkan manual lewat Edit setelah produk ke-import.
+
 ### Tab Promo
 Klik **+ Tambah Promo** → isi kode, tipe diskon (persen/nominal), minimum order, tanggal berlaku (opsional), status aktif → **Simpan Promo**.
 
