@@ -11,7 +11,7 @@ Tiga aplikasi React terpisah dalam satu repo (Vite multi-page app): katalog cust
 - Kode promo (persen / nominal, minimum order, tanggal expired)
 - Pembayaran QRIS dinamis — nominal digenerate langsung di browser dari QRIS statis toko, tanpa payment gateway/API berbayar
 - Konfirmasi pesanan otomatis terkirim ke WhatsApp admin, tersimpan di database sebagai status `pending`
-- Dashboard admin: kelola produk, promo, pesanan (ubah status, print label, kirim ringkasan ke WA customer), dan pengaturan brand/toko
+- Dashboard admin: kelola produk, promo, pesanan (ubah status, print label, kirim ringkasan ke WA customer, export CSV), notifikasi pesanan baru live, dan pengaturan brand/toko
 
 ---
 
@@ -404,6 +404,10 @@ Klik **📋 Detail** pada satu pesanan untuk:
 - **✅ Konfirmasi** / **✅ Selesai** / **❌ Batalkan** — ubah status pesanan
 - **🖨️ Print Label** — cetak label pengiriman/pickup
 - **📤 WA Customer** — kirim ringkasan pesanan (item, total, alamat, status) langsung ke WhatsApp customer, berguna kalau mereka tanya-tanya soal pesanannya
+
+**⬇ Export CSV** — export daftar pesanan yang lagi ke-filter (misal filter "Selesai" dulu baru export, buat laporan omset) ke file `.csv`, siap dibuka di Excel/Google Sheets. Semua diproses di browser, tidak ada server/biaya tambahan.
+
+**🔔 Notifikasi pesanan baru** — begitu ada pesanan masuk, admin yang lagi buka dashboard langsung dapat toast + bunyi + badge angka di tab "Pesanan" (real-time lewat Supabase Realtime, bukan polling). Cuma jalan selagi tab dashboard-nya kebuka di browser — bukan push notification asli ke HP/notifikasi sistem (itu butuh service worker + infrastruktur Web Push, di luar scope "client-side by default" project ini). Butuh Realtime diaktifkan buat tabel `orders` — sudah termasuk di `supabase-setup.sql` §6, atau aktifkan manual dari Supabase Dashboard → **Database** → **Replication**.
 
 ### Tab Pengaturan
 Ubah nama brand, ikon/logo, alamat & jam operasional toko, link Google Maps, banner katalog (judul, subjudul, foto), dan link Instagram/TikTok — semua tersimpan di tabel `settings` dan langsung berlaku di katalog tanpa perlu edit kode.

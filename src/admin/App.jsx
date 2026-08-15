@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { config } from '../shared/lib/config.js';
 import { AuthProvider, useAuth } from './AuthContext.jsx';
 import { ConfirmDialogProvider } from '../shared/components/ConfirmDialog.jsx';
+import { useNewOrderAlerts } from './hooks/useNewOrderAlerts.js';
 import LoginScreen from './components/LoginScreen.jsx';
 import DashboardTab from './components/DashboardTab.jsx';
 import ProductsTab from './components/ProductsTab.jsx';
@@ -20,6 +21,12 @@ const TABS = [
 function Dashboard() {
   const { session, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const newOrders = useNewOrderAlerts();
+
+  function selectTab(key) {
+    setActiveTab(key);
+    if (key === 'orders') newOrders.clear();
+  }
 
   return (
     <div className="admin-layout active">
@@ -40,9 +47,12 @@ function Dashboard() {
             <button
               key={t.key}
               className={`admin-tab${activeTab === t.key ? ' active' : ''}`}
-              onClick={() => setActiveTab(t.key)}
+              onClick={() => selectTab(t.key)}
             >
               {t.label}
+              {t.key === 'orders' && newOrders.count > 0 && (
+                <span className="admin-tab-badge">{newOrders.count > 9 ? '9+' : newOrders.count}</span>
+              )}
             </button>
           ))}
         </div>

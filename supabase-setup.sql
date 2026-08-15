@@ -169,7 +169,27 @@ CREATE POLICY "Admin full access orders"
 
 
 -- ----------------------------------------------------------------
--- 6. FUNCTION place_order() — insert order + kurangi stok, atomic
+-- 6. REALTIME — buat notifikasi "pesanan baru" live di dashboard admin
+-- ----------------------------------------------------------------
+-- Tanpa ini, dashboard admin tetap jalan normal (cuma harus refresh manual
+-- buat lihat pesanan baru) — tidak wajib untuk fitur checkout/pesanan bekerja,
+-- cuma dibutuhkan kalau mau notifikasi live (lihat useNewOrderAlerts.js).
+-- Realtime tetap tunduk ke RLS: anon tidak dikasih SELECT di tabel ini
+-- (lihat §5), jadi customer tidak ikut kebagian event ini — hanya admin yang
+-- login (authenticated, kena policy "Admin full access orders" di atas).
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'orders'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE orders;
+  END IF;
+END $$;
+
+
+-- ----------------------------------------------------------------
+-- 7. FUNCTION place_order() — insert order + kurangi stok, atomic
 -- ----------------------------------------------------------------
 -- Dipanggil dari browser lewat supabase.rpc('place_order', ...) sebagai
 -- pengganti insert langsung ke `orders`. Alasannya WAJIB backend (bukan
@@ -233,7 +253,7 @@ GRANT EXECUTE ON FUNCTION place_order(JSONB, JSONB) TO anon;
 
 
 -- ----------------------------------------------------------------
--- 7. FUNCTION lookup_order() — cek status pesanan tanpa login
+-- 8. FUNCTION lookup_order() — cek status pesanan tanpa login
 -- ----------------------------------------------------------------
 -- Dipakai halaman /tracking/ (lihat src/tracking/). `orders` RLS sengaja
 -- insert-only untuk anon (lihat CLAUDE.md "Kenapa begini") — customer tidak
@@ -258,7 +278,7 @@ GRANT EXECUTE ON FUNCTION lookup_order(TEXT, TEXT) TO anon;
 
 
 -- ----------------------------------------------------------------
--- 8. STORAGE BUCKET (foto produk, logo, banner)
+-- 9. STORAGE BUCKET (foto produk, logo, banner)
 -- ----------------------------------------------------------------
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('product-images', 'product-images', true)
@@ -296,7 +316,7 @@ CREATE POLICY "Admin update images"
 
 
 -- ----------------------------------------------------------------
--- 9. BUAT AKUN ADMIN
+-- 10. BUAT AKUN ADMIN
 --    Email    : admin@youremail.com
 --    Password : admin123   ← ganti setelah pertama login!
 -- ----------------------------------------------------------------
@@ -372,7 +392,7 @@ END $$;
 
 
 -- ----------------------------------------------------------------
--- 10. VERIFIKASI — cek hasil setup
+-- 11. VERIFIKASI — cek hasil setup
 -- ----------------------------------------------------------------
 SELECT 'products table'   AS item, COUNT(*)::text AS info FROM products
 UNION ALL
@@ -381,6 +401,8 @@ UNION ALL
 SELECT 'settings row',     COALESCE((SELECT 'id=1 ada' FROM settings WHERE id = 1), 'TIDAK ADA')
 UNION ALL
 SELECT 'orders table',     COUNT(*)::text FROM orders
+UNION ALL
+SELECT 'orders realtime',  COALESCE((SELECT 'aktif' FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'orders'), 'TIDAK AKTIF')
 UNION ALL
 SELECT 'place_order function', COALESCE((SELECT 'ada' FROM pg_proc WHERE proname = 'place_order'), 'TIDAK ADA')
 UNION ALL

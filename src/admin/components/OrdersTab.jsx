@@ -3,6 +3,7 @@ import { useOrders } from '../../shared/hooks/useOrders.js';
 import { formatPrice, formatOrderDate } from '../../shared/lib/format.js';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { updateOrderStatus } from '../../shared/lib/orders.js';
+import { downloadCsv } from '../../shared/lib/csv.js';
 import OrderDetailModal from './OrderDetailModal.jsx';
 
 const FILTERS = [
@@ -19,6 +20,38 @@ const STATUS_BADGES = {
   done: <span className="order-status-badge badge-done">✅ Selesai</span>,
   cancelled: <span className="order-status-badge badge-cancelled">❌ Dibatalkan</span>,
 };
+
+const STATUS_PLAIN = {
+  pending: 'Menunggu Konfirmasi',
+  confirmed: 'Diproses',
+  done: 'Selesai',
+  cancelled: 'Dibatalkan',
+};
+
+const CSV_HEADERS = [
+  'Nomor Pesanan', 'Tanggal', 'Dibuat', 'Nama', 'WhatsApp', 'Tipe', 'Alamat',
+  'Item', 'Subtotal', 'Kode Promo', 'Diskon', 'Ongkir', 'Total', 'Status',
+];
+
+function orderToCsvRow(o) {
+  const items = Array.isArray(o.items) ? o.items : [];
+  return [
+    o.order_number,
+    o.order_date_label || o.order_date,
+    new Date(o.created_at).toLocaleString('id-ID'),
+    o.customer_name,
+    o.customer_wa,
+    o.order_type === 'pickup' ? 'Pickup' : 'Delivery',
+    o.delivery_address || '',
+    items.map((it) => `${it.nm} x${it.qty}`).join('; '),
+    o.subtotal,
+    o.promo_code || '',
+    o.discount_amount || 0,
+    o.shipping_cost || 0,
+    o.total,
+    STATUS_PLAIN[o.status] || o.status,
+  ];
+}
 
 export default function OrdersTab() {
   const { orders, loading, refetch } = useOrders();
@@ -39,6 +72,17 @@ export default function OrdersTab() {
     }
   }
 
+  function exportCsv() {
+    if (filtered.length === 0) {
+      showToast('Tidak ada pesanan buat di-export', 'error');
+      return;
+    }
+    const filterLabel = filter === 'all' ? 'semua' : filter;
+    const today = new Date().toISOString().slice(0, 10);
+    downloadCsv(`pesanan-${filterLabel}-${today}.csv`, CSV_HEADERS, filtered.map(orderToCsvRow));
+    showToast(`${filtered.length} pesanan berhasil di-export ✅`, 'success');
+  }
+
   return (
     <div>
       <div className="admin-page-header">
@@ -52,6 +96,7 @@ export default function OrdersTab() {
                 : `${orders.length} pesanan`}
           </p>
         </div>
+        <button className="btn btn-secondary" onClick={exportCsv} disabled={loading}>⬇ Export CSV</button>
       </div>
 
       <div className="orders-filter-bar">
