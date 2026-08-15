@@ -30,7 +30,7 @@
 .ob-brand { display: flex; align-items: center; gap: 7px; }
 .ob-brand-icon { font-size: 22px; line-height: 1; }
 .ob-brand-name { font-size: 18px; font-weight: 800; color: var(--primary); letter-spacing: -0.01em; }
-.ob-brand-name-logo { height: 22px; width: auto; max-width: 160px; object-fit: contain; }
+.ob-brand-name-logo { object-fit: contain; width: auto; max-width: 160px; height: auto; max-height: 32px; }
 
 /* WA help button (text version in step 1) */
 .btn-wa-help {
@@ -278,7 +278,7 @@
 
 .topbar-icon { font-size: 18px; line-height: 1; }
 .topbar-brand-name { font-size: 16px; font-weight: 800; color: var(--text-dark); letter-spacing: -0.01em; }
-.topbar-brand-name-logo { height: 18px; width: auto; max-width: 130px; object-fit: contain; }
+.topbar-brand-name-logo { object-fit: contain; width: auto; max-width: 130px; height: auto; max-height: 26px; }
 
 /* ---- ORDER INFO STRIP ---- */
 .order-info-strip {
@@ -1012,12 +1012,13 @@
 
 /* Logo image in header (replaces emoji when set) */
 .brand-icon-logo {
-  height: 26px;
-  width: auto;
-  max-width: 38px;
   object-fit: contain;
   border-radius: 4px;
   flex-shrink: 0;
+  width: auto;
+  max-width: 50px;
+  height: auto;
+  max-height: 34px;
 }
 
 /* ================================================================
