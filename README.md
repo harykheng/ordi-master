@@ -2,10 +2,11 @@
 
 Website e-commerce untuk UMKM (template multi-klien). Stack: **React + Vite**, Supabase (database + auth + storage), deploy ke Vercel/Netlify/Cloudflare — project ini sendiri jalan di **Cloudflare** (Workers, static assets lewat `wrangler.jsonc`). Hampir semua logic (QRIS, promo, dsb) jalan di browser tanpa backend server — satu-satunya pengecualian adalah cek ongkir real-time, yang lewat 1 Supabase Edge Function kecil karena butuh menyembunyikan API key Biteship.
 
-Dua aplikasi React terpisah dalam satu repo (Vite multi-page app): katalog customer di `/`, dashboard admin di `/admin/`. Masing-masing punya bundle sendiri — customer tidak pernah men-download kode dashboard admin dan sebaliknya.
+Tiga aplikasi React terpisah dalam satu repo (Vite multi-page app): katalog customer di `/`, dashboard admin di `/admin/`, lacak pesanan di `/tracking/`. Masing-masing punya bundle sendiri — customer tidak pernah men-download kode dashboard admin dan sebaliknya.
 
 **Fitur utama:**
 - Katalog produk dengan varian (ukuran, suhu, dll), badge (New/Terlaris), dan stok opsional (badge "Habis" otomatis + anti-oversell)
+- Lacak status pesanan tanpa perlu akun (`/tracking/`) — customer cukup masukin kode pesanan + nomor WhatsApp
 - Checkout Pickup & Delivery, dengan alamat autocomplete (LocationIQ) dan ongkir real-time (Biteship — GoSend/GrabExpress), fallback ke tarif jarak statis kalau Biteship tidak tersedia
 - Kode promo (persen / nominal, minimum order, tanggal expired)
 - Pembayaran QRIS dinamis — nominal digenerate langsung di browser dari QRIS statis toko, tanpa payment gateway/API berbayar
@@ -166,6 +167,10 @@ Frontend **tidak** insert langsung ke `orders` — semua checkout lewat `supabas
 
 Definisi lengkapnya ada di `supabase-setup.sql` §6 — copy dari situ kalau setup manual satu-satu, jangan ditulis ulang manual di sini (biar tidak drift).
 
+#### `lookup_order()` — cek status pesanan tanpa login
+
+Dipakai halaman `/tracking/`. Karena `orders` RLS sengaja insert-only untuk `anon` (lihat catatan di atas), customer tidak pernah dikasih SELECT langsung ke tabel ini — function ini jadi satu-satunya jalan cek status, dan cuma balikin 1 baris kalau kode pesanan **dan** nomor WhatsApp-nya cocok berbarengan. Definisi lengkapnya ada di `supabase-setup.sql` §7.
+
 ### Buat Storage Bucket untuk Foto
 
 1. Di sidebar Supabase, buka **Storage** → **New bucket**
@@ -319,6 +324,8 @@ ordi-master/
 ├── index.html                ← Vite entry point aplikasi customer (root div + script module)
 ├── admin/
 │   └── index.html            ← Vite entry point aplikasi admin, di-serve di /admin/
+├── tracking/
+│   └── index.html            ← Vite entry point halaman lacak pesanan, di-serve di /tracking/
 ├── src/
 │   ├── customer/              ← Aplikasi React customer-facing
 │   │   ├── main.jsx            ← Render root, import CSS
@@ -333,7 +340,11 @@ ordi-master/
 │   │   ├── AuthContext.jsx      ← Supabase Auth session state
 │   │   └── components/          ← LoginScreen, ProductsTab/PromoTab/OrdersTab/SettingsTab,
 │   │                               form modals, ImageUploadDropzone, PrintLabel
-│   └── shared/                  ← Dipakai kedua aplikasi
+│   ├── tracking/                ← Aplikasi React lacak pesanan (lookup by kode + WA, tanpa akun)
+│   │   ├── main.jsx
+│   │   ├── App.jsx
+│   │   └── components/           ← OrderStatusCard
+│   └── shared/                  ← Dipakai ketiga aplikasi
 │       ├── lib/                  ← Pure functions: qris.js (crc16/qrisToDynamic), shipping.js
 │       │                            (Haversine), cart.js, format.js, whatsapp.js, config.js
 │       │                            (baca env var), supabaseClient.js, products/promos/orders/
@@ -343,12 +354,13 @@ ordi-master/
 ├── css/
 │   ├── main.css                ← Style bersama (warna, font, animasi, modal umum)
 │   ├── catalog.css             ← Style halaman katalog, checkout, QRIS, profile sheet
-│   └── admin.css                ← Style dashboard admin
+│   ├── admin.css                ← Style dashboard admin
+│   └── tracking.css             ← Style halaman lacak pesanan
 ├── supabase/
 │   └── functions/
 │       └── check-shipping/      ← Edge Function proxy Biteship (satu-satunya kode "backend")
 ├── .env.example                 ← Template environment variables (salin ke .env)
-├── vite.config.js                ← Vite config, dua entry (customer + admin)
+├── vite.config.js                ← Vite config, tiga entry (customer + admin + tracking)
 └── README.md
 ```
 

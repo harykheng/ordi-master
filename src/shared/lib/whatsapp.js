@@ -47,7 +47,7 @@ export function buildQrisConfirmMessage({
   return msg;
 }
 
-const ORDER_STATUS_LABELS = {
+export const ORDER_STATUS_LABELS = {
   pending:   '⏳ Menunggu Konfirmasi',
   confirmed: '🆕 Diproses',
   done:      '✅ Selesai',

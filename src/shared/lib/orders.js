@@ -17,3 +17,16 @@ export async function updateOrderStatus(orderId, newStatus) {
     .eq('id', orderId);
   if (error) throw error;
 }
+
+// Used by /tracking/ — orders has no anon SELECT policy (see CLAUDE.md), so
+// this goes through lookup_order() instead of a plain query: it only ever
+// returns a row when BOTH order_number and customer_wa match, closing off
+// scanning the table for other customers' orders. See supabase-setup.sql §7.
+export async function lookupOrder(orderNumber, customerWa) {
+  const { data, error } = await supabase.rpc('lookup_order', {
+    p_order_number: orderNumber,
+    p_customer_wa: customerWa,
+  });
+  if (error) throw error;
+  return data?.[0] || null;
+}

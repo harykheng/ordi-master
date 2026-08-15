@@ -233,7 +233,32 @@ GRANT EXECUTE ON FUNCTION place_order(JSONB, JSONB) TO anon;
 
 
 -- ----------------------------------------------------------------
--- 7. STORAGE BUCKET (foto produk, logo, banner)
+-- 7. FUNCTION lookup_order() — cek status pesanan tanpa login
+-- ----------------------------------------------------------------
+-- Dipakai halaman /tracking/ (lihat src/tracking/). `orders` RLS sengaja
+-- insert-only untuk anon (lihat CLAUDE.md "Kenapa begini") — customer tidak
+-- pernah dikasih SELECT langsung ke tabel ini, karena policy SELECT terbuka
+-- bakal bisa di-scan buat ngintip data pesanan customer lain. Function ini
+-- jalan lewat rpc(), bukan lewat query builder biasa: hanya balikin 1 baris
+-- kalau order_number DAN customer_wa-nya cocok berbarengan (order_number
+-- itu sendiri sudah acak/susah ditebak — 5 karakter base36 setelah prefix —
+-- jadi kombinasi keduanya cukup aman buat skala UMKM tanpa perlu akun/OTP).
+CREATE OR REPLACE FUNCTION lookup_order(p_order_number TEXT, p_customer_wa TEXT)
+RETURNS SETOF orders
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  SELECT * FROM orders
+  WHERE order_number = p_order_number
+    AND customer_wa = p_customer_wa;
+$$;
+
+GRANT EXECUTE ON FUNCTION lookup_order(TEXT, TEXT) TO anon;
+
+
+-- ----------------------------------------------------------------
+-- 8. STORAGE BUCKET (foto produk, logo, banner)
 -- ----------------------------------------------------------------
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('product-images', 'product-images', true)
@@ -271,7 +296,7 @@ CREATE POLICY "Admin update images"
 
 
 -- ----------------------------------------------------------------
--- 8. BUAT AKUN ADMIN
+-- 9. BUAT AKUN ADMIN
 --    Email    : admin@youremail.com
 --    Password : admin123   ← ganti setelah pertama login!
 -- ----------------------------------------------------------------
@@ -347,7 +372,7 @@ END $$;
 
 
 -- ----------------------------------------------------------------
--- 9. VERIFIKASI — cek hasil setup
+-- 10. VERIFIKASI — cek hasil setup
 -- ----------------------------------------------------------------
 SELECT 'products table'   AS item, COUNT(*)::text AS info FROM products
 UNION ALL
@@ -358,6 +383,8 @@ UNION ALL
 SELECT 'orders table',     COUNT(*)::text FROM orders
 UNION ALL
 SELECT 'place_order function', COALESCE((SELECT 'ada' FROM pg_proc WHERE proname = 'place_order'), 'TIDAK ADA')
+UNION ALL
+SELECT 'lookup_order function', COALESCE((SELECT 'ada' FROM pg_proc WHERE proname = 'lookup_order'), 'TIDAK ADA')
 UNION ALL
 SELECT 'storage bucket',   COALESCE((SELECT name FROM storage.buckets WHERE id = 'product-images'), 'TIDAK ADA')
 UNION ALL

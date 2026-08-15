@@ -129,6 +129,7 @@ export default function OrderTypeStep({ settings }) {
         </div>
 
         <footer className="site-footer">
+          <a className="footer-track-link" href="/tracking/">📦 Lacak Pesanan</a>
           <div className="footer-socials">
             <a className="footer-social-link" href={instagramUrl} target="_blank" rel="noopener noreferrer">
               <svg className="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

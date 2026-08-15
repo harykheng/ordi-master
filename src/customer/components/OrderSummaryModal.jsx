@@ -94,6 +94,9 @@ export default function OrderSummaryModal({ order, settings, onClose }) {
             <div className="oss-code">{order.orderNum}</div>
             <button className="btn-oss-copy" onClick={copyOrderCode}>{copied ? '✅ Disalin' : '📋 Salin'}</button>
           </div>
+          <a className="oss-track-link" href={`/tracking/?order=${encodeURIComponent(order.orderNum)}`} target="_blank" rel="noopener noreferrer">
+            📦 Simpan kode ini buat lacak status pesanan kapan aja →
+          </a>
         </div>
 
         {deliveryRows.length > 0 && (
