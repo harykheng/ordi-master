@@ -1,5 +1,5 @@
 /* ================================================
-   BREVA COFFEE — ADMIN DASHBOARD STYLES
+   ORDI MASTER — ADMIN DASHBOARD STYLES
    ================================================ */
 
 /* ---- LOGIN SCREEN ---- */
@@ -513,11 +513,15 @@ img.admin-product-img { font-size: inherit; }
   display: flex;
   border-bottom: 2px solid var(--border);
   margin-bottom: 28px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.admin-tabs::-webkit-scrollbar { display: none; }
 
 .admin-tab {
   position: relative;
-  padding: 10px 22px;
+  padding: 10px 18px;
   border: none;
   background: none;
   font-family: 'Nunito', sans-serif;
@@ -529,7 +533,10 @@ img.admin-product-img { font-size: inherit; }
   margin-bottom: -2px;
   transition: color 0.2s;
   white-space: nowrap;
+  flex-shrink: 0;
 }
+
+@media (min-width: 640px) { .admin-tab { padding: 10px 22px; } }
 
 .admin-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
 .admin-tab:hover:not(.active) { color: var(--text-mid); }
