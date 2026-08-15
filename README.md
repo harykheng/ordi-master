@@ -171,6 +171,16 @@ Definisi lengkapnya ada di `supabase-setup.sql` §6 — copy dari situ kalau set
 
 Dipakai halaman `/tracking/`. Karena `orders` RLS sengaja insert-only untuk `anon` (lihat catatan di atas), customer tidak pernah dikasih SELECT langsung ke tabel ini — function ini jadi satu-satunya jalan cek status, dan cuma balikin 1 baris kalau kode pesanan **dan** nomor WhatsApp-nya cocok berbarengan. Definisi lengkapnya ada di `supabase-setup.sql` §7.
 
+#### Realtime — notifikasi pesanan baru live di dashboard admin
+
+Opsional, tapi disarankan. Tanpa ini dashboard tetap jalan normal (cuma harus refresh manual buat lihat pesanan baru). Aktifkan lewat SQL Editor:
+
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE orders;
+```
+
+(Sudah termasuk otomatis kalau jalankan `supabase-setup.sql` §6 dari awal — cuma perlu dijalankan manual kalau setup satu-satu, atau kalau instance-nya dibuat sebelum fitur ini ada.) Alternatif tanpa SQL: Supabase Dashboard → **Database** → **Replication** → centang tabel `orders`.
+
 ### Buat Storage Bucket untuk Foto
 
 1. Di sidebar Supabase, buka **Storage** → **New bucket**
@@ -370,14 +380,14 @@ Tidak ada `js/config.js` lagi — semua konstanta per-toko sekarang jadi environ
 
 ## 6. Alur Pemesanan (Customer)
 
-1. Pilih produk & varian di katalog → masuk keranjang
+1. Pilih produk & varian di katalog → masuk keranjang. Produk dengan stok terbatas nampilin sisa stok dan otomatis nge-badge "Habis" begitu kosong (lihat §1 catatan `stock_qty`). Keranjang mengambang di bawah bisa di-tap buat expand, lihat detail item tanpa pindah halaman.
 2. Pilih tipe pesanan: **Pickup** (ambil di toko) atau **Delivery**
-3. Kalau Delivery: isi profil (nama, WhatsApp) lewat kartu profil yang membuka bottom sheet — alamat diisi dengan autocomplete LocationIQ, plus catatan alamat opsional
-4. Ongkir dicek otomatis lewat Biteship (pilihan GoSend/GrabExpress dengan harga real-time) — kalau tidak tersedia, fallback ke tarif jarak statis
+3. Kalau Delivery: isi profil (nama, WhatsApp) lewat kartu profil yang membuka bottom sheet — alamat diisi dengan autocomplete LocationIQ (muncul preview peta/pin lokasi begitu alamat ke-resolve), plus catatan alamat opsional. Nama/WhatsApp/alamat/catatan-nya diingat otomatis buat kunjungan berikutnya (disimpan di `localStorage`, bertahan meski browser ditutup) — cuma bagian ini yang persist, keranjang & tanggal pesanan selalu mulai kosong tiap kunjungan.
+4. Ongkir dicek otomatis lewat Biteship (pilihan GoSend/GrabExpress dengan harga real-time) — kalau tidak tersedia, fallback ke tarif jarak statis. Untuk Delivery, customer wajib ada hasil ongkir dulu (opsi kepilih otomatis) sebelum bisa lanjut ke pembayaran.
 5. Bisa pakai kode promo (persen/nominal, dicek minimum order & masa berlaku)
 6. Konfirmasi pesanan → QRIS dinamis digenerate langsung di browser sesuai total akhir, bisa disimpan sebagai gambar (tombol "Simpan QR")
-7. Setelah bayar, customer konfirmasi → pesanan tersimpan ke database dengan status `pending`, dan link WhatsApp ke admin terbuka otomatis untuk kirim bukti bayar
-8. Di ringkasan pesanan, ada tombol **"Tampilkan QR lagi"** kalau customer perlu lihat ulang QR-nya
+7. Setelah bayar, customer konfirmasi → pesanan tersimpan ke database (stok otomatis berkurang lewat `place_order()`, lihat §1) dengan status `pending`, dan link WhatsApp ke admin terbuka otomatis untuk kirim bukti bayar
+8. Di ringkasan pesanan, ada tombol **"Tampilkan QR lagi"** (popup ringan, read-only) kalau customer perlu lihat ulang QR-nya, dan link ke halaman **Lacak Pesanan** (`/tracking/`) buat cek status kapan saja pakai kode pesanan + nomor WhatsApp
 
 QRIS di sini **tidak ada masa kedaluwarsa** — karena digenerate secara deterministik dari QRIS statis + nominal (bukan dari payment gateway), QR yang sama selalu bisa dibuat ulang kapan saja dari nominal yang sama.
 
