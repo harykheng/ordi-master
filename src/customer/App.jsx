@@ -23,33 +23,19 @@ function AppShell() {
   const [confirmedOrder, setConfirmedOrder] = useState(null);
   const [checkingOut, setCheckingOut] = useState(false);
 
-  // No QRIS in this tier — checkout inserts the order straight away (still
-  // through place_order() for atomic stock) and hands off to WhatsApp for
-  // the admin to confirm/arrange payment, instead of generating a QR first.
+  // Pickup-only tier — no QRIS, no delivery/shipping. Checkout just inserts
+  // the order (still through place_order() for atomic stock) and hands off
+  // to WhatsApp for the admin to confirm.
   async function handleCheckout() {
     if (!state.isProfileFilled) {
       showToast('Isi detail pemesan dulu ya!', 'error');
       setProfileOpen(true);
       return;
     }
-    if (state.orderType === 'delivery' && !state.profile.address) {
-      showToast('Masukkan alamat pengiriman dulu ya!', 'error');
-      setProfileOpen(true);
-      return;
-    }
-    if (state.orderType === 'delivery' && state.shippingStatus === 'unavailable') {
-      showToast('Alamat kamu di luar jangkauan delivery. Ongkir tidak tersedia.', 'error');
-      return;
-    }
-    if (state.orderType === 'delivery' && !state.selectedShipping) {
-      showToast('Pilih opsi ongkir dulu ya!', 'error');
-      return;
-    }
 
     const rawTotal = cartTotal(state.cart);
     const discount = getDiscountAmount(state.cart, state.activePromo);
-    const shippingCost = state.selectedShipping?.price || 0;
-    const finalTotal = cartFinalTotal(state.cart, state.activePromo, state.selectedShipping);
+    const finalTotal = cartFinalTotal(state.cart, state.activePromo, null);
     const orderNum = `${config.orderPrefix}-${Date.now().toString(36).toUpperCase().slice(-5)}`;
     const snapshot = cartSnapshot(state.cart);
 
@@ -59,17 +45,17 @@ function AppShell() {
         order_number: orderNum,
         customer_name: state.profile.name,
         customer_wa: state.profile.wa,
-        order_type: state.orderType,
+        order_type: 'pickup',
         order_date: state.selectedDate,
         order_date_label: state.selectedDateLabel,
-        delivery_address: state.orderType === 'delivery' ? state.profile.address : null,
+        delivery_address: null,
         note: state.note || null,
         items: snapshot,
         subtotal: rawTotal,
         promo_code: state.activePromo?.code || null,
         discount_amount: discount,
-        shipping_cost: shippingCost || null,
-        shipping_label: state.selectedShipping?.label || null,
+        shipping_cost: null,
+        shipping_label: null,
         total: finalTotal,
         qris_string: null,
         status: 'pending',
@@ -79,10 +65,10 @@ function AppShell() {
         storeName: config.storeName,
         orderNum, cartSnapshot: snapshot,
         rawTotal, discount, promoCode: state.activePromo?.code || null,
-        shippingCost, shippingLabel: state.selectedShipping?.label || null, finalTotal,
-        name: state.profile.name, wa: state.profile.wa, orderType: state.orderType,
+        shippingCost: 0, shippingLabel: null, finalTotal,
+        name: state.profile.name, wa: state.profile.wa, orderType: 'pickup',
         orderDateLabel: state.selectedDateLabel,
-        address: state.profile.address, addressNote: state.profile.addressNote, note: state.note,
+        address: null, addressNote: null, note: state.note,
       });
 
       setConfirmedOrder({
@@ -90,15 +76,15 @@ function AppShell() {
         name: state.profile.name,
         wa: state.profile.wa,
         note: state.note,
-        address: state.profile.address,
-        addressNote: state.profile.addressNote,
-        orderType: state.orderType,
+        address: null,
+        addressNote: null,
+        orderType: 'pickup',
         selectedDate: state.selectedDate,
         orderDateLabel: state.selectedDateLabel,
         rawTotal,
         discount,
-        shippingCost,
-        shippingLabel: state.selectedShipping?.label || null,
+        shippingCost: 0,
+        shippingLabel: null,
         finalTotal,
         promoCode: state.activePromo?.code || null,
         cartSnapshot: snapshot,

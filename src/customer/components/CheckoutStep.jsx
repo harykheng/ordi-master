@@ -4,7 +4,6 @@ import { config } from '../../shared/lib/config.js';
 import { formatPrice } from '../../shared/lib/format.js';
 import { cartTotal, getDiscountAmount, cartFinalTotal } from '../../shared/lib/cart.js';
 import { fetchActivePromoByCode } from '../../shared/lib/promos.js';
-import OngkirOptions from './OngkirOptions.jsx';
 
 export default function CheckoutStep({ settings, onOpenProfile, onCheckout, checkingOut }) {
   const { state, dispatch } = useCart();
@@ -24,7 +23,6 @@ export default function CheckoutStep({ settings, onOpenProfile, onCheckout, chec
   function goBack() {
     dispatch({ type: 'SET_STEP', step: 2 });
     dispatch({ type: 'REMOVE_PROMO' });
-    dispatch({ type: 'SET_SHIPPING', shipping: null });
     window.scrollTo(0, 0);
   }
 
@@ -94,43 +92,27 @@ export default function CheckoutStep({ settings, onOpenProfile, onCheckout, chec
             </div>
             <div className="co-meta-divider"></div>
             <div className="co-meta-row">
-              <span className="co-meta-icon">{state.orderType === 'pickup' ? '🏠' : '🛵'}</span>
+              <span className="co-meta-icon">🏠</span>
               <div>
                 <div className="co-meta-label">Tipe Pesanan</div>
-                <div className="co-meta-value">{state.orderType === 'pickup' ? 'Pickup' : 'Delivery'}</div>
+                <div className="co-meta-value">Pickup</div>
               </div>
             </div>
           </div>
 
-          {state.orderType === 'pickup' ? (
-            <div className="co-pickup-card">
-              <div className="co-meta-row">
-                <span className="co-meta-icon">📍</span>
-                <div>
-                  <div className="co-meta-label">Lokasi Pickup</div>
-                  <div className="co-meta-value">{storeName}</div>
-                  <div className="co-pickup-addr">{storeAddress}</div>
-                  <a className="pickup-maps-link" href={storeMapsUrl} target="_blank" rel="noopener" style={{ marginTop: 8, display: 'inline-flex' }}>
-                    Buka di Google Maps →
-                  </a>
-                </div>
+          <div className="co-pickup-card">
+            <div className="co-meta-row">
+              <span className="co-meta-icon">📍</span>
+              <div>
+                <div className="co-meta-label">Lokasi Pickup</div>
+                <div className="co-meta-value">{storeName}</div>
+                <div className="co-pickup-addr">{storeAddress}</div>
+                <a className="pickup-maps-link" href={storeMapsUrl} target="_blank" rel="noopener" style={{ marginTop: 8, display: 'inline-flex' }}>
+                  Buka di Google Maps →
+                </a>
               </div>
             </div>
-          ) : (
-            <div>
-              <div className="co-pickup-card" style={{ marginTop: 12 }}>
-                <div className="co-meta-row">
-                  <span className="co-meta-icon">🏪</span>
-                  <div>
-                    <div className="co-meta-label">Dikirim dari</div>
-                    <div className="co-meta-value">{storeName}</div>
-                    <div className="co-pickup-addr">{storeAddress}</div>
-                  </div>
-                </div>
-              </div>
-              <OngkirOptions />
-            </div>
-          )}
+          </div>
         </div>
 
         <div className="co-section">
@@ -142,9 +124,7 @@ export default function CheckoutStep({ settings, onOpenProfile, onCheckout, chec
                 {state.isProfileFilled ? state.profile.name : 'Tambahkan detail pemesan'}
               </div>
               <div className="profile-card-sub">
-                {state.isProfileFilled
-                  ? state.profile.wa + (state.orderType === 'delivery' ? ' · ' + state.profile.address.split(',')[0] : '')
-                  : 'Nama & Nomor WhatsApp'}
+                {state.isProfileFilled ? state.profile.wa : 'Nama & Nomor WhatsApp'}
               </div>
             </div>
             <div className="profile-card-arrow">›</div>
@@ -178,12 +158,6 @@ export default function CheckoutStep({ settings, onOpenProfile, onCheckout, chec
             <div className="co-discount-row">
               <span className="co-total-label">🎟 Diskon</span>
               <span className="co-discount-amount">−{formatPrice(discount)}</span>
-            </div>
-          )}
-          {state.selectedShipping && state.orderType === 'delivery' && (
-            <div className="co-shipping-row">
-              <span className="co-total-label">🛵 Ongkir</span>
-              <span className="co-shipping-amount">{formatPrice(state.selectedShipping.price)}</span>
             </div>
           )}
           <div className="co-total-row">

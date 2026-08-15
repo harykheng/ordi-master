@@ -4,6 +4,7 @@ import { config } from '../../shared/lib/config.js';
 import { buildDateChips } from '../../shared/lib/format.js';
 import { waLink } from '../../shared/lib/whatsapp.js';
 
+// Pickup-only tier — no pickup/delivery toggle since there's only one option.
 export default function OrderTypeStep({ settings }) {
   const { state, dispatch } = useCart();
   const [dateChips] = useState(buildDateChips);
@@ -18,23 +19,26 @@ export default function OrderTypeStep({ settings }) {
     document.title = brandName;
   }, [brandName]);
 
-  const waHelpUrl = waLink(config.adminWhatsapp, `Halo ${brandName}, saya butuh bantuan untuk pemesanan!`);
+  // Only one order type exists in this tier — select it once on mount instead
+  // of making the customer tap a single-option "choice".
+  useEffect(() => {
+    if (!state.orderType) dispatch({ type: 'SELECT_ORDER_TYPE', orderType: 'pickup' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  function selectOrderType(type) {
-    dispatch({ type: 'SELECT_ORDER_TYPE', orderType: type });
-  }
+  const waHelpUrl = waLink(config.adminWhatsapp, `Halo ${brandName}, saya butuh bantuan untuk pemesanan!`);
 
   function selectDate(chip) {
     dispatch({ type: 'SET_DATE', value: chip.value, label: chip.label });
   }
 
   function goToStep2() {
-    if (!state.orderType || !state.selectedDate) return;
+    if (!state.selectedDate) return;
     dispatch({ type: 'SET_STEP', step: 2 });
     window.scrollTo(0, 0);
   }
 
-  const canProceed = Boolean(state.orderType && state.selectedDate);
+  const canProceed = Boolean(state.selectedDate);
 
   return (
     <div className="step active">
@@ -54,29 +58,10 @@ export default function OrderTypeStep({ settings }) {
           </a>
         </div>
 
-        <h1 className="ob-headline">Mau pickup<br />atau delivery?</h1>
-        <p className="ob-sub">Pilih dulu, baru lihat menu 👇</p>
+        <h1 className="ob-headline">Mau pickup<br />kapan?</h1>
+        <p className="ob-sub">Pilih tanggal, baru lihat menu 👇</p>
 
-        <div className="order-type-grid">
-          <div
-            className={`order-type-card${state.orderType === 'pickup' ? ' selected' : ''}`}
-            onClick={() => selectOrderType('pickup')}
-          >
-            <span className="order-type-icon">🏠</span>
-            <span className="order-type-name">Pickup</span>
-            <span className="order-type-desc">Ambil sendiri</span>
-          </div>
-          <div
-            className={`order-type-card${state.orderType === 'delivery' ? ' selected' : ''}`}
-            onClick={() => selectOrderType('delivery')}
-          >
-            <span className="order-type-icon">🛵</span>
-            <span className="order-type-name">Delivery</span>
-            <span className="order-type-desc">Dikirim ke kamu</span>
-          </div>
-        </div>
-
-        <div className={`pickup-address-card${state.orderType === 'pickup' ? ' visible' : ''}`}>
+        <div className="pickup-address-card visible">
           <span className="pickup-pin">📍</span>
           <div>
             <div className="pickup-info-label">Lokasi Pickup</div>
@@ -94,10 +79,8 @@ export default function OrderTypeStep({ settings }) {
           </div>
         </div>
 
-        <div className={`date-section${state.orderType ? ' visible' : ''}`}>
-          <div className="date-section-label">
-            {state.orderType === 'pickup' ? 'Pilih Tanggal Pickup' : 'Pilih Tanggal Delivery'}
-          </div>
+        <div className="date-section visible">
+          <div className="date-section-label">Pilih Tanggal Pickup</div>
           <div className="date-chips-wrap">
             {dateChips.map((chip) => (
               <div

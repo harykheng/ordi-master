@@ -7,20 +7,21 @@ const PROFILE_STORAGE_KEY = 'ordi_customer_profile_v1';
 
 const initialState = {
   step: 1,
-  orderType: null,        // 'pickup' | 'delivery'
+  orderType: null,        // always 'pickup' in this tier — no delivery
   selectedDate: null,
   selectedDateLabel: null,
   cart: {},                // key -> { product, qty, variantLabels?, extraPrice? }
   activePromo: null,
-  selectedShipping: null,  // { price, label } | null
+  selectedShipping: null,  // vestigial in this tier (no delivery/ongkir) — always null,
+                            // kept so the reducer shape matches tier-2/tier-3 exactly
   profile: { name: '', wa: '', address: '', addressNote: '', lat: null, lng: null },
   isProfileFilled: false,
   note: '',
-  // Shipping calc result — displayed by OngkirOptions, set by useShipping (triggered
-  // once from ProfileModal's save handler, never on every address keystroke).
-  shippingStatus: 'idle',   // 'idle' | 'loading' | 'options' | 'static' | 'unavailable'
-  shippingOptions: [],       // Biteship courier options, when shippingStatus === 'options'
-  shippingStaticKm: null,    // distance in km, when shippingStatus === 'static' | 'unavailable'
+  // Vestigial shipping fields — this tier has no delivery/ongkir, nothing ever
+  // dispatches these actions, they just sit at their idle defaults forever.
+  shippingStatus: 'idle',
+  shippingOptions: [],
+  shippingStaticKm: null,
 };
 
 function reducer(state, action) {
