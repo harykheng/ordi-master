@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS settings (
   brand_name       TEXT,
   brand_icon       TEXT,
   logo_url         TEXT,
+  logo_text_url    TEXT,
   store_address    TEXT,
   store_hours      TEXT,
   store_maps_url   TEXT,
@@ -107,6 +108,8 @@ CREATE TABLE IF NOT EXISTS settings (
   tiktok_url       TEXT,
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS logo_text_url TEXT;
 
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 

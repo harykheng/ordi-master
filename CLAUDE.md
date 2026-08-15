@@ -109,6 +109,8 @@ CRUD ke `promo_codes` lewat `savePromo()`/`deletePromo()`. Tipe diskon `percent`
 ### Tab Pengaturan — `SettingsTab.jsx`
 Form yang upsert ke tabel `settings` (row `id=1`) lewat `saveSettings()` (`shared/lib/settings.js`): nama/ikon/logo brand, alamat & jam toko, link Maps, banner katalog, link Instagram/TikTok. Upload logo & banner lewat bucket `product-images`.
 
+**Brand header punya 2 slot gambar independen**, bukan satu "logo" — `logo_url` (logo ikon/mascot, gantiin emoji `brand_icon` di slot kecil) dan `logo_text_url` (logo teks/wordmark, gantiin tulisan `brand_name` di sebelahnya). Keduanya opsional dan independen: admin bisa pasang cuma salah satu, dua-duanya, atau gak sama sekali (fallback ke emoji+teks polos). Dirender di `OrderTypeStep.jsx` dan `CatalogStep.jsx` — tiap slot punya CSS class sizing sendiri (`brand-icon-logo` buat logo ikon, `ob-brand-name-logo`/`topbar-brand-name-logo` buat logo teks), jangan ketuker kalau nambah tempat baru yang nampilin brand header. `brand_name` (teks) tetap dipakai apa adanya di tempat non-visual (judul tab browser, pesan WA, dsb) — cuma tampilan header customer yang bisa diganti gambar.
+
 `useSettings()` (hook yang sama dipakai lintas app) di-consume `src/customer/App.jsx` buat baca `settings` sekali di top level dan diteruskan sebagai prop `settings` ke tiap step. Kalau tabel `settings` belum dibuat/kosong, hook fail silent dan komponen fallback ke `config.js` (`shared/lib/config.js`, baca env var `VITE_*`).
 
 ---

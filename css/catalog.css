@@ -30,6 +30,7 @@
 .ob-brand { display: flex; align-items: center; gap: 7px; }
 .ob-brand-icon { font-size: 22px; line-height: 1; }
 .ob-brand-name { font-size: 18px; font-weight: 800; color: var(--primary); letter-spacing: -0.01em; }
+.ob-brand-name-logo { height: 22px; width: auto; max-width: 160px; object-fit: contain; }
 
 /* WA help button (text version in step 1) */
 .btn-wa-help {
@@ -277,6 +278,7 @@
 
 .topbar-icon { font-size: 18px; line-height: 1; }
 .topbar-brand-name { font-size: 16px; font-weight: 800; color: var(--text-dark); letter-spacing: -0.01em; }
+.topbar-brand-name-logo { height: 18px; width: auto; max-width: 130px; object-fit: contain; }
 
 /* ---- ORDER INFO STRIP ---- */
 .order-info-strip {

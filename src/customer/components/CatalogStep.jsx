@@ -14,6 +14,7 @@ export default function CatalogStep({ settings, onPickVariant }) {
 
   const brandName = settings?.brand_name || config.storeName;
   const logoUrl = settings?.logo_url;
+  const logoTextUrl = settings?.logo_text_url;
   const brandIcon = settings?.brand_icon || '☕';
   const bannerTitle = settings?.banner_title || config.bannerTitle;
   const bannerSub = settings?.banner_subtitle || config.bannerSubtitle;
@@ -47,7 +48,11 @@ export default function CatalogStep({ settings, onPickVariant }) {
           ) : (
             <span className="topbar-icon">{brandIcon}</span>
           )}
-          <span className="topbar-brand-name">{brandName}</span>
+          {logoTextUrl ? (
+            <img className="topbar-brand-name-logo" src={logoTextUrl} alt={brandName} />
+          ) : (
+            <span className="topbar-brand-name">{brandName}</span>
+          )}
         </div>
         <a className="btn-wa-icon" href={waHelpUrl} target="_blank" rel="noopener noreferrer" aria-label="Butuh bantuan?">
           💬
