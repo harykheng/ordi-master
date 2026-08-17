@@ -12,22 +12,13 @@ async function fetchSuggestions(q) {
   }
 }
 
-async function geocodeAddress(q) {
-  try {
-    const url = `https://api.locationiq.com/v1/search?key=${config.locationIqKey}&q=${encodeURIComponent(q)}&limit=1&format=json&countrycodes=id&accept-language=id`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data?.length ? data[0] : null;
-  } catch {
-    return null; // silent — user can still proceed without ongkir
-  }
-}
-
 // Controlled address input with LocationIQ autocomplete. Reports resolved
 // coordinates via onCoordsChange, but never triggers a shipping check itself —
-// that only happens once, from ProfileModal's save handler.
-export default function AddressAutocomplete({ value, onChange, onCoordsChange, coordsResolved }) {
+// that only happens once, from ProfileModal's save handler. Coordinates (and
+// therefore the map preview) only ever get set by an explicit tap on a
+// suggestion — no blur-time auto-geocode — so the map never pops in
+// unannounced while the customer is still typing/reading suggestions.
+export default function AddressAutocomplete({ value, onChange, onCoordsChange }) {
   const [results, setResults] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const timerRef = useRef(null);
@@ -41,6 +32,23 @@ export default function AddressAutocomplete({ value, onChange, onCoordsChange, c
     return () => document.removeEventListener('click', handleOutsideClick);
   }, []);
 
+  function scrollSuggestionsIntoView() {
+    const wrap = wrapRef.current;
+    const scrollParent = wrap?.closest('.profile-sheet');
+    if (!wrap) return;
+    if (!scrollParent) { wrap.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    // Compute the exact scroll delta from current bounding boxes (post-keyboard
+    // layout) instead of relying on the browser's own scrollIntoView, which on
+    // mobile Safari/Chrome doesn't reliably account for the on-screen keyboard
+    // eating the bottom of the visual viewport.
+    requestAnimationFrame(() => {
+      const wrapRect = wrap.getBoundingClientRect();
+      const parentRect = scrollParent.getBoundingClientRect();
+      const delta = wrapRect.top - parentRect.top - 12;
+      scrollParent.scrollBy({ top: delta, behavior: 'smooth' });
+    });
+  }
+
   function handleInput(e) {
     const q = e.target.value;
     onChange(q);
@@ -52,12 +60,7 @@ export default function AddressAutocomplete({ value, onChange, onCoordsChange, c
       const data = await fetchSuggestions(q);
       setResults(data);
       setShowSuggestions(data.length > 0);
-      // On mobile the suggestion list renders below the fold once the
-      // keyboard is up — scroll it into view instead of making the user
-      // fight the sheet's own scroll to find it.
-      if (data.length > 0) {
-        wrapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      if (data.length > 0) scrollSuggestionsIntoView();
     }, 350);
   }
 
@@ -70,14 +73,6 @@ export default function AddressAutocomplete({ value, onChange, onCoordsChange, c
     setShowSuggestions(false);
   }
 
-  async function handleBlur() {
-    if (coordsResolved) return;
-    const q = value.trim();
-    if (!q || q.length < 5) return;
-    const r = await geocodeAddress(q);
-    if (r) onCoordsChange(parseFloat(r.lat), parseFloat(r.lon));
-  }
-
   return (
     <div className="address-autocomplete-wrap" ref={wrapRef}>
       <textarea
@@ -87,7 +82,7 @@ export default function AddressAutocomplete({ value, onChange, onCoordsChange, c
         autoComplete="off"
         value={value}
         onInput={handleInput}
-        onBlur={handleBlur}
+        onFocus={() => setShowSuggestions(results.length > 0)}
       />
       {showSuggestions && (
         <div className="address-suggestions" style={{ display: 'block' }}>
