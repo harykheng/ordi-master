@@ -109,6 +109,7 @@ export default function ProfileModal({ isOpen, onClose }) {
               <div className="form-group">
                 <label htmlFor="customerAddress">Alamat Pengiriman *</label>
                 <AddressAutocomplete
+                  key={isOpen}
                   value={address}
                   onChange={setAddress}
                   onCoordsChange={handleCoordsChange}
