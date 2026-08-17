@@ -260,6 +260,13 @@ VITE_DEFAULT_ITEM_WEIGHT_G=300
 # QRIS statis merchant — dari bank/GoPay/OVO/QRIS toko, biasanya di stiker QRIS fisik.
 # Nominal dinamis digenerate otomatis di browser saat checkout, tidak butuh payment gateway.
 VITE_QRIS_STATIC=00020101021126610014COM...
+
+# Opsional, HANYA untuk demo internal di branch `main` — nampilin badge kecil
+# "🚚 Antar" / "💳 Bayar" di fitur delivery & QRIS supaya gampang jelasin ke
+# calon klien fitur itu termasuk paket tier mana. JANGAN di-set di build
+# client manapun (main ngegabung semua 3 tier jadi satu, badge ini cuma
+# masuk akal buat demo internal, bukan produk client beneran).
+VITE_DEMO_MODE=true
 ```
 
 **Cara dapat URL & Anon Key Supabase:**

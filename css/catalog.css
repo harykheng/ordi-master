@@ -1945,3 +1945,100 @@
   margin-top: 6px;
   border-top: 1.5px solid var(--border);
 }
+
+/* ================================================================
+   SALES-DEMO TIER BADGE + COMPARE MODAL (VITE_DEMO_MODE only)
+   ================================================================ */
+.tier-badge-wrap {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+
+.tier-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: none;
+  background: var(--latte-light);
+  color: var(--primary);
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.tier-badge-tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: 190px;
+  background: var(--text-dark);
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: left;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+
+.tier-badge-tooltip p { margin: 0 0 8px; font-size: 12px; font-weight: 500; line-height: 1.4; }
+
+.tier-badge-compare-link {
+  border: none;
+  background: none;
+  color: var(--latte);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tier-compare-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+
+.tier-compare-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  max-width: 420px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: auto;
+}
+
+.tier-compare-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--text-dark);
+  border-bottom: 1.5px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--white);
+}
+
+.tier-compare-close {
+  border: none;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--text-soft);
+}
+
+.tier-compare-table-wrap { padding: 8px 18px 18px; }
+
+.tier-compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.tier-compare-table th, .tier-compare-table td { padding: 8px 6px; text-align: center; }
+.tier-compare-table th { font-weight: 800; color: var(--text-dark); }
+.tier-compare-table td:first-child, .tier-compare-table th:first-child { text-align: left; }
+.tier-compare-table tbody tr { border-top: 1px solid var(--border); }

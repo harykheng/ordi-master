@@ -16,4 +16,8 @@ export const config = {
   storeLng: parseFloat(import.meta.env.VITE_STORE_LNG),
   defaultItemWeightG: parseInt(import.meta.env.VITE_DEFAULT_ITEM_WEIGHT_G, 10) || 300,
   qrisStatic: import.meta.env.VITE_QRIS_STATIC,
+  // Sales-demo-only UI (tier badges/tooltips on main's full-feature build) —
+  // never set this in a real client deployment, main ships all 3 tiers'
+  // features at once so these labels only make sense on a demo build.
+  demoMode: import.meta.env.VITE_DEMO_MODE === 'true',
 };

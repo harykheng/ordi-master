@@ -5,8 +5,9 @@ import { formatPrice } from '../../shared/lib/format.js';
 import { cartTotal, getDiscountAmount, cartFinalTotal } from '../../shared/lib/cart.js';
 import { fetchActivePromoByCode } from '../../shared/lib/promos.js';
 import OngkirOptions from './OngkirOptions.jsx';
+import TierBadge from './TierBadge.jsx';
 
-export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris }) {
+export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris, onCompareTiers }) {
   const { state, dispatch } = useCart();
   const [promoInput, setPromoInput] = useState('');
   const [promoResult, setPromoResult] = useState(null); // { type: 'success'|'error', msg }
@@ -233,10 +234,13 @@ export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris }) 
           </div>
         </div>
 
-        <div className="co-submit">
+        <div className="co-submit" style={{ position: 'relative' }}>
           <button className="btn-wa-send" onClick={onSubmitQris}>
             Bayar via QRIS 💳
           </button>
+          {config.demoMode && (
+            <TierBadge tier="bayar" onCompare={onCompareTiers} style={{ top: -12, left: 'auto', right: 8 }} align="right" />
+          )}
         </div>
 
         <footer className="site-footer">

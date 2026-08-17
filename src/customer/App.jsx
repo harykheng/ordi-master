@@ -12,6 +12,7 @@ import VariantSheet from './components/VariantSheet.jsx';
 import ProfileModal from './components/ProfileModal.jsx';
 import QrisModal from './components/QrisModal.jsx';
 import OrderSummaryModal from './components/OrderSummaryModal.jsx';
+import TierCompareModal from './components/TierCompareModal.jsx';
 
 function AppShell() {
   const { state } = useCart();
@@ -22,6 +23,7 @@ function AppShell() {
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [pendingOrder, setPendingOrder] = useState(null);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
+  const [isCompareOpen, setCompareOpen] = useState(false);
 
   function handleSubmitQris() {
     if (!state.isProfileFilled) {
@@ -87,13 +89,16 @@ function AppShell() {
 
   return (
     <>
-      {state.step === 1 && <OrderTypeStep settings={settings} />}
+      {state.step === 1 && (
+        <OrderTypeStep settings={settings} onCompareTiers={() => setCompareOpen(true)} />
+      )}
       {state.step === 2 && <CatalogStep settings={settings} onPickVariant={setVariantProduct} />}
       {state.step === 3 && (
         <CheckoutStep
           settings={settings}
           onOpenProfile={() => setProfileOpen(true)}
           onSubmitQris={handleSubmitQris}
+          onCompareTiers={() => setCompareOpen(true)}
         />
       )}
 
@@ -109,6 +114,7 @@ function AppShell() {
         settings={settings}
         onClose={() => setConfirmedOrder(null)}
       />
+      <TierCompareModal isOpen={isCompareOpen} onClose={() => setCompareOpen(false)} />
     </>
   );
 }
