@@ -6,7 +6,14 @@ Untuk setup/deploy/schema SQL, lihat `README.md`. File ini fokus menjelaskan **c
 
 Repo ini adalah copy dari codebase klien asli (Breva Coffee, toko kopi) yang sekarang jadi basis template multi-klien — kalau nemu sisa referensi "Breva" di suatu tempat, itu bug identitas yang harus dipindah ke env var, bukan hal yang disengaja (lihat "Kenapa begini" soal env var). Sebelum jadi React, repo ini vanilla HTML/CSS/JS (lihat git history sebelum commit rewrite), full-rewrite jadi React karena logic-nya sudah terlalu kompleks untuk dikelola manual lewat DOM manipulation. Business logic inti (QRIS EMV, Haversine, dsb) dipindah apa adanya dari versi vanilla — kalau ada keraguan soal behavior yang "benar", cek `src/shared/lib/` dulu.
 
-**Status saat ini**: semua fitur F&B same-day (pickup/delivery + tanggal, ongkir Biteship, QRIS dinamis, stok, tracking, dashboard admin lengkap) sudah selesai dan ada di `main` — ini jadi base buat branch `tier-1`/`tier-2`/`tier-3` (WA-only / +ongkir / +QRIS). Konsep "tier-4" buat toko online umum (flow beda, kurir reguler kayak JNT, kemungkinan repo/branch terpisah) sempat dibahas tapi **ditunda**, fokus F&B dulu.
+**Status saat ini**: semua fitur F&B same-day (pickup/delivery + tanggal, ongkir Biteship, QRIS dinamis, stok, tracking, dashboard admin lengkap) sudah selesai dan ada di `main` — ini jadi base buat branch `tier-1`/`tier-2`/`tier-3` (Basic / Antar / Bayar). Konsep "tier-4" buat toko online umum (flow beda, kurir reguler kayak JNT, kemungkinan repo/branch terpisah) sempat dibahas tapi **ditunda**, fokus F&B dulu.
+
+**Cakupan tiap tier** (definisi final, sempat ada miscommunication di awal — ini yang benar):
+- **tier-1 (Basic)**: pickup DAN delivery tersedia, tapi **tanpa** cek ongkir otomatis — customer isi alamat manual (plain text, tanpa autocomplete/map/geocoding), ongkir-nya dikonfirmasi manual sama admin lewat WhatsApp setelah pesanan masuk. Nggak ada QRIS, checkout langsung ke WA.
+- **tier-2 (Antar)**: tier-1 + ongkir otomatis (Biteship + fallback Haversine, autocomplete alamat, map preview). Masih belum ada QRIS.
+- **tier-3 (Bayar)**: tier-2 + QRIS dinamis. Full parity sama `main`.
+
+Kalau branch ini (`tier-1`) lagi dikerjain langsung: `OrderTypeStep.jsx` punya toggle pickup/delivery penuh (bukan pickup-only), `ProfileModal.jsx` punya field alamat (textarea polos, tanpa `AddressAutocomplete`/`AddressMapPreview`/`useShipping`), dan `CheckoutStep.jsx`/`App.jsx` nggak pernah nyimpen `shipping_cost`/`shipping_label` (selalu `null`) — itu bukan bug, itu memang scope tier ini.
 
 ---
 

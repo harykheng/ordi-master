@@ -3,7 +3,10 @@ import { useCart } from '../CartContext.jsx';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { useBodyScrollLock } from '../../shared/hooks/useBodyScrollLock.js';
 
-// Pickup-only tier — no address/shipping fields at all, just name + WhatsApp.
+// Basic tier — delivery is still available, but there's no autocomplete/map
+// preview/ongkir calculation (those are Antar+ features). Address is just a
+// plain typed field; ongkir gets confirmed manually by the admin over WA
+// after the order comes in, not computed here.
 export default function ProfileModal({ isOpen, onClose }) {
   const { state, dispatch } = useCart();
   const showToast = useToast();
@@ -11,6 +14,8 @@ export default function ProfileModal({ isOpen, onClose }) {
 
   const [name, setName] = useState(state.profile.name);
   const [wa, setWa] = useState(state.profile.wa);
+  const [address, setAddress] = useState(state.profile.address);
+  const [addressNote, setAddressNote] = useState(state.profile.addressNote);
 
   // Re-sync local form state whenever the modal opens (so re-opening after save
   // shows the previously saved values, and reset after order completion clears it).
@@ -18,6 +23,8 @@ export default function ProfileModal({ isOpen, onClose }) {
     if (isOpen) {
       setName(state.profile.name);
       setWa(state.profile.wa);
+      setAddress(state.profile.address);
+      setAddressNote(state.profile.addressNote);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -25,10 +32,17 @@ export default function ProfileModal({ isOpen, onClose }) {
   function handleSave() {
     if (!name.trim()) { showToast('Nama wajib diisi!', 'error'); return; }
     if (!wa.trim())   { showToast('Nomor WhatsApp wajib diisi!', 'error'); return; }
+    if (state.orderType === 'delivery' && !address.trim()) {
+      showToast('Alamat pengiriman wajib diisi!', 'error');
+      return;
+    }
 
     dispatch({
       type: 'SET_PROFILE',
-      profile: { name: name.trim(), wa: wa.trim(), address: '', addressNote: '', lat: null, lng: null },
+      profile: {
+        name: name.trim(), wa: wa.trim(), address: address.trim(), addressNote: addressNote.trim(),
+        lat: null, lng: null,
+      },
     });
     onClose();
   }
@@ -51,6 +65,32 @@ export default function ProfileModal({ isOpen, onClose }) {
             <label htmlFor="customerWA">Nomor WhatsApp *</label>
             <input type="tel" id="customerWA" placeholder="08xxxxxxxxxx" autoComplete="tel" value={wa} onChange={(e) => setWa(e.target.value)} />
           </div>
+
+          {state.orderType === 'delivery' && (
+            <div>
+              <div className="form-group">
+                <label htmlFor="customerAddress">Alamat Pengiriman *</label>
+                <textarea
+                  id="customerAddress"
+                  placeholder="Tulis alamat lengkap + patokan..."
+                  rows={3}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                />
+                <p className="form-hint">Ongkir belum dihitung otomatis — admin akan infoin ongkirnya lewat WhatsApp setelah pesanan masuk.</p>
+              </div>
+              <div className="form-group">
+                <label htmlFor="customerAddressNote">Catatan Alamat <span className="label-opt">(opsional)</span></label>
+                <input
+                  type="text"
+                  id="customerAddressNote"
+                  placeholder="No. unit, lantai, patokan, kode gate..."
+                  value={addressNote}
+                  onChange={(e) => setAddressNote(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
 
           <button className="btn-profile-save" id="btnSaveProfile" onClick={handleSave} style={{ marginBottom: 8 }}>
             Simpan

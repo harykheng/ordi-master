@@ -41,7 +41,11 @@ export function buildOrderConfirmMessage({
   if (orderType === 'delivery') {
     msg += `Alamat: ${address}\n`;
     if (addressNote) msg += `Catatan alamat: ${addressNote}\n`;
-    if (shippingLabel) msg += `Kurir: ${shippingLabel}\n`;
+    if (shippingLabel) {
+      msg += `Kurir: ${shippingLabel}\n`;
+    } else {
+      msg += `Ongkir: mohon diinfoin ya, belum kehitung otomatis di sini\n`;
+    }
   }
   if (note) msg += `Catatan: ${note}\n`;
   msg += `\nMohon info cara pembayarannya ya. Terima kasih! 🙏`;

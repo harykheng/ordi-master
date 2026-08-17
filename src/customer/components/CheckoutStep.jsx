@@ -92,27 +92,51 @@ export default function CheckoutStep({ settings, onOpenProfile, onCheckout, chec
             </div>
             <div className="co-meta-divider"></div>
             <div className="co-meta-row">
-              <span className="co-meta-icon">🏠</span>
+              <span className="co-meta-icon">{state.orderType === 'pickup' ? '🏠' : '🛵'}</span>
               <div>
                 <div className="co-meta-label">Tipe Pesanan</div>
-                <div className="co-meta-value">Pickup</div>
+                <div className="co-meta-value">{state.orderType === 'pickup' ? 'Pickup' : 'Delivery'}</div>
               </div>
             </div>
           </div>
 
-          <div className="co-pickup-card">
-            <div className="co-meta-row">
-              <span className="co-meta-icon">📍</span>
-              <div>
-                <div className="co-meta-label">Lokasi Pickup</div>
-                <div className="co-meta-value">{storeName}</div>
-                <div className="co-pickup-addr">{storeAddress}</div>
-                <a className="pickup-maps-link" href={storeMapsUrl} target="_blank" rel="noopener" style={{ marginTop: 8, display: 'inline-flex' }}>
-                  Buka di Google Maps →
-                </a>
+          {state.orderType === 'pickup' ? (
+            <div className="co-pickup-card">
+              <div className="co-meta-row">
+                <span className="co-meta-icon">📍</span>
+                <div>
+                  <div className="co-meta-label">Lokasi Pickup</div>
+                  <div className="co-meta-value">{storeName}</div>
+                  <div className="co-pickup-addr">{storeAddress}</div>
+                  <a className="pickup-maps-link" href={storeMapsUrl} target="_blank" rel="noopener" style={{ marginTop: 8, display: 'inline-flex' }}>
+                    Buka di Google Maps →
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div>
+              <div className="co-pickup-card" style={{ marginTop: 12 }}>
+                <div className="co-meta-row">
+                  <span className="co-meta-icon">🏪</span>
+                  <div>
+                    <div className="co-meta-label">Dikirim dari</div>
+                    <div className="co-meta-value">{storeName}</div>
+                    <div className="co-pickup-addr">{storeAddress}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="co-pickup-card" style={{ marginTop: 12 }}>
+                <div className="co-meta-row">
+                  <span className="co-meta-icon">🛵</span>
+                  <div>
+                    <div className="co-meta-label">Ongkir</div>
+                    <div className="co-pickup-addr">Belum dihitung — admin akan infoin ongkirnya lewat WhatsApp setelah pesanan masuk.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="co-section">
@@ -124,7 +148,9 @@ export default function CheckoutStep({ settings, onOpenProfile, onCheckout, chec
                 {state.isProfileFilled ? state.profile.name : 'Tambahkan detail pemesan'}
               </div>
               <div className="profile-card-sub">
-                {state.isProfileFilled ? state.profile.wa : 'Nama & Nomor WhatsApp'}
+                {state.isProfileFilled
+                  ? state.profile.wa + (state.orderType === 'delivery' ? ' · ' + state.profile.address.split(',')[0] : '')
+                  : 'Nama & Nomor WhatsApp'}
               </div>
             </div>
             <div className="profile-card-arrow">›</div>
