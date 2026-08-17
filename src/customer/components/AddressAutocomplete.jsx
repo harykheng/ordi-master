@@ -23,6 +23,8 @@ export default function AddressAutocomplete({ value, onChange, onCoordsChange })
   const [showSuggestions, setShowSuggestions] = useState(false);
   const timerRef = useRef(null);
   const wrapRef = useRef(null);
+  const isFocusedRef = useRef(false);
+  const viewportTimerRef = useRef(null);
 
   useEffect(() => {
     function handleOutsideClick(e) {
@@ -30,6 +32,27 @@ export default function AddressAutocomplete({ value, onChange, onCoordsChange })
     }
     document.addEventListener('click', handleOutsideClick);
     return () => document.removeEventListener('click', handleOutsideClick);
+  }, []);
+
+  // The on-screen keyboard animates open over ~250-300ms, and browsers keep
+  // adjusting the visual viewport (and sometimes auto-scrolling the focused
+  // field) for the whole duration — a scroll fired mid-animation gets undone
+  // a moment later once the keyboard finishes and the browser "corrects" the
+  // view on its own. Listening for visualViewport's resize event instead of
+  // guessing a fixed delay means we always apply our scroll AFTER the
+  // keyboard has actually settled, so nothing overrides it afterwards.
+  useEffect(() => {
+    if (!window.visualViewport) return;
+    function handleViewportResize() {
+      if (!isFocusedRef.current) return;
+      clearTimeout(viewportTimerRef.current);
+      viewportTimerRef.current = setTimeout(scrollSuggestionsIntoView, 80);
+    }
+    window.visualViewport.addEventListener('resize', handleViewportResize);
+    return () => {
+      window.visualViewport.removeEventListener('resize', handleViewportResize);
+      clearTimeout(viewportTimerRef.current);
+    };
   }, []);
 
   function scrollSuggestionsIntoView() {
@@ -49,6 +72,14 @@ export default function AddressAutocomplete({ value, onChange, onCoordsChange })
     });
   }
 
+  function handleFocus() {
+    isFocusedRef.current = true;
+    setShowSuggestions(results.length > 0);
+    // Fallback for browsers without visualViewport support — still scroll
+    // once on focus, just without the "wait for keyboard to settle" fix.
+    if (!window.visualViewport) scrollSuggestionsIntoView();
+  }
+
   function handleInput(e) {
     const q = e.target.value;
     onChange(q);
@@ -60,7 +91,6 @@ export default function AddressAutocomplete({ value, onChange, onCoordsChange })
       const data = await fetchSuggestions(q);
       setResults(data);
       setShowSuggestions(data.length > 0);
-      if (data.length > 0) scrollSuggestionsIntoView();
     }, 350);
   }
 
@@ -82,7 +112,8 @@ export default function AddressAutocomplete({ value, onChange, onCoordsChange })
         autoComplete="off"
         value={value}
         onInput={handleInput}
-        onFocus={() => setShowSuggestions(results.length > 0)}
+        onFocus={handleFocus}
+        onBlur={() => { isFocusedRef.current = false; }}
       />
       {showSuggestions && (
         <div className="address-suggestions" style={{ display: 'block' }}>
