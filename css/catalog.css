@@ -699,8 +699,6 @@
 
 .btn-loc-icon { font-size: 15px; line-height: 1; }
 
-.address-autocomplete-wrap { position: relative; }
-
 .address-map-preview {
   height: 160px;
   border-radius: var(--radius-md);
@@ -709,34 +707,136 @@
   border: 1.5px solid var(--latte-light);
 }
 
-.address-suggestions {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: #fff;
-  border: 1.5px solid var(--latte-light);
-  border-top: none;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.10);
-  /* Leaflet's own panes/controls (in AddressMapPreview below) use z-index up
-     to 800 in the page's stacking context — has to clear that or the map
-     renders on top of the dropdown once an address is already resolved. */
-  z-index: 900;
-  max-height: 220px;
-  overflow-y: auto;
+.address-map-preview-lg { height: 220px; margin-top: 0; }
+
+/* ---- Address summary card (ProfileModal, tap opens AddressPickerModal) ---- */
+.address-summary-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  background: var(--white);
+}
+.address-summary-card:hover { border-color: var(--latte); }
+
+.address-summary-text { flex: 1; font-size: 13.5px; color: var(--text-dark); line-height: 1.4; }
+.address-summary-note { font-size: 12px; color: var(--text-soft); margin-top: 3px; }
+
+.address-summary-remove {
+  border: none;
+  background: var(--latte-xlight);
+  color: var(--text-soft);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.address-summary-remove:hover { background: var(--latte-light); color: var(--primary); }
+
+.address-summary-empty {
+  width: 100%;
+  padding: 14px;
+  border: 1.5px dashed var(--latte);
+  border-radius: var(--radius-md);
+  background: var(--latte-xlight);
+  color: var(--text-mid);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+.address-summary-empty:hover { background: var(--latte-light); }
+
+/* ---- Full-screen address picker (AddressPickerModal) ---- */
+.address-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 700;
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
 }
 
-.address-suggestion-item {
-  padding: 10px 14px;
-  font-size: 13px;
-  color: var(--text-dark);
-  cursor: pointer;
-  border-bottom: 1px solid var(--latte-xlight);
-  line-height: 1.4;
+.address-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--border);
+  flex-shrink: 0;
 }
-.address-suggestion-item:last-child { border-bottom: none; }
-.address-suggestion-item:hover { background: var(--latte-xlight); color: var(--primary); }
+
+.address-picker-back {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: var(--cream);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+}
+.address-picker-back:hover { background: var(--border); }
+
+.address-picker-title { font-size: 15px; font-weight: 800; color: var(--text-dark); }
+
+.address-picker-search-wrap { padding: 14px 16px 8px; flex-shrink: 0; }
+
+.address-picker-search-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text-dark);
+}
+.address-picker-search-input:focus { border-color: var(--primary); outline: none; }
+
+.address-picker-results { flex: 1; overflow-y: auto; padding: 4px 8px 24px; }
+
+.address-picker-status { padding: 20px 16px; text-align: center; font-size: 13px; color: var(--text-soft); }
+
+.address-picker-result-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 10px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.address-picker-result-item:hover { background: var(--latte-xlight); }
+.address-picker-result-item:active { background: var(--latte-light); }
+
+.address-picker-result-icon { font-size: 15px; line-height: 1.5; flex-shrink: 0; }
+
+.address-picker-result-title { font-size: 14px; font-weight: 700; color: var(--text-dark); }
+.address-picker-result-sub { font-size: 12px; color: var(--text-soft); margin-top: 2px; line-height: 1.4; }
+
+.address-picker-confirm-body { flex: 1; overflow-y: auto; padding: 16px; }
+
+.address-picker-selected-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--latte-xlight);
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  color: var(--text-dark);
+  line-height: 1.4;
+  margin-bottom: 14px;
+}
+
+.address-picker-footer {
+  padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
+  border-top: 1.5px solid var(--border);
+  flex-shrink: 0;
+}
 
 .address-maps-verify {
   font-size: 12px;

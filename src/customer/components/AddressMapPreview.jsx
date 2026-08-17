@@ -19,7 +19,7 @@ L.Icon.Default.mergeOptions({
 // Small read-only OpenStreetMap preview pinned at the resolved address coords —
 // free tile server, no API key/cost, matches this project's "avoid Maps API
 // billing" stance (see CLAUDE.md). Renders nothing until coords are resolved.
-export default function AddressMapPreview({ lat, lng }) {
+export default function AddressMapPreview({ lat, lng, large }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -60,5 +60,5 @@ export default function AddressMapPreview({ lat, lng }) {
 
   if (lat == null || lng == null) return null;
 
-  return <div className="address-map-preview" ref={containerRef} />;
+  return <div className={`address-map-preview${large ? ' address-map-preview-lg' : ''}`} ref={containerRef} />;
 }
