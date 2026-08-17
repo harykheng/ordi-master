@@ -34,6 +34,7 @@ Kalau branch ini (`tier-1`) lagi dikerjain langsung: `OrderTypeStep.jsx` punya t
 | `supabase/functions/check-shipping/index.ts` | Edge Function (Deno) — proxy ke Biteship Rates API, satu-satunya kode yang jalan di Deno/server, bukan Postgres |
 | `supabase-setup.sql` | Skema lengkap + kanonik: tabel, RLS policy, `place_order()`, `lookup_order()`, Realtime publication, storage bucket, akun admin. Idempotent (aman di-re-run) — kalau ada perubahan schema, update di sini DULU baru README, jangan sebaliknya |
 | `wrangler.jsonc` | Config Cloudflare — deklarasi deploy static-assets-only (`assets.directory: "./dist"`, tanpa Worker script). Lihat "Kenapa begini" untuk alasannya. |
+| `public/` | Favicon (`favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png`, `android-chrome-*.png`, `site.webmanifest`) — Vite copy apa adanya ke root `dist/`, di-link dari ketiga `index.html` dengan path absolut (`/favicon.ico`, dst). Sama untuk ketiga app (customer/admin/tracking), belum per-klien — kalau mau beda favicon per klien, generate baru dari [favicon.io](https://favicon.io) dan replace isi folder ini. |
 
 Build via Vite (`npm run dev` / `npm run build`). Live deploy demo project ini ada di **Cloudflare** — detail troubleshooting deploy (Vite version, Workers vs Pages, env var) ada di README §8.
 
