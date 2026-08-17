@@ -52,6 +52,12 @@ export default function AddressAutocomplete({ value, onChange, onCoordsChange, c
       const data = await fetchSuggestions(q);
       setResults(data);
       setShowSuggestions(data.length > 0);
+      // On mobile the suggestion list renders below the fold once the
+      // keyboard is up — scroll it into view instead of making the user
+      // fight the sheet's own scroll to find it.
+      if (data.length > 0) {
+        wrapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }, 350);
   }
 
