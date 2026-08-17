@@ -112,7 +112,6 @@ export default function ProfileModal({ isOpen, onClose }) {
                   value={address}
                   onChange={setAddress}
                   onCoordsChange={handleCoordsChange}
-                  coordsResolved={Boolean(deliveryLat && deliveryLng)}
                 />
                 <AddressMapPreview lat={deliveryLat} lng={deliveryLng} />
               </div>
