@@ -129,7 +129,12 @@ export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris, on
                   </div>
                 </div>
               </div>
-              <OngkirOptions />
+              <div style={{ position: 'relative' }}>
+                <OngkirOptions />
+                {config.demoMode && (
+                  <TierBadge tier="antar" onCompare={onCompareTiers} style={{ top: 4, left: 'auto', right: 4 }} align="right" />
+                )}
+              </div>
             </div>
           )}
         </div>

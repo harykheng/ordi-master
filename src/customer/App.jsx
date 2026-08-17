@@ -89,9 +89,7 @@ function AppShell() {
 
   return (
     <>
-      {state.step === 1 && (
-        <OrderTypeStep settings={settings} onCompareTiers={() => setCompareOpen(true)} />
-      )}
+      {state.step === 1 && <OrderTypeStep settings={settings} />}
       {state.step === 2 && <CatalogStep settings={settings} onPickVariant={setVariantProduct} />}
       {state.step === 3 && (
         <CheckoutStep

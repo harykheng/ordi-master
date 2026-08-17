@@ -2,8 +2,9 @@ const FEATURES = [
   { label: 'Katalog produk & varian', basic: true, antar: true, bayar: true },
   { label: 'Lacak status pesanan', basic: true, antar: true, bayar: true },
   { label: 'Pickup di toko', basic: true, antar: true, bayar: true },
+  { label: 'Delivery (alamat manual)', basic: true, antar: true, bayar: true },
   { label: 'Konfirmasi pesanan via WhatsApp', basic: true, antar: true, bayar: true },
-  { label: 'Delivery + cek ongkir otomatis', basic: false, antar: true, bayar: true },
+  { label: 'Cek ongkir otomatis (Biteship + map)', basic: false, antar: true, bayar: true },
   { label: 'Pembayaran QRIS otomatis (QR dinamis)', basic: false, antar: false, bayar: true },
 ];
 

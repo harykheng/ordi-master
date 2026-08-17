@@ -3,9 +3,8 @@ import { useCart } from '../CartContext.jsx';
 import { config } from '../../shared/lib/config.js';
 import { buildDateChips } from '../../shared/lib/format.js';
 import { waLink } from '../../shared/lib/whatsapp.js';
-import TierBadge from './TierBadge.jsx';
 
-export default function OrderTypeStep({ settings, onCompareTiers }) {
+export default function OrderTypeStep({ settings }) {
   const { state, dispatch } = useCart();
   const [dateChips] = useState(buildDateChips);
 
@@ -79,7 +78,6 @@ export default function OrderTypeStep({ settings, onCompareTiers }) {
             <span className="order-type-icon">🛵</span>
             <span className="order-type-name">Delivery</span>
             <span className="order-type-desc">Dikirim ke kamu</span>
-            {config.demoMode && <TierBadge tier="antar" onCompare={onCompareTiers} />}
           </div>
         </div>
 
