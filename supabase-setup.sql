@@ -413,4 +413,47 @@ SELECT 'lookup_order function', COALESCE((SELECT 'ada' FROM pg_proc WHERE pronam
 UNION ALL
 SELECT 'storage bucket',   COALESCE((SELECT name FROM storage.buckets WHERE id = 'product-images'), 'TIDAK ADA')
 UNION ALL
-SELECT 'admin user',       COALESCE((SELECT email FROM auth.users WHERE email = 'admin@youremail.com'), 'TIDAK ADA');
+SELECT 'admin user',       COALESCE((SELECT email FROM auth.users WHERE email = 'admin@youremail.com'), 'TIDAK ADA')
+UNION ALL
+SELECT 'daily_visits table', COALESCE((SELECT 'ada' FROM pg_tables WHERE tablename = 'daily_visits'), 'TIDAK ADA')
+UNION ALL
+SELECT 'track_visit function', COALESCE((SELECT 'ada' FROM pg_proc WHERE proname = 'track_visit'), 'TIDAK ADA');
+
+
+-- ----------------------------------------------------------------
+-- 12. TABEL DAILY_VISITS + FUNCTION track_visit() — hitung pengunjung
+--     halaman katalog customer per hari
+-- ----------------------------------------------------------------
+-- Satu baris per tanggal (bukan satu baris per visit) supaya tabelnya gak
+-- tumbuh gak terbatas — dihitung lewat UPSERT counter, bukan INSERT log.
+CREATE TABLE IF NOT EXISTS daily_visits (
+  visit_date DATE    PRIMARY KEY,
+  count      INTEGER NOT NULL DEFAULT 0
+);
+
+ALTER TABLE daily_visits ENABLE ROW LEVEL SECURITY;
+
+-- Cuma admin yang boleh baca angkanya — anon nulis lewat track_visit() di
+-- bawah (SECURITY DEFINER), gak pernah dikasih SELECT/INSERT/UPDATE langsung
+-- ke tabel ini, sama pola-nya kayak place_order()/products.stock_qty.
+DROP POLICY IF EXISTS "Admin read daily visits" ON daily_visits;
+CREATE POLICY "Admin read daily visits"
+  ON daily_visits FOR SELECT TO authenticated
+  USING (true);
+
+-- Dipanggil dari src/customer/App.jsx sekali tiap kunjungan (lihat
+-- shared/lib/visits.js). UPSERT + count = count + 1 atomic di satu statement
+-- supaya dua kunjungan bersamaan gak saling timpa (race condition sama kayak
+-- alasan place_order() jadi function, bukan sekadar preferensi).
+CREATE OR REPLACE FUNCTION track_visit()
+RETURNS VOID
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  INSERT INTO daily_visits (visit_date, count)
+  VALUES (CURRENT_DATE, 1)
+  ON CONFLICT (visit_date) DO UPDATE SET count = daily_visits.count + 1;
+$$;
+
+GRANT EXECUTE ON FUNCTION track_visit() TO anon;

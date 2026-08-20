@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CartProvider, useCart } from './CartContext.jsx';
 import { useSettings } from '../shared/hooks/useSettings.js';
 import { useToast } from '../shared/components/Toast.jsx';
 import { config } from '../shared/lib/config.js';
+import { trackVisit } from '../shared/lib/visits.js';
 import { cartTotal, getDiscountAmount, cartFinalTotal, cartSnapshot, cartStockItems } from '../shared/lib/cart.js';
 import { qrisToDynamic } from '../shared/lib/qris.js';
 import OrderTypeStep from './components/OrderTypeStep.jsx';
@@ -24,6 +25,15 @@ function AppShell() {
   const [pendingOrder, setPendingOrder] = useState(null);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
   const [isCompareOpen, setCompareOpen] = useState(false);
+
+  // Once per tab session, not once per render/refresh — a sessionStorage
+  // flag survives React StrictMode's double-invoke in dev and keeps a
+  // customer flipping between steps or refreshing from inflating the count.
+  useEffect(() => {
+    if (sessionStorage.getItem('ordi_visit_tracked_v1')) return;
+    sessionStorage.setItem('ordi_visit_tracked_v1', '1');
+    trackVisit();
+  }, []);
 
   function handleSubmitQris() {
     if (!state.isProfileFilled) {
