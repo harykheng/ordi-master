@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CartProvider, useCart } from './CartContext.jsx';
 import { useSettings } from '../shared/hooks/useSettings.js';
 import { useToast } from '../shared/components/Toast.jsx';
 import { config } from '../shared/lib/config.js';
+import { trackVisit } from '../shared/lib/visits.js';
 import { cartTotal, getDiscountAmount, cartFinalTotal, cartSnapshot, cartStockItems } from '../shared/lib/cart.js';
 import { insertOrder } from '../shared/lib/orders.js';
 import { buildOrderConfirmMessage, waLink } from '../shared/lib/whatsapp.js';
@@ -22,6 +23,15 @@ function AppShell() {
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
   const [checkingOut, setCheckingOut] = useState(false);
+
+  // Once per tab session, not once per render/refresh — a sessionStorage
+  // flag survives React StrictMode's double-invoke in dev and keeps a
+  // customer flipping between steps or refreshing from inflating the count.
+  useEffect(() => {
+    if (sessionStorage.getItem('ordi_visit_tracked_v1')) return;
+    sessionStorage.setItem('ordi_visit_tracked_v1', '1');
+    trackVisit();
+  }, []);
 
   // No QRIS in this tier — checkout inserts the order straight away (still
   // through place_order() for atomic stock) and hands off to WhatsApp for

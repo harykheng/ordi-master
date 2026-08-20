@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useOrders } from '../../shared/hooks/useOrders.js';
+import { useDailyVisits } from '../../shared/hooks/useDailyVisits.js';
 import { formatPrice } from '../../shared/lib/format.js';
 
 // Only orders an admin has actually confirmed (checked the payment proof)
@@ -29,8 +30,37 @@ function sumItemCount(list) {
   }, 0);
 }
 
+function toDateKey(d) {
+  return d.toISOString().slice(0, 10);
+}
+
 export default function DashboardTab() {
   const { orders, loading } = useOrders();
+  const { visits, loading: visitsLoading } = useDailyVisits(7);
+
+  const visitStats = useMemo(() => {
+    const now = new Date();
+    const countByDate = new Map(visits.map((v) => [v.visit_date, v.count]));
+
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      days.push({
+        label: d.toLocaleDateString('id-ID', { weekday: 'short' }),
+        isToday: i === 0,
+        count: countByDate.get(toDateKey(d)) || 0,
+      });
+    }
+    const maxDayCount = Math.max(1, ...days.map((d) => d.count));
+
+    return {
+      todayCount: days[days.length - 1].count,
+      weekCount: days.reduce((s, d) => s + d.count, 0),
+      days,
+      maxDayCount,
+    };
+  }, [visits]);
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -120,6 +150,30 @@ export default function DashboardTab() {
           <div className="dash-stat-label">Omset Bulan Ini</div>
           <div className="dash-stat-value">{formatPrice(stats.monthRevenue)}</div>
           <div className="dash-stat-sub">{stats.monthOrderCount} pesanan</div>
+        </div>
+        <div className="dash-stat-card">
+          <span className="dash-stat-icon">👀</span>
+          <div className="dash-stat-label">Pengunjung Hari Ini</div>
+          <div className="dash-stat-value">{visitsLoading ? '—' : visitStats.todayCount}</div>
+          <div className="dash-stat-sub">{visitStats.weekCount} dalam 7 hari</div>
+        </div>
+      </div>
+
+      <div className="dash-section">
+        <h3 className="dash-section-title">Pengunjung 7 Hari Terakhir</h3>
+        <div className="dash-chart">
+          {visitStats.days.map((d, i) => (
+            <div className="dash-chart-col" key={i}>
+              <div className="dash-chart-bar-wrap">
+                <div
+                  className={`dash-chart-bar${d.isToday ? ' today' : ''}`}
+                  style={{ height: `${Math.max(4, (d.count / visitStats.maxDayCount) * 100)}%` }}
+                  title={`${d.count} pengunjung`}
+                ></div>
+              </div>
+              <div className="dash-chart-label">{d.label}</div>
+            </div>
+          ))}
         </div>
       </div>
 
