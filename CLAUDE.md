@@ -14,7 +14,7 @@ Repo ini adalah copy dari codebase klien asli (Breva Coffee, toko kopi) yang sek
 
 | Path | Isi |
 |---|---|
-| `index.html` / `admin/index.html` / `tracking/index.html` | Vite entry point ketiga aplikasi (root div + script module) |
+| `index.html` / `admin/index.html` / `tracking/index.html` | Vite entry point ketiga aplikasi (root div + script module). Cuma `index.html` (customer) yang punya Google tag (`gtag.js`, GA4) — ID-nya di-inject dari env var `VITE_GA_ID` lewat placeholder `%VITE_GA_ID%` (fitur bawaan Vite buat HTML, sama polanya kayak `%VITE_STORE_NAME%` di `<title>`, gak butuh plugin). Dipasang buat lacak link mana yang kebuka (pakai UTM parameter di link yang di-share) — beda dari `daily_visits`/`track_visit()` yang cuma hitung agregat harian tanpa breakdown sumber. |
 | `vite.config.js` | Config Vite, tiga entry point (`main` = customer, `admin` = admin, `tracking` = lacak pesanan) |
 | `src/customer/` | Aplikasi React customer: `App.jsx` (step switcher + modal orchestration), `CartContext.jsx` (state global order flow via `useReducer`, profile di-persist ke `localStorage`), `components/`, `hooks/useShipping.js` |
 | `src/admin/` | Aplikasi React admin: `App.jsx` (tab shell + live order alert), `AuthContext.jsx` (Supabase Auth session), `hooks/useNewOrderAlerts.js` (Realtime), `components/` |
