@@ -172,6 +172,10 @@ Definisi lengkapnya ada di `supabase-setup.sql` §6 — copy dari situ kalau set
 
 Dipakai halaman `/tracking/`. Karena `orders` RLS sengaja insert-only untuk `anon` (lihat catatan di atas), customer tidak pernah dikasih SELECT langsung ke tabel ini — function ini jadi satu-satunya jalan cek status, dan cuma balikin 1 baris kalau kode pesanan **dan** nomor WhatsApp-nya cocok berbarengan. Definisi lengkapnya ada di `supabase-setup.sql` §7.
 
+#### `track_visit()` — hitung pengunjung katalog per hari
+
+Halaman katalog customer (`/`) manggil `supabase.rpc('track_visit')` sekali per sesi tab (`sessionStorage`, bukan tiap render/refresh) lewat `src/shared/lib/visits.js`. Function ini upsert satu baris counter per tanggal ke tabel `daily_visits` (`count = count + 1`, atomic — bukan satu baris per kunjungan, biar tabelnya tidak tumbuh tak terbatas). `daily_visits` tidak punya policy SELECT untuk `anon`, cuma admin (login) yang bisa baca lewat tab **Dashboard** (chart "Pengunjung 7 Hari Terakhir"). Definisi lengkapnya ada di `supabase-setup.sql` §12.
+
 #### Realtime — notifikasi pesanan baru live di dashboard admin
 
 Opsional, tapi disarankan. Tanpa ini dashboard tetap jalan normal (cuma harus refresh manual buat lihat pesanan baru). Aktifkan lewat SQL Editor:
