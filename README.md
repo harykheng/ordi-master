@@ -7,7 +7,7 @@ Tiga aplikasi React terpisah dalam satu repo (Vite multi-page app): katalog cust
 **Fitur utama:**
 - Katalog produk dengan varian (ukuran, suhu, dll), badge (New/Terlaris), dan stok opsional (badge "Habis" otomatis + anti-oversell)
 - Lacak status pesanan tanpa perlu akun (`/tracking/`) — customer cukup masukin kode pesanan + nomor WhatsApp
-- Checkout Pickup & Delivery, dengan alamat autocomplete (LocationIQ) dan ongkir real-time (Biteship — GoSend/GrabExpress), fallback ke tarif jarak statis kalau Biteship tidak tersedia
+- Checkout Pickup & Delivery, dengan alamat autocomplete (LocationIQ) dan ongkir real-time (Biteship — GoSend/GrabExpress/Paxel), fallback ke tarif jarak statis kalau Biteship tidak tersedia
 - Kode promo (persen / nominal, minimum order, tanggal expired)
 - Pembayaran QRIS dinamis — nominal digenerate langsung di browser dari QRIS statis toko, tanpa payment gateway/API berbayar
 - Konfirmasi pesanan otomatis terkirim ke WhatsApp admin, tersimpan di database sebagai status `pending`
@@ -284,7 +284,7 @@ Jalankan lokal dengan `npm run dev` (buka `localhost:5173` untuk katalog, `local
 
 ## 3. Setup Ongkir Real-time (Biteship)
 
-Fitur cek ongkir GoSend/GrabExpress pakai [Biteship](https://biteship.com). Berbeda dari key lain di `.env`, **API key Biteship adalah secret** — tidak boleh ditaruh di kode frontend, jadi dipanggil lewat Supabase Edge Function (`supabase/functions/check-shipping`) yang jadi proxy. Frontend React cuma pernah manggil Edge Function ini, tidak ada jalur "panggil Biteship langsung dari browser" sama sekali di kode — jadi **Edge Function ini wajib dideploy** sebelum ongkir real-time bisa jalan (sebelum itu, otomatis fallback ke tarif jarak statis, checkout tetap jalan normal).
+Fitur cek ongkir GoSend/GrabExpress/Paxel pakai [Biteship](https://biteship.com). Berbeda dari key lain di `.env`, **API key Biteship adalah secret** — tidak boleh ditaruh di kode frontend, jadi dipanggil lewat Supabase Edge Function (`supabase/functions/check-shipping`) yang jadi proxy. Frontend React cuma pernah manggil Edge Function ini, tidak ada jalur "panggil Biteship langsung dari browser" sama sekali di kode — jadi **Edge Function ini wajib dideploy** sebelum ongkir real-time bisa jalan (sebelum itu, otomatis fallback ke tarif jarak statis, checkout tetap jalan normal).
 
 ### Dapatkan API Key Biteship
 1. Daftar/login ke [dashboard.biteship.com](https://dashboard.biteship.com/integrations)
@@ -395,7 +395,7 @@ Tidak ada `js/config.js` lagi — semua konstanta per-toko sekarang jadi environ
 1. Pilih produk & varian di katalog → masuk keranjang. Produk dengan stok terbatas nampilin sisa stok dan otomatis nge-badge "Habis" begitu kosong (lihat §1 catatan `stock_qty`). Keranjang mengambang di bawah bisa di-tap buat expand, lihat detail item tanpa pindah halaman.
 2. Pilih tipe pesanan: **Pickup** (ambil di toko) atau **Delivery**
 3. Kalau Delivery: isi profil (nama, WhatsApp) lewat kartu profil yang membuka bottom sheet. Alamat bukan field teks biasa — tap kartu alamat buka **halaman pencarian full-screen** (bukan dropdown kecil di dalam sheet): ketik, pilih hasil dari LocationIQ, lanjut ke layar konfirmasi lokasi (peta lebih besar + catatan alamat opsional), baru "Simpan Alamat Ini" balik ke form profil dengan alamat tersimpan sebagai kartu ringkasan (bisa di-tap lagi buat ganti, atau dihapus). Nama/WhatsApp/alamat/catatan-nya diingat otomatis buat kunjungan berikutnya (disimpan di `localStorage`, bertahan meski browser ditutup) — cuma bagian ini yang persist, keranjang & tanggal pesanan selalu mulai kosong tiap kunjungan.
-4. Ongkir dicek otomatis lewat Biteship (pilihan GoSend/GrabExpress dengan harga real-time) — kalau tidak tersedia, fallback ke tarif jarak statis. Untuk Delivery, customer wajib ada hasil ongkir dulu (opsi kepilih otomatis) sebelum bisa lanjut ke pembayaran.
+4. Ongkir dicek otomatis lewat Biteship (pilihan GoSend/GrabExpress/Paxel dengan harga real-time) — kalau tidak tersedia, fallback ke tarif jarak statis. Untuk Delivery, customer wajib ada hasil ongkir dulu (opsi kepilih otomatis) sebelum bisa lanjut ke pembayaran.
 5. Bisa pakai kode promo (persen/nominal, dicek minimum order & masa berlaku)
 6. Konfirmasi pesanan → QRIS dinamis digenerate langsung di browser sesuai total akhir, bisa disimpan sebagai gambar (tombol "Simpan QR")
 7. Setelah bayar, customer konfirmasi → pesanan tersimpan ke database (stok otomatis berkurang lewat `place_order()`, lihat §1) dengan status `pending`, dan link WhatsApp ke admin terbuka otomatis untuk kirim bukti bayar
