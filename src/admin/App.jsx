@@ -36,6 +36,7 @@ function Dashboard() {
           <div className="logo-text">{config.storeName} Admin</div>
         </div>
         <div className="admin-header-right">
+          {config.demoMode && <span className="admin-demo-badge">🔧 Mode Demo</span>}
           <span className="admin-user-email">{session.user.email}</span>
           <button className="btn-logout" onClick={logout}>Keluar</button>
         </div>

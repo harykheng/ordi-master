@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSettings } from '../../shared/hooks/useSettings.js';
 import { useToast } from '../../shared/components/Toast.jsx';
+import { useDemoGuard } from '../hooks/useDemoGuard.js';
 import { saveSettings } from '../../shared/lib/settings.js';
 import ImageUploadDropzone from './ImageUploadDropzone.jsx';
 
@@ -12,6 +13,7 @@ const EMPTY_FORM = {
 export default function SettingsTab() {
   const { settings, loading, refetch } = useSettings();
   const showToast = useToast();
+  const guardDemoWrite = useDemoGuard();
   const [form, setForm] = useState(EMPTY_FORM);
   const [logoFile, setLogoFile] = useState(null);
   const [existingLogoUrl, setExistingLogoUrl] = useState(null);
@@ -41,6 +43,7 @@ export default function SettingsTab() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (guardDemoWrite()) return;
     setSaving(true);
     try {
       await saveSettings({

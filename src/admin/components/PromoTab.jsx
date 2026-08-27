@@ -3,6 +3,7 @@ import { usePromos } from '../../shared/hooks/usePromos.js';
 import { formatPrice, formatExpiryDate } from '../../shared/lib/format.js';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { useConfirmDialog } from '../../shared/components/ConfirmDialog.jsx';
+import { useDemoGuard } from '../hooks/useDemoGuard.js';
 import { deletePromo } from '../../shared/lib/promos.js';
 import PromoFormModal from './PromoFormModal.jsx';
 
@@ -10,20 +11,24 @@ export default function PromoTab() {
   const { promos, loading, refetch } = usePromos();
   const { confirm, close } = useConfirmDialog();
   const showToast = useToast();
+  const guardDemoWrite = useDemoGuard();
   const [formOpen, setFormOpen] = useState(false);
   const [editingPromo, setEditingPromo] = useState(null);
 
   function openCreate() {
+    if (guardDemoWrite()) return;
     setEditingPromo(null);
     setFormOpen(true);
   }
 
   function openEdit(promo) {
+    if (guardDemoWrite()) return;
     setEditingPromo(promo);
     setFormOpen(true);
   }
 
   function handleDelete(promo) {
+    if (guardDemoWrite()) return;
     confirm(`Yakin mau hapus kode "${promo.code}"? Tindakan ini tidak bisa dibatalkan.`, async () => {
       try {
         await deletePromo(promo.id);

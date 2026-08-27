@@ -82,6 +82,16 @@
   display: none;
 }
 
+.admin-demo-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--latte-light);
+  color: var(--primary);
+  white-space: nowrap;
+}
+
 @media (min-width: 480px) { .admin-user-email { display: block; } }
 
 .btn-logout {

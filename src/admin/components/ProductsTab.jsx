@@ -3,6 +3,7 @@ import { useProducts } from '../../shared/hooks/useProducts.js';
 import { formatPrice } from '../../shared/lib/format.js';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { useConfirmDialog } from '../../shared/components/ConfirmDialog.jsx';
+import { useDemoGuard } from '../hooks/useDemoGuard.js';
 import { deleteProduct } from '../../shared/lib/products.js';
 import ProductFormModal from './ProductFormModal.jsx';
 import ProductImportModal from './ProductImportModal.jsx';
@@ -11,21 +12,30 @@ export default function ProductsTab() {
   const { products, loading, refetch } = useProducts();
   const { confirm, close } = useConfirmDialog();
   const showToast = useToast();
+  const guardDemoWrite = useDemoGuard();
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
 
   function openCreate() {
+    if (guardDemoWrite()) return;
     setEditingProduct(null);
     setFormOpen(true);
   }
 
   function openEdit(product) {
+    if (guardDemoWrite()) return;
     setEditingProduct(product);
     setFormOpen(true);
   }
 
+  function openImport() {
+    if (guardDemoWrite()) return;
+    setImportOpen(true);
+  }
+
   function handleDelete(product) {
+    if (guardDemoWrite()) return;
     confirm(`Yakin mau hapus "${product.name}"? Tindakan ini tidak bisa dibatalkan.`, async () => {
       try {
         await deleteProduct(product.id);
@@ -47,7 +57,7 @@ export default function ProductsTab() {
           <p className="admin-page-subtitle">{loading ? 'Memuat...' : `${products.length} produk`}</p>
         </div>
         <div className="admin-page-header-actions">
-          <button className="btn btn-secondary" onClick={() => setImportOpen(true)}>⬆ Import CSV</button>
+          <button className="btn btn-secondary" onClick={openImport}>⬆ Import CSV</button>
           <button className="btn btn-primary" onClick={openCreate}>+ Tambah Produk</button>
         </div>
       </div>
