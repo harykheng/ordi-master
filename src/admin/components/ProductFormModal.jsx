@@ -99,7 +99,7 @@ export default function ProductFormModal({ isOpen, product, onClose, onSaved }) 
         existingImageUrl,
       });
 
-      showToast(product ? 'Produk berhasil diperbarui! ✅' : 'Produk berhasil ditambahkan! ✅', 'success');
+      showToast(product ? 'Produk berhasil diperbarui!' : 'Produk berhasil ditambahkan!', 'success');
       onSaved();
       onClose();
     } catch (err) {
@@ -162,7 +162,7 @@ export default function ProductFormModal({ isOpen, product, onClose, onSaved }) 
           <div className="toggle-group">
             <div className="toggle-item">
               <div className="toggle-label">
-                <span className="toggle-label-title">✨ Badge "New"</span>
+                <span className="toggle-label-title">Badge "Baru"</span>
                 <span className="toggle-label-sub">Tampilkan label baru di kartu produk</span>
               </div>
               <label className="toggle-switch">
@@ -172,7 +172,7 @@ export default function ProductFormModal({ isOpen, product, onClose, onSaved }) 
             </div>
             <div className="toggle-item">
               <div className="toggle-label">
-                <span className="toggle-label-title">⭐ Badge "Terlaris"</span>
+                <span className="toggle-label-title">Badge "Terlaris"</span>
                 <span className="toggle-label-sub">Tampilkan label terlaris di kartu produk</span>
               </div>
               <label className="toggle-switch">
@@ -182,7 +182,7 @@ export default function ProductFormModal({ isOpen, product, onClose, onSaved }) 
             </div>
             <div className="toggle-item">
               <div className="toggle-label">
-                <span className="toggle-label-title">👁️ Tampilkan di Katalog</span>
+                <span className="toggle-label-title">Tampilkan di Katalog</span>
                 <span className="toggle-label-sub">Matikan untuk sembunyikan sementara</span>
               </div>
               <label className="toggle-switch">

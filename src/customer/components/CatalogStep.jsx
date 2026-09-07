@@ -95,7 +95,6 @@ export default function CatalogStep({ settings, onPickVariant }) {
           )}
           {!loading && error && (
             <div className="catalog-error">
-              <span className="catalog-error-icon">😔</span>
               <h3>Gagal memuat menu</h3>
               <p>Coba refresh halaman ini ya!</p>
             </div>
@@ -138,8 +137,7 @@ export default function CatalogStep({ settings, onPickVariant }) {
           aria-expanded={cartExpanded}
         >
           <div className="csf-left">
-            <div className="csf-icon">🛒</div>
-            <div className="csf-info">
+              <div className="csf-info">
               <div className="csf-qty">{count} item</div>
               <div className="csf-total">{formatPrice(total)}</div>
             </div>

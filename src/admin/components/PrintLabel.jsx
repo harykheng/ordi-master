@@ -3,7 +3,7 @@ import { formatPrice } from '../../shared/lib/format.js';
 import { config } from '../../shared/lib/config.js';
 
 // Rendered via portal into #printLabel, a direct <body> child declared in
-// admin/index.html — @media print in admin.css hides every other body child
+// admin/index.html, @media print in admin.css hides every other body child
 // and only shows #printLabel, so this must NOT be nested inside #root.
 export default function PrintLabel({ order }) {
   const target = document.getElementById('printLabel');

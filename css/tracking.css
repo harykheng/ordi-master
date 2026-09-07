@@ -1,7 +1,5 @@
-/* ================================================================
-   TRACKING PAGE (/tracking/) — reuses vars from main.css and
-   .catalog-topbar / .co-item / form-group from catalog.css
-   ================================================================ */
+/* Tracking page (/tracking/). Reuses the variables from main.css and
+   .catalog-topbar / .co-item / .form-group from catalog.css. */
 
 .trk-page {
   min-height: 100dvh;
@@ -55,10 +53,10 @@
   font-weight: 700;
   margin-bottom: 12px;
 }
-.trk-status-pending   { background: #fff3e0; color: #9a3e00; }
-.trk-status-confirmed { background: #e3f2fd; color: #1565c0; }
-.trk-status-done      { background: #e8f5e9; color: #2e7d32; }
-.trk-status-cancelled { background: #fdecea; color: #c0392b; }
+.trk-status-pending   { background: var(--status-pending-bg); color: var(--status-pending-fg); }
+.trk-status-confirmed { background: var(--status-progress-bg); color: var(--status-progress-fg); }
+.trk-status-done      { background: var(--status-done-bg); color: var(--status-done-fg); }
+.trk-status-cancelled { background: var(--status-cancel-bg); color: var(--status-cancel-fg); }
 
 .trk-card-header {
   display: flex;

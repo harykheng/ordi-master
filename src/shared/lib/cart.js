@@ -1,4 +1,4 @@
-// Pure cart math — ported from js/catalog.js. cart is keyed by productId
+// Pure cart math, ported from js/catalog.js. cart is keyed by productId
 // (plain product) or `productId|Var1|Var2` (variant combo).
 
 export function cartCount(cart) {
@@ -39,7 +39,7 @@ export function cartSnapshot(cart) {
   }));
 }
 
-// product_id + qty per cart line, for place_order()'s atomic stock check —
+// product_id + qty per cart line, for place_order()'s atomic stock check ,
 // separate from cartSnapshot because that's a display-only shape without
 // product ids. Different variants of the same product become separate
 // entries (same product_id, split qty); place_order() decrements them

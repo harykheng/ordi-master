@@ -26,7 +26,7 @@ export default function OrderSummaryModal({ order, settings, onClose }) {
     if (order.waUrl) window.open(order.waUrl, '_blank');
     dispatch({ type: 'RESET_ORDER' });
     onClose();
-    showToast('Pesanan dikonfirmasi! Kirim pesan ke toko via WA ya 🎉', 'success');
+    showToast('Pesanan dikonfirmasi! Kirim pesan ke toko via WA ya', 'success');
   }
 
   function copyOrderCode() {
@@ -93,20 +93,20 @@ export default function OrderSummaryModal({ order, settings, onClose }) {
         )}
 
         <div className="oss-card">
-          <div className="oss-card-label">KODE PESANAN</div>
+          <div className="oss-card-label">Kode pesanan</div>
           <div className="oss-code-row">
             <div className="oss-code">{order.orderNum}</div>
-            <button className="btn-oss-copy" onClick={copyOrderCode}>{copied ? '✅ Disalin' : '📋 Salin'}</button>
+            <button className="btn-oss-copy" onClick={copyOrderCode}>{copied ? 'Disalin' : 'Salin'}</button>
           </div>
           <a className="oss-track-link" href={`/tracking/?order=${encodeURIComponent(order.orderNum)}`} target="_blank" rel="noopener noreferrer">
-            📦 Simpan kode ini buat lacak status pesanan kapan aja →
+            Simpan kode ini buat lacak status pesanan kapan aja
           </a>
         </div>
 
         {deliveryRows.length > 0 && (
           <div className="oss-section">
             <div className="oss-section-header">
-              <span>{order.orderType === 'delivery' ? '🛵' : '🏠'}</span> {order.orderType === 'delivery' ? 'PENGIRIMAN' : 'LOKASI PICKUP'}
+              {order.orderType === 'delivery' ? 'Pengiriman' : 'Lokasi pickup'}
             </div>
             <div>
               {deliveryRows.map(([label, value]) => (
@@ -120,7 +120,7 @@ export default function OrderSummaryModal({ order, settings, onClose }) {
         )}
 
         <div className="oss-section">
-          <div className="oss-section-header"><span>📦</span> PESANAN</div>
+          <div className="oss-section-header">Pesanan</div>
           <div>
             {order.cartSnapshot.map((it, i) => (
               <div className="oss-item" key={i}>

@@ -27,7 +27,6 @@ export function ConfirmDialogProvider({ children }) {
         aria-label="Konfirmasi hapus"
       >
         <div className="confirm-box" ref={boxRef}>
-          <span className="confirm-icon">🗑️</span>
           <h3 className="confirm-title">Hapus?</h3>
           <p className="confirm-text">{state.text}</p>
           <div className="confirm-actions">
