@@ -4,14 +4,15 @@ import { useToast } from '../../shared/components/Toast.jsx';
 import { useDemoGuard } from '../hooks/useDemoGuard.js';
 import { saveSettings } from '../../shared/lib/settings.js';
 import ImageUploadDropzone from './ImageUploadDropzone.jsx';
+import AdminErrorState from './AdminErrorState.jsx';
 
 const EMPTY_FORM = {
-  brandName: '', brandIcon: '☕', storeAddress: '', storeHours: '', storeMapsUrl: '',
+  brandName: '', brandIcon: '🏪', storeAddress: '', storeHours: '', storeMapsUrl: '',
   bannerTitle: '', bannerSubtitle: '', instagramUrl: '', tiktokUrl: '',
 };
 
 export default function SettingsTab() {
-  const { settings, loading, refetch } = useSettings();
+  const { settings, loading, error, refetch } = useSettings();
   const showToast = useToast();
   const guardDemoWrite = useDemoGuard();
   const [form, setForm] = useState(EMPTY_FORM);
@@ -27,7 +28,7 @@ export default function SettingsTab() {
     if (!settings) return;
     setForm({
       brandName: settings.brand_name || '',
-      brandIcon: settings.brand_icon || '☕',
+      brandIcon: settings.brand_icon || '🏪',
       storeAddress: settings.store_address || '',
       storeHours: settings.store_hours || '',
       storeMapsUrl: settings.store_maps_url || '',
@@ -94,6 +95,8 @@ export default function SettingsTab() {
         </div>
       </div>
 
+      {error && <AdminErrorState what="pengaturan" error={error} onRetry={refetch} />}
+
       <form onSubmit={handleSubmit} className="settings-form" noValidate>
         <div className="settings-section">
           <div className="settings-section-title">Brand</div>
@@ -103,28 +106,28 @@ export default function SettingsTab() {
           </div>
           <div className="form-group">
             <label htmlFor="settingBrandIcon">Ikon / Emoji</label>
-            <input type="text" id="settingBrandIcon" placeholder="☕" maxLength={4} style={{ maxWidth: 90 }} value={form.brandIcon} onChange={(e) => setForm((f) => ({ ...f, brandIcon: e.target.value }))} />
+            <input type="text" id="settingBrandIcon" placeholder="🏪" maxLength={4} style={{ maxWidth: 90 }} value={form.brandIcon} onChange={(e) => setForm((f) => ({ ...f, brandIcon: e.target.value }))} />
             <p className="form-hint">Tampil di header kalau tidak ada logo gambar</p>
           </div>
           <div className="form-group">
-            <label>Logo Ikon (Gambar — opsional)</label>
+            <label>Logo Ikon (gambar, opsional)</label>
             <ImageUploadDropzone
               existingUrl={existingLogoUrl}
               onFileSelect={setLogoFile}
               onRemove={() => { setLogoFile(null); setExistingLogoUrl(null); }}
               maxSizeMB={2}
-              hint="PNG, JPG, WEBP, SVG — Maks 2 MB"
+              hint="PNG, JPG, WEBP, SVG, maks 2 MB"
             />
             <p className="form-hint">Mascot/ikon kecil di header. Tampil kalau tidak ada logo ikon, fallback ke emoji di atas.</p>
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label>Logo Teks / Wordmark (Gambar — opsional)</label>
+            <label>Logo Teks / Wordmark (gambar, opsional)</label>
             <ImageUploadDropzone
               existingUrl={existingLogoTextUrl}
               onFileSelect={setLogoTextFile}
               onRemove={() => { setLogoTextFile(null); setExistingLogoTextUrl(null); }}
               maxSizeMB={2}
-              hint="PNG, JPG, WEBP, SVG — Maks 2 MB"
+              hint="PNG, JPG, WEBP, SVG, maks 2 MB"
             />
             <p className="form-hint">Ganti tulisan "Nama Brand" di header dengan gambar logo teks kamu sendiri. Kalau kosong, tampil sebagai teks biasa.</p>
           </div>
@@ -156,7 +159,7 @@ export default function SettingsTab() {
               onFileSelect={setBannerImageFile}
               onRemove={() => { setBannerImageFile(null); setExistingBannerImageUrl(null); }}
               maxSizeMB={5}
-              hint="PNG, JPG, WEBP — Maks 5 MB"
+              hint="PNG, JPG, WEBP, maks 5 MB"
             />
             <p className="form-hint">Tampil sebagai foto background di banner katalog</p>
           </div>

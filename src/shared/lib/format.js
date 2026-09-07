@@ -46,3 +46,11 @@ export function formatExpiryDate(isoString) {
     day: 'numeric', month: 'short', year: 'numeric',
   });
 }
+
+// First letter of a product name, used as the image placeholder when a product
+// has no photo. Neutral by design: the template serves many kinds of shops, so
+// no food/drink emoji is assumed here.
+export function productInitial(name) {
+  const ch = (name || '').trim().charAt(0);
+  return ch ? ch.toUpperCase() : '·';
+}

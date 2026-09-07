@@ -114,6 +114,7 @@ function AppShell() {
       <ProfileModal isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
       <QrisModal
         pendingOrder={pendingOrder}
+        settings={settings}
         onClose={() => setPendingOrder(null)}
         onConfirmed={handleConfirmed}
       />

@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCart } from '../CartContext.jsx';
 import { useShipping } from '../hooks/useShipping.js';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { useBodyScrollLock } from '../../shared/hooks/useBodyScrollLock.js';
 import { cartCount, cartTotal } from '../../shared/lib/cart.js';
 import { config } from '../../shared/lib/config.js';
+import { onKeyActivate, useDialogKeyboard } from '../../shared/hooks/useDialogKeyboard.js';
 import AddressPickerModal from './AddressPickerModal.jsx';
 import ShippingLoadingOverlay from './ShippingLoadingOverlay.jsx';
 
@@ -22,6 +23,8 @@ export default function ProfileModal({ isOpen, onClose }) {
   const [deliveryLng, setDeliveryLng] = useState(null);
   const [saving, setSaving] = useState(false);
   const [isAddressPickerOpen, setAddressPickerOpen] = useState(false);
+  const sheetRef = useRef(null);
+  useDialogKeyboard({ active: isOpen && !isAddressPickerOpen, onClose, containerRef: sheetRef });
 
   // Re-sync local form state whenever the modal opens (so re-opening after save
   // shows the previously saved values, and reset after order completion clears it).
@@ -83,8 +86,8 @@ export default function ProfileModal({ isOpen, onClose }) {
   }
 
   return (
-    <div className="profile-overlay" style={{ display: isOpen ? 'flex' : 'none' }} onClick={onClose}>
-      <div className="profile-sheet" onClick={(e) => e.stopPropagation()}>
+    <div className="profile-overlay" role="dialog" aria-modal="true" aria-label="Detail Pemesan" style={{ display: isOpen ? 'flex' : 'none' }} onClick={onClose}>
+      <div className="profile-sheet" ref={sheetRef} onClick={(e) => e.stopPropagation()}>
         <div className="profile-sheet-drag"></div>
         <div className="profile-sheet-inner">
           <div className="profile-sheet-header">
@@ -105,7 +108,13 @@ export default function ProfileModal({ isOpen, onClose }) {
             <div className="form-group">
               <label>Alamat Pengiriman *</label>
               {address ? (
-                <div className="address-summary-card" onClick={() => setAddressPickerOpen(true)} role="button" tabIndex={0}>
+                <div
+                  className="address-summary-card"
+                  onClick={() => setAddressPickerOpen(true)}
+                  onKeyDown={onKeyActivate(() => setAddressPickerOpen(true))}
+                  role="button"
+                  tabIndex={0}
+                >
                   <span className="address-picker-result-icon">📍</span>
                   <div className="address-summary-text">
                     <div>{address}</div>

@@ -6,9 +6,10 @@ import { useConfirmDialog } from '../../shared/components/ConfirmDialog.jsx';
 import { useDemoGuard } from '../hooks/useDemoGuard.js';
 import { deletePromo } from '../../shared/lib/promos.js';
 import PromoFormModal from './PromoFormModal.jsx';
+import AdminErrorState from './AdminErrorState.jsx';
 
 export default function PromoTab() {
-  const { promos, loading, refetch } = usePromos();
+  const { promos, loading, error, refetch } = usePromos();
   const { confirm, close } = useConfirmDialog();
   const showToast = useToast();
   const guardDemoWrite = useDemoGuard();
@@ -47,7 +48,7 @@ export default function PromoTab() {
       <div className="admin-page-header">
         <div>
           <h2 className="admin-page-title">Kode Promo</h2>
-          <p className="admin-page-subtitle">{loading ? 'Memuat...' : `${promos.length} kode promo`}</p>
+          <p className="admin-page-subtitle">{loading ? 'Memuat...' : error ? 'Data tidak termuat' : `${promos.length} kode promo`}</p>
         </div>
         <button className="btn btn-primary" onClick={openCreate}>+ Tambah Promo</button>
       </div>
@@ -59,7 +60,9 @@ export default function PromoTab() {
         </div>
       )}
 
-      {!loading && promos.length === 0 && (
+      {!loading && error && <AdminErrorState what="kode promo" error={error} onRetry={refetch} />}
+
+      {!loading && !error && promos.length === 0 && (
         <div className="empty-admin-state visible">
           <span className="empty-admin-icon">🎟️</span>
           <h3>Belum ada kode promo</h3>
@@ -67,7 +70,7 @@ export default function PromoTab() {
         </div>
       )}
 
-      {!loading && promos.length > 0 && (
+      {!loading && !error && promos.length > 0 && (
         <div className="promos-list">
           {promos.map((promo) => {
             const discLabel = promo.discount_type === 'percent'

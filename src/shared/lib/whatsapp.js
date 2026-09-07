@@ -4,8 +4,12 @@ export function escapeTextForWA(str) {
   return (str || '').replace(/[*_~`]/g, '\\$&');
 }
 
+// Returns null when no number is configured, so callers hide the control
+// rather than render a link to wa.me/undefined (R-26).
 export function waLink(phone, message) {
-  return `https://wa.me/${encodeURIComponent(phone)}?text=${encodeURIComponent(message)}`;
+  const digits = String(phone || '').replace(/[^0-9]/g, '');
+  if (!digits) return null;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
 
 // Message sent to the admin after a customer confirms QRIS payment
@@ -22,7 +26,7 @@ export function buildQrisConfirmMessage({
   msg += `*Pesanan #${orderNum}:*\n`;
   cartSnapshot.forEach((it, i) => {
     const v = it.vl?.length ? ` (${it.vl.join(', ')})` : '';
-    msg += `${i + 1}. ${it.nm}${v} ×${it.qty} — ${formatPrice(it.sub)}\n`;
+    msg += `${i + 1}. ${it.nm}${v} ×${it.qty}: ${formatPrice(it.sub)}\n`;
   });
   msg += `\nSubtotal: ${formatPrice(rawTotal)}\n`;
   if (discount > 0) {
@@ -68,7 +72,7 @@ export function buildAdminOrderSummaryMessage(order, storeName) {
   msg += `*Pesanan:*\n`;
   items.forEach((it, i) => {
     const v = it.vl?.length ? ` (${it.vl.join(', ')})` : '';
-    msg += `${i + 1}. ${it.nm}${v} ×${it.qty} — ${formatPrice(it.sub)}\n`;
+    msg += `${i + 1}. ${it.nm}${v} ×${it.qty}: ${formatPrice(it.sub)}\n`;
   });
 
   msg += `\n`;
@@ -90,7 +94,7 @@ export function buildAdminOrderSummaryMessage(order, storeName) {
   }
 
   msg += `\n\nStatus: ${ORDER_STATUS_LABELS[order.status] || order.status}`;
-  msg += `\n\nTerima kasih sudah order di ${storeName}! ☕`;
+  msg += `\n\nTerima kasih sudah order di ${storeName}!`;
 
   return msg;
 }

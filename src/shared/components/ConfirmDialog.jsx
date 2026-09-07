@@ -1,9 +1,11 @@
-import { createContext, useCallback, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { useDialogKeyboard } from '../hooks/useDialogKeyboard.js';
 
 const ConfirmDialogContext = createContext(null);
 
 export function ConfirmDialogProvider({ children }) {
   const [state, setState] = useState({ isOpen: false, text: '', onConfirm: null });
+  const boxRef = useRef(null);
 
   const confirm = useCallback((text, onConfirm) => {
     setState({ isOpen: true, text, onConfirm });
@@ -13,15 +15,18 @@ export function ConfirmDialogProvider({ children }) {
     setState((s) => ({ ...s, isOpen: false }));
   }, []);
 
+  useDialogKeyboard({ active: state.isOpen, onClose: close, containerRef: boxRef });
+
   return (
     <ConfirmDialogContext.Provider value={{ confirm, close }}>
       {children}
       <div
         className={`confirm-overlay${state.isOpen ? ' active' : ''}`}
         role="alertdialog"
+        aria-modal="true"
         aria-label="Konfirmasi hapus"
       >
-        <div className="confirm-box">
+        <div className="confirm-box" ref={boxRef}>
           <span className="confirm-icon">🗑️</span>
           <h3 className="confirm-title">Hapus?</h3>
           <p className="confirm-text">{state.text}</p>

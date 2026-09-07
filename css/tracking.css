@@ -55,7 +55,7 @@
   font-weight: 700;
   margin-bottom: 12px;
 }
-.trk-status-pending   { background: #fff3e0; color: #c05000; }
+.trk-status-pending   { background: #fff3e0; color: #9a3e00; }
 .trk-status-confirmed { background: #e3f2fd; color: #1565c0; }
 .trk-status-done      { background: #e8f5e9; color: #2e7d32; }
 .trk-status-cancelled { background: #fdecea; color: #c0392b; }

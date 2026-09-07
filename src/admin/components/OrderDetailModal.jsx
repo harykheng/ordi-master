@@ -16,6 +16,7 @@ export default function OrderDetailModal({ isOpen, order, onClose, onStatusChang
   const isCancelled = order.status === 'cancelled';
 
   const items = Array.isArray(order.items) ? order.items : [];
+  const customerWaUrl = waLink(order.customer_wa, buildAdminOrderSummaryMessage(order, config.storeName));
 
   async function changeStatus(newStatus) {
     const labelMap = { confirmed: 'Dikonfirmasi', done: 'Selesai', cancelled: 'Dibatalkan' };
@@ -30,8 +31,7 @@ export default function OrderDetailModal({ isOpen, order, onClose, onStatusChang
   }
 
   function sendToWA() {
-    const msg = buildAdminOrderSummaryMessage(order, config.storeName);
-    window.open(waLink(order.customer_wa, msg), '_blank');
+    window.open(customerWaUrl, '_blank');
   }
 
   function printLabel() {
@@ -45,7 +45,7 @@ export default function OrderDetailModal({ isOpen, order, onClose, onStatusChang
           <div className="order-detail-meta">
             <div className="order-detail-field"><span className="order-field-label">Nomor</span><span>{order.order_number}</span></div>
             <div className="order-detail-field"><span className="order-field-label">Nama</span><span>{order.customer_name}</span></div>
-            <div className="order-detail-field"><span className="order-field-label">WhatsApp</span><span><a href={`https://wa.me/${encodeURIComponent(order.customer_wa)}`} target="_blank" rel="noreferrer">{order.customer_wa}</a></span></div>
+            <div className="order-detail-field"><span className="order-field-label">WhatsApp</span><span>{customerWaUrl ? <a href={customerWaUrl} target="_blank" rel="noreferrer">{order.customer_wa}</a> : order.customer_wa}</span></div>
             <div className="order-detail-field"><span className="order-field-label">Tipe</span><span>{order.order_type === 'pickup' ? '🏪 Pickup' : '🛵 Delivery'}</span></div>
             <div className="order-detail-field"><span className="order-field-label">Tanggal</span><span>{order.order_date_label || order.order_date}</span></div>
             {order.order_type === 'delivery' && order.delivery_address && (
@@ -85,7 +85,7 @@ export default function OrderDetailModal({ isOpen, order, onClose, onStatusChang
 
         <div className="order-detail-actions">
           <button className="btn btn-secondary" onClick={onClose}>Tutup</button>
-          <button className="btn btn-wa" onClick={sendToWA}>📤 WA Customer</button>
+          {customerWaUrl && <button className="btn btn-wa" onClick={sendToWA}>📤 WA Customer</button>}
           {!isPending && <button className="btn btn-outline" onClick={printLabel}>🖨️ Print Label</button>}
           {!isCancelled && !isDone && <button className="btn btn-danger" onClick={() => changeStatus('cancelled')}>❌ Batalkan</button>}
           {!isPending && !isDone && !isCancelled && <button className="btn btn-success" onClick={() => changeStatus('done')}>✅ Selesai</button>}

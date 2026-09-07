@@ -211,8 +211,8 @@
 .dash-status-pill strong { font-size: 16px; }
 .dash-status-pending   { background: #fef3c7; color: #92400e; }
 .dash-status-confirmed { background: #fef3c7; color: #b45309; }
-.dash-status-done      { background: #dcfce7; color: #16a34a; }
-.dash-status-cancelled { background: #fee2e2; color: #dc2626; }
+.dash-status-done      { background: #dcfce7; color: #15803d; }
+.dash-status-cancelled { background: #fee2e2; color: #b91c1c; }
 
 .dash-empty-note { font-size: 13px; color: var(--text-soft); font-weight: 500; }
 
@@ -902,8 +902,8 @@ img.admin-product-img { font-size: inherit; }
 }
 
 .badge-confirmed { background: #fef3c7; color: #b45309; }
-.badge-done      { background: #dcfce7; color: #16a34a; }
-.badge-cancelled { background: #fee2e2; color: #dc2626; }
+.badge-done      { background: #dcfce7; color: #15803d; }
+.badge-cancelled { background: #fee2e2; color: #b91c1c; }
 
 .order-total {
   font-weight: 800;
@@ -978,7 +978,7 @@ img.admin-product-img { font-size: inherit; }
 }
 
 .order-detail-discount {
-  color: #16a34a;
+  color: #15803d;
   font-size: 13px;
 }
 
@@ -1018,7 +1018,7 @@ img.admin-product-img { font-size: inherit; }
 
 /* Button variants for orders */
 .btn-wa {
-  background: #25D366;
+  background: #15803d;
   color: #fff;
   border: none;
   border-radius: var(--radius-md);
@@ -1031,7 +1031,7 @@ img.admin-product-img { font-size: inherit; }
 .btn-wa:hover { background: #1ebe59; }
 
 .btn-success {
-  background: #22c55e;
+  background: #15803d;
   color: #fff;
   border: none;
   border-radius: var(--radius-md);
@@ -1041,7 +1041,7 @@ img.admin-product-img { font-size: inherit; }
   cursor: pointer;
   transition: background 0.15s;
 }
-.btn-success:hover { background: #16a34a; }
+.btn-success:hover { background: #0f6b34; }
 
 .btn-outline {
   background: transparent;
@@ -1125,7 +1125,7 @@ img.admin-product-img { font-size: inherit; }
 .badge-pending { background: #fef3c7; color: #92400e; }
 
 .btn-confirm-quick {
-  background: #22c55e;
+  background: #15803d;
   color: #fff;
   border: none;
   border-radius: var(--radius-sm);
@@ -1135,4 +1135,29 @@ img.admin-product-img { font-size: inherit; }
   cursor: pointer;
   transition: background 0.15s;
 }
-.btn-confirm-quick:hover { background: #16a34a; }
+.btn-confirm-quick:hover { background: #0f6b34; }
+
+/* Error state for admin lists (R-27): shown instead of the empty state when
+   the fetch itself failed, so a broken RLS policy or lost session never reads
+   as "no data yet". */
+.admin-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 48px 24px;
+  margin: 8px 0;
+  background: #fde8e8;
+  border: 1.5px solid #f5c2c2;
+  border-radius: var(--radius-md);
+  color: #7a1f16;
+}
+.admin-error-state h3 { font-size: 16px; font-weight: 800; color: #7a1f16; }
+.admin-error-state p { font-size: 13px; max-width: 420px; word-break: break-word; }
+.admin-error-state .btn { margin-top: 6px; }
+
+/* Stacked action buttons need real space between their 44px targets, not just
+   the 6px that suited the old 28px buttons (R-03, "targets too close"). */
+.promo-card-actions { gap: 10px; }
+.variant-opts-list { gap: 8px; }

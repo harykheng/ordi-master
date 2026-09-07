@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { config } from '../shared/lib/config.js';
+import { useSettings } from '../shared/hooks/useSettings.js';
 import { AuthProvider, useAuth } from './AuthContext.jsx';
 import { ConfirmDialogProvider } from '../shared/components/ConfirmDialog.jsx';
 import { useNewOrderAlerts } from './hooks/useNewOrderAlerts.js';
@@ -20,6 +21,7 @@ const TABS = [
 
 function Dashboard() {
   const { session, logout } = useAuth();
+  const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState('dashboard');
   const newOrders = useNewOrderAlerts();
 
@@ -32,7 +34,7 @@ function Dashboard() {
     <div className="admin-layout active">
       <header className="admin-header">
         <div className="logo">
-          <span className="logo-icon">☕</span>
+          <span className="logo-icon">{settings?.brand_icon || '🏪'}</span>
           <div className="logo-text">{config.storeName} Admin</div>
         </div>
         <div className="admin-header-right">
