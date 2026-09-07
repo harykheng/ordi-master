@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useCart } from '../CartContext.jsx';
 import { config } from '../../shared/lib/config.js';
-import { formatPrice } from '../../shared/lib/format.js';
+import { formatPrice, productInitial } from '../../shared/lib/format.js';
 import { cartTotal, getDiscountAmount, cartFinalTotal } from '../../shared/lib/cart.js';
 import { fetchActivePromoByCode } from '../../shared/lib/promos.js';
+import { onKeyActivate } from '../../shared/hooks/useDialogKeyboard.js';
 
 export default function CheckoutStep({ settings, onOpenProfile, onCheckout, checkingOut }) {
   const { state, dispatch } = useCart();
@@ -108,9 +109,11 @@ export default function CheckoutStep({ settings, onOpenProfile, onCheckout, chec
                   <div className="co-meta-label">Lokasi Pickup</div>
                   <div className="co-meta-value">{storeName}</div>
                   <div className="co-pickup-addr">{storeAddress}</div>
-                  <a className="pickup-maps-link" href={storeMapsUrl} target="_blank" rel="noopener" style={{ marginTop: 8, display: 'inline-flex' }}>
-                    Buka di Google Maps →
-                  </a>
+                  {storeMapsUrl && (
+                    <a className="pickup-maps-link" href={storeMapsUrl} target="_blank" rel="noopener noreferrer" style={{ marginTop: 8, display: 'inline-flex' }}>
+                      Buka di Google Maps →
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -141,7 +144,13 @@ export default function CheckoutStep({ settings, onOpenProfile, onCheckout, chec
 
         <div className="co-section">
           <div className="co-section-title">Info Pemesan</div>
-          <div className={`profile-card${state.isProfileFilled ? ' is-filled' : ''}`} onClick={onOpenProfile} role="button" tabIndex={0}>
+          <div
+            className={`profile-card${state.isProfileFilled ? ' is-filled' : ''}`}
+            onClick={onOpenProfile}
+            onKeyDown={onKeyActivate(onOpenProfile)}
+            role="button"
+            tabIndex={0}
+          >
             <div className="profile-card-avatar">👤</div>
             <div className="profile-card-info">
               <div className="profile-card-name">
@@ -166,7 +175,7 @@ export default function CheckoutStep({ settings, onOpenProfile, onCheckout, chec
                 <div className="co-item" key={key}>
                   {product.image_url
                     ? <img className="co-item-img" src={product.image_url} alt={product.name} loading="lazy" />
-                    : <div className="co-item-img co-item-img-ph">☕</div>}
+                    : <div className="co-item-img co-item-img-ph" aria-hidden="true">{productInitial(product.name)}</div>}
                   <div className="co-item-info">
                     <div className="co-item-name">{product.name}</div>
                     {variantLabels?.length > 0 && (

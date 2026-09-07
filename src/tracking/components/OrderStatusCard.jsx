@@ -1,4 +1,4 @@
-import { formatPrice } from '../../shared/lib/format.js';
+import { formatPrice, productInitial } from '../../shared/lib/format.js';
 import { ORDER_STATUS_LABELS } from '../../shared/lib/whatsapp.js';
 
 export default function OrderStatusCard({ order }) {
@@ -42,7 +42,7 @@ export default function OrderStatusCard({ order }) {
       <div className="trk-items">
         {items.map((it, i) => (
           <div className="co-item" key={i}>
-            <div className="co-item-img co-item-img-ph">☕</div>
+            <div className="co-item-img co-item-img-ph" aria-hidden="true">{productInitial(it.nm)}</div>
             <div className="co-item-info">
               <div className="co-item-name">{it.nm}</div>
               {it.vl?.length > 0 && <div className="co-item-variants">{it.vl.join(' · ')}</div>}

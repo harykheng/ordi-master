@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { formatPrice } from '../../shared/lib/format.js';
+import { formatPrice, productInitial } from '../../shared/lib/format.js';
 import { getProductCartQty } from '../../shared/lib/cart.js';
 import { useCart } from '../CartContext.jsx';
 
@@ -31,7 +31,7 @@ export default function ProductCard({ product, index, onPickVariant }) {
         {product.image_url && !imgError ? (
           <img src={product.image_url} alt={product.name} loading="lazy" onError={() => setImgError(true)} />
         ) : (
-          <span className="product-image-placeholder">☕</span>
+          <span className="product-image-placeholder" aria-hidden="true">{productInitial(product.name)}</span>
         )}
       </div>
 

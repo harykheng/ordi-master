@@ -116,7 +116,7 @@ export default function ProductFormModal({ isOpen, product, onClose, onSaved }) 
         <div className="form-group">
           <label htmlFor="productName">Nama Produk *</label>
           <input
-            type="text" id="productName" placeholder="Contoh: Kopi Latte Susu" required
+            type="text" id="productName" placeholder="Contoh: nama produk" required
             value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
           />
         </div>
@@ -124,7 +124,7 @@ export default function ProductFormModal({ isOpen, product, onClose, onSaved }) 
         <div className="form-group">
           <label htmlFor="productDescription">Deskripsi <span style={{ fontWeight: 500, color: 'var(--text-soft)' }}>(opsional)</span></label>
           <textarea
-            id="productDescription" rows={2} placeholder="Contoh: Espresso + susu oat, tersedia hot/iced"
+            id="productDescription" rows={2} placeholder="Contoh: bahan, ukuran, atau pilihan yang tersedia"
             value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
           />
         </div>
@@ -153,7 +153,7 @@ export default function ProductFormModal({ isOpen, product, onClose, onSaved }) 
             onFileSelect={setImageFile}
             onRemove={() => { setImageFile(null); setExistingImageUrl(null); }}
             maxSizeMB={5}
-            hint="PNG, JPG, WEBP — Maks 5 MB"
+            hint="PNG, JPG, WEBP, maks 5 MB"
           />
         </div>
 

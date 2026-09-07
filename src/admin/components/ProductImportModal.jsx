@@ -6,8 +6,8 @@ import { importProducts } from '../../shared/lib/products.js';
 
 const TEMPLATE_HEADERS = ['Nama', 'Deskripsi', 'Harga', 'Stok', 'Badge New', 'Badge Terlaris', 'Tampil di Katalog'];
 const TEMPLATE_EXAMPLE_ROWS = [
-  ['Es Kopi Susu', 'Espresso + susu, tersedia hot/iced', '18000', '', 'TRUE', 'FALSE', 'TRUE'],
-  ['Croissant Coklat', '', '22000', '10', 'FALSE', 'TRUE', 'TRUE'],
+  ['Produk Contoh A', 'Deskripsi singkat, boleh dikosongkan', '18000', '', 'TRUE', 'FALSE', 'TRUE'],
+  ['Produk Contoh B', '', '22000', '10', 'FALSE', 'TRUE', 'TRUE'],
 ];
 
 function parseBool(str, defaultVal) {
@@ -122,7 +122,7 @@ export default function ProductImportModal({ isOpen, onClose, onImported }) {
     <Modal isOpen={isOpen} onClose={handleClose} title="Import Produk dari CSV" boxClassName="product-import-box">
       <div className="import-intro">
         <p>Upload file CSV berisi daftar produk. Kolom yang dibaca: <strong>Nama, Deskripsi, Harga, Stok, Badge New, Badge Terlaris, Tampil di Katalog</strong>.</p>
-        <p className="form-hint">Foto &amp; varian tidak bisa lewat CSV — tambahkan manual lewat Edit setelah produk ke-import.</p>
+        <p className="form-hint">Foto &amp; varian tidak bisa lewat CSV. Tambahkan manual lewat Edit setelah produk ke-import.</p>
         <button type="button" className="btn btn-secondary import-template-btn" onClick={downloadTemplate}>⬇ Download Template CSV</button>
       </div>
 

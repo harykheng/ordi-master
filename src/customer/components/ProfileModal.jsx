@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCart } from '../CartContext.jsx';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { useBodyScrollLock } from '../../shared/hooks/useBodyScrollLock.js';
+import { useDialogKeyboard } from '../../shared/hooks/useDialogKeyboard.js';
 
-// Basic tier — delivery is still available, but there's no autocomplete/map
+// Basic tier, delivery is still available, but there's no autocomplete/map
 // preview/ongkir calculation (those are Antar+ features). Address is just a
 // plain typed field; ongkir gets confirmed manually by the admin over WA
 // after the order comes in, not computed here.
@@ -16,6 +17,8 @@ export default function ProfileModal({ isOpen, onClose }) {
   const [wa, setWa] = useState(state.profile.wa);
   const [address, setAddress] = useState(state.profile.address);
   const [addressNote, setAddressNote] = useState(state.profile.addressNote);
+  const sheetRef = useRef(null);
+  useDialogKeyboard({ active: isOpen, onClose, containerRef: sheetRef });
 
   // Re-sync local form state whenever the modal opens (so re-opening after save
   // shows the previously saved values, and reset after order completion clears it).
@@ -48,8 +51,8 @@ export default function ProfileModal({ isOpen, onClose }) {
   }
 
   return (
-    <div className="profile-overlay" style={{ display: isOpen ? 'flex' : 'none' }} onClick={onClose}>
-      <div className="profile-sheet" onClick={(e) => e.stopPropagation()}>
+    <div className="profile-overlay" role="dialog" aria-modal="true" aria-label="Detail Pemesan" style={{ display: isOpen ? 'flex' : 'none' }} onClick={onClose}>
+      <div className="profile-sheet" ref={sheetRef} onClick={(e) => e.stopPropagation()}>
         <div className="profile-sheet-drag"></div>
         <div className="profile-sheet-inner">
           <div className="profile-sheet-header">
@@ -77,7 +80,7 @@ export default function ProfileModal({ isOpen, onClose }) {
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                 />
-                <p className="form-hint">Ongkir belum dihitung otomatis — admin akan infoin ongkirnya lewat WhatsApp setelah pesanan masuk.</p>
+                <p className="form-hint">Ongkir belum dihitung otomatis. Admin akan infoin ongkirnya lewat WhatsApp setelah pesanan masuk.</p>
               </div>
               <div className="form-group">
                 <label htmlFor="customerAddressNote">Catatan Alamat <span className="label-opt">(opsional)</span></label>
