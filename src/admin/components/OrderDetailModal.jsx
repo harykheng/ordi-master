@@ -22,7 +22,7 @@ export default function OrderDetailModal({ isOpen, order, onClose, onStatusChang
     const labelMap = { confirmed: 'Dikonfirmasi', done: 'Selesai', cancelled: 'Dibatalkan' };
     try {
       await updateOrderStatus(order.id, newStatus);
-      showToast(`Pesanan ${labelMap[newStatus] || newStatus} ✅`, 'success');
+      showToast(`Pesanan ${labelMap[newStatus] || newStatus}`, 'success');
       onClose();
       await onStatusChanged();
     } catch (err) {
@@ -85,11 +85,11 @@ export default function OrderDetailModal({ isOpen, order, onClose, onStatusChang
 
         <div className="order-detail-actions">
           <button className="btn btn-secondary" onClick={onClose}>Tutup</button>
-          {customerWaUrl && <button className="btn btn-wa" onClick={sendToWA}>📤 WA Customer</button>}
-          {!isPending && <button className="btn btn-outline" onClick={printLabel}>🖨️ Print Label</button>}
-          {!isCancelled && !isDone && <button className="btn btn-danger" onClick={() => changeStatus('cancelled')}>❌ Batalkan</button>}
-          {!isPending && !isDone && !isCancelled && <button className="btn btn-success" onClick={() => changeStatus('done')}>✅ Selesai</button>}
-          {isPending && <button className="btn btn-primary" onClick={() => changeStatus('confirmed')}>✅ Konfirmasi</button>}
+          {customerWaUrl && <button className="btn btn-wa" onClick={sendToWA}>WA Customer</button>}
+          {!isPending && <button className="btn btn-outline" onClick={printLabel}>Print Label</button>}
+          {!isCancelled && !isDone && <button className="btn btn-danger" onClick={() => changeStatus('cancelled')}>Batalkan</button>}
+          {!isPending && !isDone && !isCancelled && <button className="btn btn-success" onClick={() => changeStatus('done')}>Selesai</button>}
+          {isPending && <button className="btn btn-primary" onClick={() => changeStatus('confirmed')}>Konfirmasi</button>}
         </div>
       </Modal>
 

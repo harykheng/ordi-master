@@ -12,11 +12,11 @@ import OrdersTab from './components/OrdersTab.jsx';
 import SettingsTab from './components/SettingsTab.jsx';
 
 const TABS = [
-  { key: 'dashboard', label: '📊 Dashboard' },
-  { key: 'products', label: '🛍 Produk' },
-  { key: 'promo', label: '🎟 Promo' },
-  { key: 'orders', label: '📦 Pesanan' },
-  { key: 'settings', label: '⚙️ Pengaturan' },
+  { key: 'dashboard', label: 'Dashboard' },
+  { key: 'products', label: 'Produk' },
+  { key: 'promo', label: 'Promo' },
+  { key: 'orders', label: 'Pesanan' },
+  { key: 'settings', label: 'Pengaturan' },
 ];
 
 function Dashboard() {
@@ -60,7 +60,7 @@ function Dashboard() {
         </div>
 
         <div id="tab-dashboard" className="tab-panel" style={{ display: activeTab === 'dashboard' ? '' : 'none' }}>
-          {activeTab === 'dashboard' && <DashboardTab />}
+          {activeTab === 'dashboard' && <DashboardTab onGoToOrders={() => selectTab('orders')} />}
         </div>
         <div id="tab-products" className="tab-panel" style={{ display: activeTab === 'products' ? '' : 'none' }}>
           {activeTab === 'products' && <ProductsTab />}

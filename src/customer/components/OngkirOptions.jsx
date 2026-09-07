@@ -19,7 +19,6 @@ export default function OngkirOptions() {
     return (
       <div style={{ marginTop: 10 }}>
         <div className="ongkir-unavailable">
-          <span>😔</span>
           <div>
             <strong>Di luar jangkauan delivery</strong>
             <div>{shippingStaticKm?.toFixed(1)} km dari toko, maksimal 10 km</div>

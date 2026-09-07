@@ -11,15 +11,15 @@ async function fetchSuggestions(q) {
     if (!res.ok) return [];
     return await res.json();
   } catch {
-    return []; // silent — customer can still search again
+    return []; // silent, customer can still search again
   }
 }
 
 // Full-screen address picker, opened by tapping the address summary card in
-// ProfileModal — replaces the old cramped in-sheet dropdown+map. Two internal
+// ProfileModal, replaces the old cramped in-sheet dropdown+map. Two internal
 // steps: search (full-screen results list) then confirm (bigger map preview +
 // the catatan alamat field), landing back on ProfileModal only once "Simpan
-// Alamat Ini" is tapped. Nothing here touches CartContext directly — the
+// Alamat Ini" is tapped. Nothing here touches CartContext directly, the
 // picked address/coords/note are only reported up via onConfirm.
 export default function AddressPickerModal({ isOpen, onClose, onConfirm, initialAddress, initialNote }) {
   const [step, setStep] = useState('search');
@@ -82,7 +82,7 @@ export default function AddressPickerModal({ isOpen, onClose, onConfirm, initial
   return (
     // Rendered as a sibling of .profile-sheet inside ProfileModal's
     // .profile-overlay, which closes the whole sheet on any click that
-    // bubbles to it — stopPropagation here so interacting with the picker
+    // bubbles to it, stopPropagation here so interacting with the picker
     // doesn't accidentally close the profile sheet underneath it.
     <div
       className="address-picker-overlay"
@@ -121,7 +121,6 @@ export default function AddressPickerModal({ isOpen, onClose, onConfirm, initial
               const title = (r.display_place || r.display_name || '').split(',')[0];
               return (
                 <button type="button" key={i} className="address-picker-result-item" onClick={() => pickResult(r)}>
-                  <span className="address-picker-result-icon">📍</span>
                   <div>
                     <div className="address-picker-result-title">{title}</div>
                     <div className="address-picker-result-sub">{r.display_name}</div>
@@ -140,7 +139,6 @@ export default function AddressPickerModal({ isOpen, onClose, onConfirm, initial
           </header>
           <div className="address-picker-confirm-body">
             <div className="address-picker-selected-card">
-              <span className="address-picker-result-icon">📍</span>
               <span>{selected?.label}</span>
             </div>
             <AddressMapPreview lat={selected?.lat} lng={selected?.lng} large />

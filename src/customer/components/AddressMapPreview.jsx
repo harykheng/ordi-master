@@ -5,7 +5,7 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-// Leaflet's default marker icon paths break under bundlers — point them at the
+// Leaflet's default marker icon paths break under bundlers, point them at the
 // bundled asset URLs instead (standard Vite+Leaflet fix). The prototype delete
 // is required too: without it, Leaflet's own path-detection logic still runs
 // and produces a doubled/broken icon URL even with iconUrl set explicitly.
@@ -16,7 +16,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-// Small read-only OpenStreetMap preview pinned at the resolved address coords —
+// Small read-only OpenStreetMap preview pinned at the resolved address coords ,
 // free tile server, no API key/cost, matches this project's "avoid Maps API
 // billing" stance (see CLAUDE.md). Renders nothing until coords are resolved.
 export default function AddressMapPreview({ lat, lng, large }) {

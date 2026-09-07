@@ -22,10 +22,10 @@ export default function ProductCard({ product, index, onPickVariant }) {
   }
 
   return (
-    <div className={`product-card${isOutOfStock ? ' product-card-oos' : ''}`} style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}>
+    <div className={`product-card${isOutOfStock ? ' product-card-oos' : ''}`}>
       {isOutOfStock && <div className="product-badge badge-oos">Habis</div>}
-      {!isOutOfStock && product.is_bestseller && <div className="product-badge badge-bestseller">⭐ Terlaris</div>}
-      {!isOutOfStock && !product.is_bestseller && product.is_new && <div className="product-badge badge-new">✨ New</div>}
+      {!isOutOfStock && product.is_bestseller && <div className="product-badge badge-bestseller">Terlaris</div>}
+      {!isOutOfStock && !product.is_bestseller && product.is_new && <div className="product-badge badge-new">Baru</div>}
 
       <div className="product-image-wrap">
         {product.image_url && !imgError ? (

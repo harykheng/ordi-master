@@ -1,4 +1,4 @@
-// Static distance-based shipping fallback — used when Biteship is unavailable
+// Static distance-based shipping fallback, used when Biteship is unavailable
 // or returns no couriers for a location. Ported verbatim from js/catalog.js.
 
 export function haversineDistance(lat1, lng1, lat2, lng2) {

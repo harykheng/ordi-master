@@ -6,7 +6,7 @@ import { useDialogKeyboard } from '../../shared/hooks/useDialogKeyboard.js';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { config } from '../../shared/lib/config.js';
 
-// Read-only QR re-display for an order that's already been confirmed/inserted —
+// Read-only QR re-display for an order that's already been confirmed/inserted ,
 // stacks as a popup on top of OrderSummaryModal (never touches App.jsx's
 // pendingOrder/confirmedOrder state). Deliberately has no "Konfirmasi Pesanan"
 // button: that flow already ran once via QrisModal, re-running it here would
@@ -55,7 +55,7 @@ export default function QrisViewModal({ order, settings, onClose }) {
 
         <p className="qp-hint">Scan dengan aplikasi bank atau e-wallet kamu</p>
 
-        <button className="btn-qp-save" onClick={saveQrisImage}>⬇ Simpan QR</button>
+        <button className="btn-qp-save" onClick={saveQrisImage}>Simpan QR</button>
       </div>
     </div>
   );

@@ -59,7 +59,6 @@ export default function PromoTab() {
 
       {!loading && !error && promos.length === 0 && (
         <div className="empty-admin-state visible">
-          <span className="empty-admin-icon">🎟️</span>
           <h3>Belum ada kode promo</h3>
           <p>Buat kode promo pertamamu!</p>
         </div>
@@ -82,13 +81,13 @@ export default function PromoTab() {
                   <div className="promo-meta">{minLabel} · {expLabel}</div>
                   <div>
                     {promo.is_active
-                      ? <span className="promo-tag promo-tag-active">✅ Aktif</span>
-                      : <span className="promo-tag promo-tag-inactive">⭕ Nonaktif</span>}
+                      ? <span className="promo-tag promo-tag-active">Aktif</span>
+                      : <span className="promo-tag promo-tag-inactive">Nonaktif</span>}
                   </div>
                 </div>
                 <div className="promo-card-actions">
-                  <button className="btn-sm btn-edit" onClick={() => openEdit(promo)}>✏️ Edit</button>
-                  <button className="btn-sm btn-delete" onClick={() => handleDelete(promo)}>🗑️</button>
+                  <button className="btn-sm btn-edit" onClick={() => openEdit(promo)}>Edit</button>
+                  <button className="btn-sm btn-delete" onClick={() => handleDelete(promo)} aria-label={`Hapus kode ${promo.code}`}>Hapus</button>
                 </div>
               </div>
             );
