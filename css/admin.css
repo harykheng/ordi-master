@@ -283,7 +283,7 @@ img.admin-product-img { font-size: inherit; }
   letter-spacing: 0.05em;
 }
 
-.admin-tag.tag-new         { background: #fff3e0; color: #d4660a; }
+.admin-tag.tag-new         { background: var(--status-pending-bg); color: var(--status-pending-fg); }
 .admin-tag.tag-bestseller  { background: var(--primary); color: var(--cream); }
 .admin-tag.tag-hidden      { background: var(--latte-xlight); color: var(--text-soft); }
 .admin-tag.tag-visible     { background: #e8f5e9; color: #2e7d32; }
@@ -821,8 +821,8 @@ img.admin-product-img { font-size: inherit; }
 .order-card:hover { box-shadow: var(--shadow-md); }
 
 .order-card-confirmed { border-left: 4px solid var(--primary); }
-.order-card-done      { border-left: 4px solid #22c55e; }
-.order-card-cancelled { border-left: 4px solid #ef4444; opacity: 0.7; }
+.order-card-done      { border-left: 4px solid var(--status-done-fg); }
+.order-card-cancelled { border-left: 4px solid var(--status-cancel-fg); opacity: 0.7; }
 
 .order-card-top {
   display: flex;
@@ -830,6 +830,8 @@ img.admin-product-img { font-size: inherit; }
   gap: 12px;
   margin-bottom: 12px;
 }
+
+.order-card-top > div:first-child { min-width: 0; }
 
 .order-number {
   font-weight: 800;
@@ -858,7 +860,7 @@ img.admin-product-img { font-size: inherit; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 260px;
+  max-width: 100%;
 }
 
 .order-card-right {
