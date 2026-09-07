@@ -24,7 +24,7 @@ function AppShell() {
   const [confirmedOrder, setConfirmedOrder] = useState(null);
   const [checkingOut, setCheckingOut] = useState(false);
 
-  // Once per tab session, not once per render/refresh — a sessionStorage
+  // Once per tab session, not once per render/refresh, a sessionStorage
   // flag survives React StrictMode's double-invoke in dev and keeps a
   // customer flipping between steps or refreshing from inflating the count.
   useEffect(() => {

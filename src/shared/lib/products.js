@@ -49,7 +49,7 @@ export async function deleteProduct(productId) {
 }
 
 // Bulk create from CSV import (see ProductImportModal.jsx). Rows are already
-// validated/parsed by the caller — this just inserts. No image_url/variants:
+// validated/parsed by the caller, this just inserts. No image_url/variants:
 // those aren't representable in a flat CSV row, admin adds them after via
 // the normal edit form.
 export async function importProducts(rows) {

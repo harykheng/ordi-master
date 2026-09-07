@@ -72,7 +72,6 @@ export default function App() {
 
         {searched && !order && (
           <div className="trk-notfound">
-            <span>😕</span>
             <div>
               <strong>Pesanan tidak ditemukan</strong>
               <p>Cek lagi kode pesanan &amp; nomor WhatsApp-nya ya.</p>

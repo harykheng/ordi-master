@@ -8,18 +8,18 @@ import OrderDetailModal from './OrderDetailModal.jsx';
 import AdminErrorState from './AdminErrorState.jsx';
 
 const FILTERS = [
-  { key: 'pending', label: '🕐 Menunggu' },
-  { key: 'confirmed', label: '🆕 Diproses' },
-  { key: 'done', label: '✅ Selesai' },
-  { key: 'cancelled', label: '❌ Dibatalkan' },
+  { key: 'pending', label: 'Menunggu' },
+  { key: 'confirmed', label: 'Diproses' },
+  { key: 'done', label: 'Selesai' },
+  { key: 'cancelled', label: 'Dibatalkan' },
   { key: 'all', label: 'Semua' },
 ];
 
 const STATUS_BADGES = {
-  pending: <span className="order-status-badge badge-pending">🕐 Menunggu</span>,
-  confirmed: <span className="order-status-badge badge-confirmed">🆕 Diproses</span>,
-  done: <span className="order-status-badge badge-done">✅ Selesai</span>,
-  cancelled: <span className="order-status-badge badge-cancelled">❌ Dibatalkan</span>,
+  pending: <span className="order-status-badge badge-pending">Menunggu</span>,
+  confirmed: <span className="order-status-badge badge-confirmed">Diproses</span>,
+  done: <span className="order-status-badge badge-done">Selesai</span>,
+  cancelled: <span className="order-status-badge badge-cancelled">Dibatalkan</span>,
 };
 
 const STATUS_PLAIN = {
@@ -66,7 +66,7 @@ export default function OrdersTab() {
   async function quickConfirm(order) {
     try {
       await updateOrderStatus(order.id, 'confirmed');
-      showToast('Pesanan Dikonfirmasi ✅', 'success');
+      showToast('Pesanan dikonfirmasi', 'success');
       await refetch();
     } catch (err) {
       showToast('Gagal ubah status: ' + err.message, 'error');
@@ -81,7 +81,7 @@ export default function OrdersTab() {
     const filterLabel = filter === 'all' ? 'semua' : filter;
     const today = new Date().toISOString().slice(0, 10);
     downloadCsv(`pesanan-${filterLabel}-${today}.csv`, CSV_HEADERS, filtered.map(orderToCsvRow));
-    showToast(`${filtered.length} pesanan berhasil di-export ✅`, 'success');
+    showToast(`${filtered.length} pesanan berhasil di-export`, 'success');
   }
 
   return (
@@ -97,7 +97,7 @@ export default function OrdersTab() {
                 : `${orders.length} pesanan`}
           </p>
         </div>
-        <button className="btn btn-secondary" onClick={exportCsv} disabled={loading}>⬇ Export CSV</button>
+        <button className="btn btn-secondary" onClick={exportCsv} disabled={loading}>Export CSV</button>
       </div>
 
       <div className="orders-filter-bar">
@@ -123,8 +123,7 @@ export default function OrdersTab() {
 
       {!loading && !error && filtered.length === 0 && (
         <div className="empty-admin-state visible">
-          <span className="empty-admin-icon">📦</span>
-          <h3>Belum ada pesanan</h3>
+                    <h3>Belum ada pesanan</h3>
           <p>Pesanan yang dikonfirmasi dari WhatsApp akan muncul di sini</p>
         </div>
       )}
@@ -155,9 +154,9 @@ export default function OrdersTab() {
                 </div>
                 <div className="order-card-actions">
                   {order.status === 'pending' && (
-                    <button className="btn-sm btn-confirm-quick" onClick={() => quickConfirm(order)}>✅ Konfirmasi</button>
+                    <button className="btn-sm btn-confirm-quick" onClick={() => quickConfirm(order)}>Konfirmasi</button>
                   )}
-                  <button className="btn-sm btn-edit" onClick={() => setDetailOrder(order)}>📋 Detail</button>
+                  <button className="btn-sm btn-edit" onClick={() => setDetailOrder(order)}>Detail</button>
                 </div>
               </div>
             );

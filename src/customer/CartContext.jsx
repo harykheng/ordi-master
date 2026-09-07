@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useReducer } from 'react';
 
-// Only the profile card (name/WA/address/patokan) persists long-term — cart,
+// Only the profile card (name/WA/address/patokan) persists long-term, cart,
 // step, tanggal pemesanan, promo, and shipping are intentionally NOT
 // persisted, they reset on every refresh like before.
 const PROFILE_STORAGE_KEY = 'ordi_customer_profile_v1';
@@ -16,7 +16,7 @@ const initialState = {
   profile: { name: '', wa: '', address: '', addressNote: '', lat: null, lng: null },
   isProfileFilled: false,
   note: '',
-  // Shipping calc result — displayed by OngkirOptions, set by useShipping (triggered
+  // Shipping calc result, displayed by OngkirOptions, set by useShipping (triggered
   // once from ProfileModal's save handler, never on every address keystroke).
   shippingStatus: 'idle',   // 'idle' | 'loading' | 'options' | 'static' | 'unavailable'
   shippingOptions: [],       // Biteship courier options, when shippingStatus === 'options'
@@ -136,7 +136,7 @@ function reducer(state, action) {
       return { ...state, note: action.note };
 
     case 'RESET_ORDER':
-      // Profile stays — it's the one thing meant to survive past this order
+      // Profile stays, it's the one thing meant to survive past this order
       // (see PROFILE_STORAGE_KEY), so a returning customer doesn't have to
       // retype name/WA/address for their next order in the same visit.
       return {
@@ -152,7 +152,7 @@ function reducer(state, action) {
 }
 
 // Profile persists across refresh AND closing the browser entirely (unlike
-// cart/step/tanggal, which reset every time) — matches what a returning
+// cart/step/tanggal, which reset every time), matches what a returning
 // customer expects: name/WA/address/patokan already filled in next visit.
 function loadPersistedProfile() {
   try {
@@ -182,7 +182,7 @@ export function CartProvider({ children }) {
     try {
       localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(state.profile));
     } catch {
-      // storage unavailable (private mode, quota) — profile just won't be remembered
+      // storage unavailable (private mode, quota), profile just won't be remembered
     }
   }, [state.profile]);
 

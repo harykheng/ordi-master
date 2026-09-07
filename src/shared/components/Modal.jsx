@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { useDialogKeyboard } from '../hooks/useDialogKeyboard.js';
 
-// Generic modal shell — reused by admin's ProductFormModal/PromoFormModal/OrderDetailModal.
+// Generic modal shell, reused by admin's ProductFormModal/PromoFormModal/OrderDetailModal.
 // Mirrors the original .modal-overlay/.modal-box/.modal-header/.modal-close markup,
 // toggled via the "active" class (opacity/pointer-events transition in main.css).
 export default function Modal({ isOpen, onClose, title, boxClassName = '', overlayClassName = '', children }) {

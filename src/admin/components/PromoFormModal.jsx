@@ -50,7 +50,7 @@ export default function PromoFormModal({ isOpen, promo, onClose, onSaved }) {
         expiresAt: form.expires ? new Date(form.expires + 'T23:59:59+07:00').toISOString() : null,
         isActive: form.isActive,
       });
-      showToast(promo ? 'Kode promo berhasil diperbarui! ✅' : 'Kode promo berhasil ditambahkan! ✅', 'success');
+      showToast(promo ? 'Kode promo berhasil diperbarui!' : 'Kode promo berhasil ditambahkan!', 'success');
       onSaved();
       onClose();
     } catch (err) {
@@ -123,7 +123,7 @@ export default function PromoFormModal({ isOpen, promo, onClose, onSaved }) {
         <div className="form-group" style={{ marginBottom: 0 }}>
           <div className="toggle-item">
             <div className="toggle-label">
-              <span className="toggle-label-title">✅ Aktif</span>
+              <span className="toggle-label-title">Aktif</span>
               <span className="toggle-label-sub">Promo bisa digunakan customer</span>
             </div>
             <label className="toggle-switch">

@@ -4,7 +4,7 @@ import { supabase } from '../../shared/lib/supabaseClient.js';
 import { config } from '../../shared/lib/config.js';
 import { haversineDistance, calcShippingRate } from '../../shared/lib/shipping.js';
 
-// Production path only — calls the Supabase Edge Function, which keeps the real
+// Production path only, calls the Supabase Edge Function, which keeps the real
 // BITESHIP_API_KEY server-side. No direct-call test-key path (see CLAUDE.md).
 async function checkBiteshipRatesViaEdgeFunction(destLat, destLng, weightGrams, orderValue) {
   const { data, error } = await supabase.functions.invoke('check-shipping', {
@@ -21,7 +21,7 @@ async function checkBiteshipRatesViaEdgeFunction(destLat, destLng, weightGrams, 
 export function useShipping() {
   const { dispatch } = useCart();
 
-  // Fires exactly once per call — the caller (ProfileModal's save handler) is
+  // Fires exactly once per call, the caller (ProfileModal's save handler) is
   // responsible for only calling this once, not on every address keystroke.
   const calculate = useCallback(async (destLat, destLng, weightGrams, orderValue) => {
     dispatch({ type: 'SET_SHIPPING_LOADING' });
@@ -32,7 +32,7 @@ export function useShipping() {
       return;
     } catch {
       // Biteship unavailable / Edge Function not deployed yet / no courier for this
-      // location — fall back to the static distance-based tiers.
+      // location, fall back to the static distance-based tiers.
     }
 
     const km = haversineDistance(config.storeLat, config.storeLng, destLat, destLng);

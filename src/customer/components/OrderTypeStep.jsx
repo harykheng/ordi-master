@@ -57,13 +57,13 @@ export default function OrderTypeStep({ settings }) {
           </div>
           {waHelpUrl && (
             <a className="btn-wa-help" href={waHelpUrl} target="_blank" rel="noopener noreferrer">
-              💬 Butuh bantuan?
+              Butuh bantuan?
             </a>
           )}
         </div>
 
         <h1 className="ob-headline">Mau pickup<br />atau delivery?</h1>
-        <p className="ob-sub">Pilih dulu, baru lihat menu 👇</p>
+        <p className="ob-sub">Pilih dulu, baru lihat menu.</p>
 
         <div className="order-type-grid">
           <button
@@ -89,7 +89,6 @@ export default function OrderTypeStep({ settings }) {
         </div>
 
         <div className={`pickup-address-card${state.orderType === 'pickup' ? ' visible' : ''}`}>
-          <span className="pickup-pin">📍</span>
           <div>
             <div className="pickup-info-label">Lokasi Pickup</div>
             <div className="pickup-info-name">{brandName}</div>
@@ -97,7 +96,7 @@ export default function OrderTypeStep({ settings }) {
             <div className="pickup-info-hours">{settings?.store_hours || config.storeOpenHours}</div>
             {storeMapsUrl && (
               <a className="pickup-maps-link" href={storeMapsUrl} target="_blank" rel="noopener noreferrer">
-                Buka di Google Maps →
+                Buka di Google Maps
               </a>
             )}
           </div>
@@ -140,7 +139,7 @@ export default function OrderTypeStep({ settings }) {
         </div>
 
         <footer className="site-footer">
-          <a className="footer-track-link" href="/tracking/">📦 Lacak Pesanan</a>
+          <a className="footer-track-link" href="/tracking/">Lacak Pesanan</a>
           <div className="footer-socials">
             {instagramUrl && (
             <a className="footer-social-link" href={instagramUrl} target="_blank" rel="noopener noreferrer">

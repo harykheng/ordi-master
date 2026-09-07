@@ -155,3 +155,29 @@ Sudah pernah divalidasi langsung ke Postgres lokal (bukan cuma dibaca): order no
 - **`supabase-setup.sql` adalah sumber kebenaran skema, README dokumentasi turunannya** — kalau bikin perubahan schema/function/policy, edit `supabase-setup.sql` dulu (idempotent, `DROP POLICY IF EXISTS`/`CREATE OR REPLACE FUNCTION`/`ADD COLUMN IF NOT EXISTS` semua dipakai supaya aman di-re-run di instance yang udah jalan), baru sinkronkan ke README. Jangan tulis SQL cuma di README doang.
 - **Alamat delivery dipindah dari dropdown-in-sheet (`AddressAutocomplete.jsx`, sudah dihapus) ke full-screen picker (`AddressPickerModal.jsx`)** — dropdown suggestion yang nempel di textarea kecil di dalam bottom sheet konsisten kena masalah di mobile: ketutup keyboard, harus scroll manual buat lihat hasil, dan kalau alamat udah ke-resolve sebelumnya (edit ulang), dropdown-nya bisa tabrakan sama `AddressMapPreview` (Leaflet punya internal z-index sampai 800 di stacking context global, gampang ngalahin dropdown manapun). Full-screen picker (2 step terpisah: search lalu confirm) ngilangin semua masalah itu sekaligus — gak ada lagi yang perlu di-scroll-into-view atau di-z-index-perang-in, karena search dan map gak pernah tampil bersamaan di layar yang sama.
 - **Demo badge tier di customer app (`TierBadge.jsx`/`TierCompareModal.jsx`, `config.demoMode` dari `VITE_DEMO_MODE`) — sengaja CUMA ada di `main`, JANGAN di-merge/cherry-pick ke `tier-1`/`tier-2`/`tier-3`.** `main` gabung semua fitur 3 tier jadi satu build, dipakai buat demo jualan ke calon klien — badge kecil ("🚚 Antar"/"💳 Bayar") di fitur-fitur yang beda per paket, klik buka tabel perbandingan Basic/Antar/Bayar. Default off (`VITE_DEMO_MODE` gak di-set = badge gak pernah render), biar aman kalau ada yang gak sengaja pakai `main` buat build client asli. Deployment client sungguhan selalu dari salah satu `tier-1`/`tier-2`/`tier-3`, yang emang cuma punya fitur 1 tier — badge perbandingan gak relevan di situ.
+
+---
+
+<!-- antislop:start -->
+## Desain: arah dulu, baru filter
+
+Untuk kerjaan UI, copy, layout mobile, aksesibilitas, atau komentar kode:
+
+1. Baca `DESIGN.md` dulu. Itu **arah** desainnya: identitas, palet, tipografi, dial (ENERGY 2 / RHYTHM 1 / MOTION 2), motif, dan hierarki per layar. Kalau `DESIGN.md` dan selera pribadi bertabrakan, `DESIGN.md` yang menang.
+2. Baru pakai antislop sebagai **filter**: aturan lengkapnya di [miqdadbadjuber/anti-slop](https://github.com/miqdadbadjuber/anti-slop) (`antislop.md` inti, plus skill `antislop-ui`, `antislop-copywriting`, `antislop-human`, `antislop-layoutmobile`, `antislop-code`).
+3. Riwayat audit ada di `anti-slop/`: `audit-001` (19 temuan), `audit-002` (perbaikan HIGH 1 sampai 8), `audit-003` (perbaikan sisanya). Baca yang terakhir sebelum mengubah UI, supaya keputusan yang sudah diambil tidak dibatalkan tanpa sengaja.
+
+Aturan keras yang paling sering kelanggar di repo ini, jadi cek ini dulu:
+
+- **Tidak ada em dash (—) di teks yang dilihat user.** Pakai koma, titik dua, titik, atau `·`.
+- **Setiap yang bisa ditekan minimal 44 x 44px**, dan dua kontrol bersebelahan tidak boleh berbagi area sentuh.
+- **Setiap pasangan teks dan latar minimal 4.5:1** (3:1 untuk teks besar). Hitung, jangan dikira.
+- **Jangan matikan pinch zoom.** Kalau iOS auto-zoom saat input difokus, naikkan font input ke 16px, jangan kunci zoom.
+- **Setiap kontrol harus bisa dipakai keyboard**: Tab sampai, Enter/Space menekan, Escape menutup dialog. Kalau butuh elemen klik, pakai `<button>`, bukan `<div>`.
+- **Jangan render link yang URL-nya bisa kosong.** Sembunyikan kontrolnya.
+- **Setiap tampilan data punya tiga keadaan**: kosong, memuat, gagal.
+- **Emoji hanya kalau membawa informasi**, lihat bagian Motif di `DESIGN.md`.
+- **Jangan hardcode ikon atau copy khas satu jenis toko.** Ikon baca `settings.brand_icon`, placeholder produk pakai inisial nama.
+
+Sebelum bilang selesai: jalankan `npm run build`, lalu benar-benar buka aplikasinya dan klik elemen yang kamu ubah. Klaim "sudah dites" tanpa daftar apa yang diklik bukan tes.
+<!-- antislop:end -->

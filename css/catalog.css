@@ -1,14 +1,10 @@
-/* ================================================
-   ORDI MASTER — CATALOG STYLES (3-step flow)
-   ================================================ */
+/* Ordi Master customer catalog styles (3-step order flow) */
 
-/* ---- STEP SYSTEM ---- */
+/* STEP SYSTEM */
 .step { display: none; }
 .step.active { display: block; animation: slideUp 0.3s ease; }
 
-/* ================================================================
-   STEP 1 — ONBOARDING
-   ================================================================ */
+/* STEP 1 : ONBOARDING */
 .onboarding {
   min-height: 100dvh;
   background: var(--white);
@@ -19,7 +15,7 @@
   margin: 0 auto;
 }
 
-/* ---- OB TOPBAR ---- */
+/* OB TOPBAR */
 .ob-topbar {
   display: flex;
   align-items: center;
@@ -38,8 +34,8 @@
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: #e7f7ef;
-  color: #1a7a3c;
+  background: var(--wa-chip-bg);
+  color: var(--wa-chip-fg);
   border-radius: 20px;
   font-size: 13px;
   font-weight: 700;
@@ -58,7 +54,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #e7f7ef;
+  background: var(--wa-chip-bg);
   border-radius: 50%;
   font-size: 16px;
   text-decoration: none;
@@ -68,7 +64,7 @@
 
 .btn-wa-icon:hover { background: #d0f0df; }
 
-/* ---- HEADLINE ---- */
+/* HEADLINE */
 .ob-content { padding: 0 20px; }
 
 .ob-headline {
@@ -87,7 +83,7 @@
   margin: 0 20px 24px;
 }
 
-/* ---- ORDER TYPE CARDS ---- */
+/* ORDER TYPE CARDS */
 .order-type-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -132,7 +128,7 @@
 .order-type-name { font-size: 17px; font-weight: 800; color: var(--text-dark); display: block; margin-bottom: 2px; }
 .order-type-desc { font-size: 12px; color: var(--text-soft); font-weight: 500; display: block; }
 
-/* ---- PICKUP ADDRESS ---- */
+/* PICKUP ADDRESS */
 .pickup-address-card {
   background: var(--cream);
   border-radius: var(--radius-md);
@@ -146,15 +142,14 @@
 
 .pickup-address-card.visible { display: flex; }
 
-.pickup-pin { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
-.pickup-info-label { font-size: 11px; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
+.pickup-info-label { font-size: 13px; font-weight: 700; color: var(--text-mid); margin-bottom: 3px; }
 .pickup-info-name  { font-size: 14px; font-weight: 800; color: var(--text-dark); margin-bottom: 3px; }
 .pickup-info-addr  { font-size: 13px; font-weight: 500; color: var(--text-mid); line-height: 1.5; margin-bottom: 3px; }
 .pickup-info-hours { font-size: 12px; font-weight: 600; color: var(--text-soft); margin-bottom: 8px; }
 .pickup-maps-link  { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; color: var(--primary); text-decoration: none; }
 .pickup-maps-link:hover { text-decoration: underline; }
 
-/* ---- DATE SECTION ---- */
+/* DATE SECTION */
 .date-section {
   margin: 0 20px 24px;
   display: none;
@@ -163,7 +158,7 @@
 
 .date-section.visible { display: block; }
 
-.date-section-label { font-size: 13px; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+.date-section-label { font-size: 13px; font-weight: 700; color: var(--text-mid); margin-bottom: 10px; }
 
 .date-chips-wrap {
   display: flex;
@@ -205,7 +200,7 @@
 .date-chip.chip-today,
 .date-chip.chip-tomorrow { min-width: 80px; }
 
-/* ---- STEP 1 CTA ---- */
+/* STEP 1 CTA */
 .ob-footer { margin-top: auto; padding: 20px 20px 0; }
 
 .btn-next {
@@ -231,11 +226,9 @@
 .btn-next:active:not(:disabled) { transform: translateY(0); }
 .btn-next:disabled { opacity: 0.28; cursor: not-allowed; }
 
-/* ================================================================
-   STEP 2 — CATALOG
-   ================================================================ */
+/* STEP 2 : CATALOG */
 
-/* ---- CATALOG TOPBAR ---- */
+/* CATALOG TOPBAR */
 .catalog-topbar {
   background: var(--white);
   padding: 12px 16px;
@@ -280,7 +273,7 @@
 .topbar-brand-name { font-size: 16px; font-weight: 800; color: var(--text-dark); letter-spacing: -0.01em; }
 .topbar-brand-name-logo { object-fit: contain; width: auto; max-width: 130px; height: auto; max-height: 26px; }
 
-/* ---- ORDER INFO STRIP ---- */
+/* ORDER INFO STRIP */
 .order-info-strip {
   display: flex;
   align-items: center;
@@ -328,7 +321,7 @@
 
 .ois-change:hover { background: var(--latte-xlight); }
 
-/* ---- BANNER ---- */
+/* BANNER */
 .catalog-banner {
   background: linear-gradient(135deg, var(--primary) 0%, #7a4a38 55%, #9a6248 100%);
   margin: 16px 16px 0;
@@ -374,22 +367,20 @@
   border-radius: 50%;
 }
 
-/* ---- PRODUCTS SECTION ---- */
+/* PRODUCTS SECTION */
 .products-section {
   padding: 20px 16px 120px;
 }
 
 .section-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--text-soft);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  color: var(--text-mid);
   margin-bottom: 12px;
   margin-top: 16px;
 }
 
-/* ---- PRODUCT GRID ---- */
+/* PRODUCT GRID */
 .products-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -399,7 +390,7 @@
 @media (min-width: 520px) { .products-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 720px) { .products-grid { grid-template-columns: repeat(4, 1fr); gap: 14px; } }
 
-/* ---- PRODUCT CARD ---- */
+/* PRODUCT CARD */
 .product-card {
   background: var(--white);
   border-radius: var(--radius-lg);
@@ -411,7 +402,6 @@
   transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
   position: relative;
   overflow: hidden;
-  animation: fadeUp 0.4s ease both;
 }
 
 .product-card:hover {
@@ -420,7 +410,7 @@
   border-color: var(--latte-light);
 }
 
-/* ---- BADGE ---- */
+/* BADGE */
 .product-badge {
   position: absolute;
   top: 9px;
@@ -434,7 +424,7 @@
   z-index: 1;
 }
 
-.badge-new        { background: #fff3e0; color: #9a3e00; }
+.badge-new        { background: var(--status-pending-bg); color: var(--status-pending-fg); }
 .badge-bestseller { background: var(--primary); color: #fff; }
 .badge-oos        { background: #4a4a4a; color: #fff; }
 
@@ -444,11 +434,11 @@
 .product-stock-hint {
   font-size: 11px;
   font-weight: 700;
-  color: #9a3e00;
+  color: var(--status-pending-fg);
   margin-top: 2px;
 }
 
-/* ---- PRODUCT IMAGE ---- */
+/* PRODUCT IMAGE */
 .product-image-wrap {
   width: 100%;
   aspect-ratio: 1;
@@ -470,7 +460,7 @@
 .product-card:hover .product-image-wrap img { transform: scale(1.08); }
 .product-image-placeholder { font-size: 42px; opacity: 0.55; }
 
-/* ---- PRODUCT INFO ---- */
+/* PRODUCT INFO */
 .product-name {
   font-size: 13px;
   font-weight: 700;
@@ -483,7 +473,7 @@
 
 .product-price { font-size: 14px; font-weight: 800; color: var(--primary); }
 
-/* ---- QTY CONTROLS ---- */
+/* QTY CONTROLS */
 .product-controls { display: flex; align-items: center; gap: 8px; }
 
 .qty-btn {
@@ -513,7 +503,7 @@
 
 .qty-display { font-size: 15px; font-weight: 800; color: var(--text-dark); min-width: 20px; text-align: center; }
 
-/* ---- STICKY FOOTER (cart) ---- */
+/* STICKY FOOTER (cart) */
 .catalog-sticky-footer {
   position: fixed;
   bottom: 0;
@@ -539,7 +529,6 @@
 }
 
 .csf-left  { display: flex; align-items: center; gap: 12px; }
-.csf-icon  { font-size: 26px; flex-shrink: 0; }
 .csf-qty   { font-size: 13px; font-weight: 600; color: var(--text-soft); }
 .csf-total { font-size: 18px; font-weight: 800; color: var(--text-dark); margin-top: 1px; }
 
@@ -552,7 +541,7 @@
 }
 .csf-chevron.open { transform: rotate(180deg); }
 
-/* ---- STICKY FOOTER (cart) — expandable item list ---- */
+/* STICKY FOOTER (cart), expandable item list */
 .csf-list {
   max-height: 0;
   overflow: hidden;
@@ -598,17 +587,15 @@
 .csf-cta:hover { background: var(--primary-hover); transform: translateY(-1px); }
 .csf-cta:active { transform: translateY(0); }
 
-/* ---- LOADING / EMPTY / ERROR ---- */
+/* LOADING / EMPTY / ERROR */
 .loading-state { grid-column: 1/-1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 14px; color: var(--text-soft); font-weight: 600; }
 
 .catalog-empty, .catalog-error { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--text-soft); }
-.catalog-empty-icon, .catalog-error-icon { font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.4; }
+.catalog-empty-icon { font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.4; }
 .catalog-empty h3, .catalog-error h3 { font-size: 18px; font-weight: 800; color: var(--text-mid); margin-bottom: 6px; }
 .catalog-empty p, .catalog-error p { font-size: 14px; font-weight: 500; }
 
-/* ================================================================
-   STEP 3 — CHECKOUT
-   ================================================================ */
+/* STEP 3 : CHECKOUT */
 .checkout-body {
   background: var(--cream);
   padding: 16px;
@@ -618,7 +605,7 @@
   flex-direction: column;
 }
 
-/* ---- CO SECTION ---- */
+/* CO SECTION */
 .co-section {
   background: var(--white);
   border-radius: var(--radius-lg);
@@ -627,15 +614,13 @@
 }
 
 .co-section-title {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-soft);
+  color: var(--text-mid);
   margin-bottom: 14px;
 }
 
-/* ---- CO META CARD ---- */
+/* CO META CARD */
 .co-meta-card {
   background: var(--cream);
   border-radius: var(--radius-md);
@@ -655,11 +640,10 @@
   margin: 12px 0;
 }
 
-.co-meta-icon  { font-size: 20px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
-.co-meta-label { font-size: 11px; font-weight: 600; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+.co-meta-label { font-size: 13px; font-weight: 600; color: var(--text-mid); margin-bottom: 3px; }
 .co-meta-value { font-size: 15px; font-weight: 700; color: var(--text-dark); }
 
-/* ---- CO PICKUP CARD ---- */
+/* CO PICKUP CARD */
 .co-pickup-card {
   background: var(--cream);
   border-radius: var(--radius-md);
@@ -669,7 +653,7 @@
 
 .co-pickup-addr { font-size: 13px; font-weight: 500; color: var(--text-mid); line-height: 1.5; margin-top: 4px; }
 
-/* ---- DELIVERY ADDRESS INPUT ---- */
+/* DELIVERY ADDRESS INPUT */
 .address-input-wrap { display: flex; flex-direction: column; gap: 8px; }
 
 .btn-use-location {
@@ -709,7 +693,7 @@
 
 .address-map-preview-lg { height: 220px; margin-top: 0; }
 
-/* ---- Address summary card (ProfileModal, tap opens AddressPickerModal) ---- */
+/* Address summary card (ProfileModal, tap opens AddressPickerModal) */
 .address-summary-card {
   display: flex;
   align-items: flex-start;
@@ -752,7 +736,7 @@
 }
 .address-summary-empty:hover { background: var(--latte-light); }
 
-/* ---- Full-screen address picker (AddressPickerModal) ---- */
+/* Full-screen address picker (AddressPickerModal) */
 .address-picker-overlay {
   position: fixed;
   inset: 0;
@@ -812,7 +796,6 @@
 .address-picker-result-item:hover { background: var(--latte-xlight); }
 .address-picker-result-item:active { background: var(--latte-light); }
 
-.address-picker-result-icon { font-size: 15px; line-height: 1.5; flex-shrink: 0; }
 
 .address-picker-result-title { font-size: 14px; font-weight: 700; color: var(--text-dark); }
 .address-picker-result-sub { font-size: 12px; color: var(--text-soft); margin-top: 2px; line-height: 1.4; }
@@ -849,7 +832,7 @@
 }
 .address-maps-verify:hover { text-decoration: underline; }
 
-/* ---- ONGKIR AUTO RESULT ---- */
+/* ONGKIR AUTO RESULT */
 #ongkirOptions { margin-top: 10px; }
 
 .ongkir-static-result {
@@ -873,7 +856,7 @@
   border: 1.5px solid #f5c6cb;
   border-radius: var(--radius-md);
   font-size: 13px;
-  color: #c0392b;
+  color: var(--danger);
   animation: fadeIn 0.25s ease;
 }
 .ongkir-unavailable strong { display: block; font-weight: 700; margin-bottom: 2px; }
@@ -896,7 +879,7 @@
 .spinner-sm {
   width: 14px;
   height: 14px;
-  border: 2px solid var(--border, #e8ded4);
+  border: 2px solid var(--border, var(--border-light));
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.75s linear infinite;
@@ -911,7 +894,7 @@
   justify-content: space-between;
   padding: 11px 14px;
   background: #fff;
-  border: 1.5px solid var(--border-light, #e8ded4);
+  border: 1.5px solid var(--border-light);
   border-radius: var(--radius-md);
   gap: 10px;
   cursor: pointer;
@@ -921,7 +904,7 @@
 .ongkir-option-item:hover     { border-color: var(--primary); }
 .ongkir-option-item.selected  { border-color: var(--primary); background: var(--latte-xlight); }
 
-/* ---- SHIPPING LOADING OVERLAY (full-screen, saat cek ongkir) ---- */
+/* SHIPPING LOADING OVERLAY (full-screen, saat cek ongkir) */
 .shipping-loading-overlay {
   position: fixed;
   inset: 0;
@@ -1016,7 +999,7 @@
   40%           { transform: translateY(-6px); opacity: 1; }
 }
 
-/* ---- CO SHIPPING ROW ---- */
+/* CO SHIPPING ROW */
 .co-shipping-row {
   display: flex;
   justify-content: space-between;
@@ -1025,7 +1008,7 @@
 }
 .co-shipping-amount { font-size: 15px; font-weight: 700; color: var(--text-dark); }
 
-/* ---- CO ITEMS LIST ---- */
+/* CO ITEMS LIST */
 .co-item {
   display: flex;
   align-items: center;
@@ -1059,8 +1042,8 @@
   width: 26px;
   height: 26px;
   border: none;
-  background: #fde8e8;
-  color: #c0392b;
+  background: var(--danger-bg);
+  color: var(--danger);
   border-radius: 50%;
   cursor: pointer;
   font-size: 10px;
@@ -1072,9 +1055,9 @@
   justify-content: center;
   margin-left: 4px;
 }
-.co-item-del:hover { background: #c0392b; color: white; }
+.co-item-del:hover { background: var(--danger); color: white; }
 
-/* ---- CO TOTAL ---- */
+/* CO TOTAL */
 .co-total-row {
   display: flex;
   justify-content: space-between;
@@ -1087,13 +1070,13 @@
 .co-total-label  { font-size: 15px; font-weight: 600; color: var(--text-mid); }
 .co-total-amount { font-size: 20px; font-weight: 800; color: var(--primary); }
 
-/* ---- CO SUBMIT ---- */
+/* CO SUBMIT */
 .co-submit { margin-top: 8px; }
 
 .btn-wa-send {
   width: 100%;
   padding: 18px;
-  background: #15803d;
+  background: var(--success);
   color: var(--white);
   border: none;
   border-radius: var(--radius-lg);
@@ -1106,7 +1089,7 @@
 }
 
 .btn-wa-send:hover {
-  background: #0f6b34;
+  background: var(--success-hover);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(21,128,61,0.3);
 }
@@ -1124,9 +1107,7 @@
   max-height: 34px;
 }
 
-/* ================================================================
-   SITE FOOTER
-   ================================================================ */
+/* SITE FOOTER */
 
 .site-footer {
   text-align: center;
@@ -1195,9 +1176,7 @@
   color: var(--text-mid);
 }
 
-/* ================================================================
-   VARIANT — "Pilih" button on product card
-   ================================================================ */
+/* VARIANT : "Pilih" button on product card */
 
 .btn-pick-variant {
   position: relative;
@@ -1235,9 +1214,7 @@
   border: 2px solid var(--white);
 }
 
-/* ================================================================
-   VARIANT SELECTION SHEET
-   ================================================================ */
+/* VARIANT SELECTION SHEET */
 
 .variant-overlay {
   position: fixed;
@@ -1332,11 +1309,9 @@
 }
 
 .vs-group-name {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
-  color: var(--text-soft);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  color: var(--text-mid);
   margin-bottom: 10px;
 }
 
@@ -1374,11 +1349,9 @@
 .vs-add-btn { width: 100%; justify-content: center; padding: 14px; font-size: 15px; }
 .vs-add-btn:disabled { background: #c9c2ba; cursor: not-allowed; }
 
-.vs-stock-hint { font-size: 12px; font-weight: 700; color: #9a3e00; }
+.vs-stock-hint { font-size: 12px; font-weight: 700; color: var(--status-pending-fg); }
 
-/* ================================================================
-   PRODUCT DESCRIPTION on catalog card
-   ================================================================ */
+/* PRODUCT DESCRIPTION on catalog card */
 .product-desc {
   font-size: 11px;
   color: var(--text-soft);
@@ -1391,9 +1364,7 @@
   overflow: hidden;
 }
 
-/* ================================================================
-   PROMO CODE — checkout section
-   ================================================================ */
+/* PROMO CODE : checkout section */
 .promo-input-wrap {
   display: flex;
   gap: 8px;
@@ -1402,6 +1373,10 @@
 
 .promo-input {
   flex: 1;
+  /* Without this a flex item refuses to shrink past its placeholder width,
+     which pushed the "Pakai" button off-screen at 320px once the font went
+     to 16px (needed so iOS does not auto-zoom, see R-03). */
+  min-width: 0;
   padding: 11px 14px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
@@ -1445,13 +1420,13 @@
   font-weight: 600;
 }
 
-.promo-ok  { color: #1a7a3c; }
-.promo-err { color: #c0392b; }
+.promo-ok  { color: var(--wa-chip-fg); }
+.promo-err { color: var(--danger); }
 
 .promo-remove-btn {
   padding: 5px 12px;
-  background: #fde8e8;
-  color: #c0392b;
+  background: var(--danger-bg);
+  color: var(--danger);
   border: none;
   border-radius: 20px;
   font-family: inherit;
@@ -1476,12 +1451,10 @@
 .co-discount-amount {
   font-size: 15px;
   font-weight: 700;
-  color: #1a7a3c;
+  color: var(--wa-chip-fg);
 }
 
-/* ================================================================
-   QRIS PAYMENT MODAL
-   ================================================================ */
+/* QRIS PAYMENT MODAL */
 #qrisModal {
   position: fixed;
   inset: 0;
@@ -1513,7 +1486,7 @@
   font-size: 20px;
   font-weight: 700;
   cursor: pointer;
-  color: #553125;
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1525,7 +1498,7 @@
 .qp-topbar-title {
   font-size: 15px;
   font-weight: 700;
-  color: #2d1a0e;
+  color: var(--text-strong);
 }
 
 .qp-body {
@@ -1540,7 +1513,7 @@
 .qp-store-badge {
   font-size: 13px;
   font-weight: 700;
-  color: #7a5538;
+  color: var(--text-warm);
   letter-spacing: 0.04em;
   margin-bottom: 20px;
 }
@@ -1555,18 +1528,16 @@
 }
 
 .qp-total-label {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
-  color: #9a7a65;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  color: var(--text-mid);
   margin-bottom: 4px;
 }
 
 .qp-total-amount {
   font-size: 30px;
   font-weight: 800;
-  color: #2d1a0e;
+  color: var(--text-strong);
   letter-spacing: -0.025em;
   line-height: 1.1;
   margin-bottom: 12px;
@@ -1585,8 +1556,8 @@
   max-width: 280px;
   padding: 12px 28px;
   background: transparent;
-  color: #553125;
-  border: 1.5px solid #c4a898;
+  color: var(--primary);
+  border: 1.5px solid var(--text-soft);
   border-radius: 14px;
   font-size: 14px;
   font-weight: 600;
@@ -1602,7 +1573,7 @@
   width: 100%;
   max-width: 280px;
   padding: 16px 28px;
-  background: #553125;
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 14px;
@@ -1617,7 +1588,7 @@
 .btn-qp-confirm:active  { transform: scale(0.97); }
 .btn-qp-confirm:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
-/* ---- QRIS re-display popup (read-only, stacks on top of OrderSummaryModal) ---- */
+/* QRIS re-display popup (read-only, stacks on top of OrderSummaryModal) */
 .qview-overlay {
   position: fixed;
   inset: 0;
@@ -1650,7 +1621,7 @@
   height: 32px;
   border-radius: 50%;
   background: #f0ebe6;
-  color: #553125;
+  color: var(--primary);
   border: none;
   cursor: pointer;
   font-size: 14px;
@@ -1661,9 +1632,7 @@
 }
 .qview-close:hover { background: #e6ddd5; }
 
-/* ================================================================
-   PROFILE MODAL (detail pemesan bottom sheet)
-   ================================================================ */
+/* PROFILE MODAL (detail pemesan bottom sheet) */
 .profile-overlay {
   position: fixed;
   inset: 0;
@@ -1726,7 +1695,7 @@
 .btn-profile-save {
   width: 100%;
   padding: 15px;
-  background: #553125;
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 14px;
@@ -1751,11 +1720,6 @@
   transition: background 0.15s;
 }
 .profile-card:hover { background: #faf6f3; }
-
-.profile-card-avatar {
-  font-size: 22px;
-  flex-shrink: 0;
-}
 
 .profile-card-info {
   flex: 1;
@@ -1783,8 +1747,8 @@
   flex-shrink: 0;
 }
 
-.profile-card.is-filled .profile-card-name { color: #2d1a0e; }
-.profile-card.is-filled .profile-card-sub  { color: #7a5538; }
+.profile-card.is-filled .profile-card-name { color: var(--text-strong); }
+.profile-card.is-filled .profile-card-sub  { color: var(--text-warm); }
 
 /* Label optional hint */
 .label-opt {
@@ -1793,9 +1757,7 @@
   font-size: 12px;
 }
 
-/* ================================================================
-   ORDER SUMMARY MODAL (after QRIS confirm)
-   ================================================================ */
+/* ORDER SUMMARY MODAL (after QRIS confirm) */
 .oss-overlay {
   position: fixed;
   inset: 0;
@@ -1860,17 +1822,16 @@
 .oss-warning {
   margin: 0 16px 12px;
   padding: 10px 14px;
-  background: #fff3cd;
-  border: 1.5px solid #f4c842;
+  background: var(--warning-bg);
+  border: 1.5px solid var(--warning-border);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
-  font-weight: 800;
-  color: #7a5c00;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--warning-fg);
 }
 
 .btn-oss-wa {
@@ -1878,7 +1839,7 @@
   width: calc(100% - 32px);
   margin: 0 16px 16px;
   padding: 16px;
-  background: #15803d;
+  background: var(--success);
   color: var(--white);
   border: none;
   border-radius: var(--radius-lg);
@@ -1889,7 +1850,7 @@
   transition: all 0.2s ease;
   letter-spacing: -0.01em;
 }
-.btn-oss-wa:hover { background: #0f6b34; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(21,128,61,0.3); }
+.btn-oss-wa:hover { background: var(--success-hover); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(21,128,61,0.3); }
 
 .btn-oss-qr {
   display: block;
@@ -1897,8 +1858,8 @@
   margin: 0 16px 16px;
   padding: 13px;
   background: transparent;
-  color: #553125;
-  border: 1.5px solid #c4a898;
+  color: var(--primary);
+  border: 1.5px solid var(--text-soft);
   border-radius: var(--radius-lg);
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 14px;
@@ -1917,11 +1878,9 @@
 }
 
 .oss-card-label {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--text-soft);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
+  color: var(--text-mid);
   margin-bottom: 8px;
 }
 
@@ -1975,11 +1934,9 @@
 }
 
 .oss-section-header {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--text-soft);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  color: var(--text-mid);
   margin-bottom: 12px;
   display: flex;
   align-items: center;

@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabaseClient.js';
 const PENDING_EXPIRE_MS = 24 * 60 * 60 * 1000;
 
 // Admin-only. Hides pending orders older than 24h (never confirmed), same as the
-// original loadOrders() behavior — customer never reads this table (RLS insert-only).
+// original loadOrders() behavior, customer never reads this table (RLS insert-only).
 export function useOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -74,7 +74,6 @@ export default function ImageUploadDropzone({ existingUrl, onFileSelect, onRemov
         </div>
       ) : (
         <div>
-          <span className="image-upload-icon">🖼️</span>
           <div className="image-upload-text">Klik atau seret foto ke sini</div>
           <div className="image-upload-sub">{hint}</div>
         </div>
