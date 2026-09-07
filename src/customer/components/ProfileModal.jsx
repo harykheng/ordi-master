@@ -65,7 +65,7 @@ export default function ProfileModal({ isOpen, onClose }) {
     }
 
     // Address/coords always get set together by AddressPickerModal, so
-    // there's no "resolve coords at save time" fallback needed anymore —
+    // there's no "resolve coords at save time" fallback needed anymore ,
     // if address is filled, deliveryLat/deliveryLng are already there too.
     if (state.orderType === 'delivery' && deliveryLat && deliveryLng) {
       setSaving(true);
@@ -115,7 +115,6 @@ export default function ProfileModal({ isOpen, onClose }) {
                   role="button"
                   tabIndex={0}
                 >
-                  <span className="address-picker-result-icon">📍</span>
                   <div className="address-summary-text">
                     <div>{address}</div>
                     {addressNote && <div className="address-summary-note">{addressNote}</div>}
@@ -131,7 +130,7 @@ export default function ProfileModal({ isOpen, onClose }) {
                 </div>
               ) : (
                 <button type="button" className="address-summary-empty" onClick={() => setAddressPickerOpen(true)}>
-                  📍 Tap untuk pilih alamat
+                  Tap untuk pilih alamat
                 </button>
               )}
             </div>

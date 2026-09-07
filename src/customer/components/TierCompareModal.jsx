@@ -11,7 +11,7 @@ const FEATURES = [
   { label: 'Pembayaran QRIS otomatis (QR dinamis)', basic: false, antar: false, bayar: true },
 ];
 
-// Sales-demo-only — rendered next to TierBadge chips so a client can see
+// Sales-demo-only, rendered next to TierBadge chips so a client can see
 // the full picture of what each package includes, not just the one
 // feature they clicked on. Gated by config.demoMode at the call sites.
 export default function TierCompareModal({ isOpen, onClose }) {

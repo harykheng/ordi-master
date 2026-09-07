@@ -3,7 +3,7 @@ function escapeCsvField(value) {
   return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
 }
 
-// No library — this is a plain enough format that hand-rolling it avoids a
+// No library, this is a plain enough format that hand-rolling it avoids a
 // dependency. Leading BOM (U+FEFF) is so Excel opens it as UTF-8 instead of
 // guessing wrong and mangling "Rp"/accented characters.
 export function downloadCsv(filename, headers, rows) {

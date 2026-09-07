@@ -5,7 +5,7 @@ const TIER_INFO = {
   bayar: { label: '💳 Bayar', text: 'Fitur ini ada di paket Ordi Bayar.' },
 };
 
-// Sales-demo-only chip — click to reveal which package tier a feature
+// Sales-demo-only chip, click to reveal which package tier a feature
 // belongs to, with a link into the full comparison table. Only ever
 // rendered when config.demoMode is true (gated by callers), so this
 // never reaches a real client build.
@@ -35,7 +35,7 @@ export default function TierBadge({ tier, onCompare, style, align = 'left' }) {
             className="tier-badge-compare-link"
             onClick={() => { setOpen(false); onCompare?.(); }}
           >
-            Lihat semua paket →
+            Lihat semua paket
           </button>
         </div>
       )}

@@ -67,7 +67,7 @@ export default function SettingsTab() {
       setLogoFile(null);
       setLogoTextFile(null);
       setBannerImageFile(null);
-      showToast('Pengaturan berhasil disimpan! ✅', 'success');
+      showToast('Pengaturan berhasil disimpan!', 'success');
       await refetch();
     } catch (err) {
       console.error('Save settings error:', err);
@@ -165,7 +165,7 @@ export default function SettingsTab() {
           </div>
           <div className="form-group">
             <label htmlFor="settingBannerTitle">Judul Banner</label>
-            <input type="text" id="settingBannerTitle" placeholder="Ada yang baru nih! ✨" value={form.bannerTitle} onChange={(e) => setForm((f) => ({ ...f, bannerTitle: e.target.value }))} />
+            <input type="text" id="settingBannerTitle" placeholder="Ada yang baru nih!" value={form.bannerTitle} onChange={(e) => setForm((f) => ({ ...f, bannerTitle: e.target.value }))} />
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label htmlFor="settingBannerSub">Subjudul Banner</label>

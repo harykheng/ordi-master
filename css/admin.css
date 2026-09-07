@@ -1,10 +1,8 @@
-/* ================================================
-   ORDI MASTER — ADMIN DASHBOARD STYLES
-   ================================================ */
+/* Ordi Master admin dashboard styles */
 
-/* ---- LOGIN SCREEN ---- */
+/* LOGIN SCREEN */
 .login-screen {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -35,23 +33,23 @@
 }
 
 .login-error {
-  background: #fde8e8;
-  color: #c0392b;
+  background: var(--danger-bg);
+  color: var(--danger);
   border-radius: var(--radius-sm);
   padding: 12px 16px;
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 16px;
   display: none;
-  border-left: 3px solid #c0392b;
+  border-left: 3px solid var(--danger);
 }
 
 .login-btn { width: 100%; padding: 14px; font-size: 16px; margin-top: 6px; }
 
-/* ---- ADMIN LAYOUT ---- */
+/* ADMIN LAYOUT */
 .admin-layout {
   display: none;
-  min-height: 100vh;
+  min-height: 100dvh;
   flex-direction: column;
   background: var(--cream);
 }
@@ -109,7 +107,7 @@
 
 .btn-logout:hover { background: rgba(255, 255, 255, 0.25); }
 
-/* ---- ADMIN MAIN ---- */
+/* ADMIN MAIN */
 .admin-main {
   flex: 1;
   padding: 28px 20px 60px;
@@ -130,7 +128,7 @@
 .admin-page-title { font-size: 26px; color: var(--primary); }
 .admin-page-subtitle { font-size: 13px; color: var(--text-soft); font-weight: 600; margin-top: 3px; }
 
-/* ---- DASHBOARD ---- */
+/* DASHBOARD */
 .dash-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -145,7 +143,6 @@
   padding: 18px 20px;
 }
 
-.dash-stat-icon { font-size: 22px; display: block; margin-bottom: 8px; }
 .dash-stat-label { font-size: 12px; font-weight: 700; color: var(--text-soft); }
 .dash-stat-value { font-size: 22px; font-weight: 800; color: var(--primary); margin-top: 4px; }
 .dash-stat-sub   { font-size: 11px; font-weight: 600; color: var(--text-soft); margin-top: 2px; }
@@ -209,10 +206,10 @@
 }
 
 .dash-status-pill strong { font-size: 16px; }
-.dash-status-pending   { background: #fef3c7; color: #92400e; }
-.dash-status-confirmed { background: #fef3c7; color: #b45309; }
-.dash-status-done      { background: #dcfce7; color: #15803d; }
-.dash-status-cancelled { background: #fee2e2; color: #b91c1c; }
+.dash-status-pending   { background: var(--status-pending-bg); color: var(--status-pending-fg); }
+.dash-status-confirmed { background: var(--status-progress-bg); color: var(--status-progress-fg); }
+.dash-status-done      { background: var(--status-done-bg); color: var(--status-done-fg); }
+.dash-status-cancelled { background: var(--status-cancel-bg); color: var(--status-cancel-fg); }
 
 .dash-empty-note { font-size: 13px; color: var(--text-soft); font-weight: 500; }
 
@@ -223,7 +220,7 @@
   align-items: center;
   gap: 12px;
   padding: 10px 4px;
-  border-bottom: 1px solid var(--border-light, #e8ded4);
+  border-bottom: 1px solid var(--border-light);
   font-size: 13px;
 }
 .dash-top-product-row:last-child { border-bottom: none; }
@@ -233,7 +230,7 @@
 .dash-top-product-qty   { font-weight: 600; color: var(--text-soft); flex-shrink: 0; }
 .dash-top-product-revenue { font-weight: 800; color: var(--primary); flex-shrink: 0; }
 
-/* ---- PRODUCTS ADMIN GRID ---- */
+/* PRODUCTS ADMIN GRID */
 .products-admin-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -243,7 +240,7 @@
 @media (min-width: 560px)  { .products-admin-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 880px)  { .products-admin-grid { grid-template-columns: repeat(3, 1fr); } }
 
-/* ---- ADMIN PRODUCT CARD ---- */
+/* ADMIN PRODUCT CARD */
 .admin-product-card {
   background: var(--white);
   border-radius: var(--radius-lg);
@@ -252,7 +249,6 @@
   gap: 14px;
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s ease;
-  animation: fadeInUp 0.3s ease both;
 }
 
 .admin-product-card:hover { box-shadow: var(--shadow-md); }
@@ -303,7 +299,7 @@ img.admin-product-img { font-size: inherit; }
 .admin-tag.tag-visible     { background: #e8f5e9; color: #2e7d32; }
 .admin-tag.tag-stock-unlimited { background: var(--latte-xlight); color: var(--text-soft); }
 .admin-tag.tag-stock       { background: #e3f2fd; color: #1565c0; }
-.admin-tag.tag-stock-empty { background: #fdecea; color: #c0392b; }
+.admin-tag.tag-stock-empty { background: #fdecea; color: var(--danger); }
 
 .admin-product-actions { display: flex; gap: 8px; }
 
@@ -320,10 +316,10 @@ img.admin-product-img { font-size: inherit; }
 
 .btn-edit   { background: var(--latte-xlight); color: var(--primary); }
 .btn-edit:hover  { background: var(--latte-light); }
-.btn-delete { background: #fde8e8; color: #c0392b; }
-.btn-delete:hover { background: #c0392b; color: white; }
+.btn-delete { background: var(--danger-bg); color: var(--danger); }
+.btn-delete:hover { background: var(--danger); color: white; }
 
-/* ---- PRODUCT FORM MODAL ---- */
+/* PRODUCT FORM MODAL */
 .product-form .modal-box { max-width: 560px; }
 
 .toggle-group { display: flex; flex-direction: column; gap: 10px; }
@@ -370,7 +366,7 @@ img.admin-product-img { font-size: inherit; }
 .toggle-switch input:checked + .toggle-slider { background: var(--primary); }
 .toggle-switch input:checked + .toggle-slider::before { transform: translateX(21px); }
 
-/* ---- IMAGE UPLOAD ---- */
+/* IMAGE UPLOAD */
 .image-upload-area {
   border: 2px dashed var(--latte);
   border-radius: var(--radius-md);
@@ -390,7 +386,6 @@ img.admin-product-img { font-size: inherit; }
 .image-upload-area.dragover { border-color: var(--primary); background: #efe5dc; }
 
 .image-upload-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-.image-upload-icon  { font-size: 30px; margin-bottom: 6px; display: block; }
 .image-upload-text  { font-size: 14px; color: var(--text-mid); font-weight: 700; }
 .image-upload-sub   { font-size: 12px; color: var(--text-soft); margin-top: 3px; font-weight: 500; }
 
@@ -403,7 +398,7 @@ img.admin-product-img { font-size: inherit; }
   right: -8px;
   width: 24px;
   height: 24px;
-  background: #c0392b;
+  background: var(--danger);
   color: white;
   border: none;
   border-radius: 50%;
@@ -417,14 +412,14 @@ img.admin-product-img { font-size: inherit; }
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
-/* ---- FORM ACTIONS ---- */
+/* FORM ACTIONS */
 .form-actions { display: flex; gap: 10px; margin-top: 10px; }
 .form-actions .btn { flex: 1; justify-content: center; padding: 14px; }
 .form-actions .btn-primary { flex: 2; }
 
 .admin-page-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
-/* ---- PRODUCT IMPORT MODAL ---- */
+/* PRODUCT IMPORT MODAL */
 .product-import-box { max-width: 560px; }
 
 .import-intro { margin-bottom: 18px; }
@@ -435,7 +430,7 @@ img.admin-product-img { font-size: inherit; }
 
 .import-summary { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; font-weight: 700; margin-bottom: 10px; }
 .import-summary-ok  { color: #2e7d32; }
-.import-summary-err { color: #c0392b; }
+.import-summary-err { color: var(--danger); }
 
 .import-error-list {
   list-style: none;
@@ -444,7 +439,7 @@ img.admin-product-img { font-size: inherit; }
   background: #fdecea;
   border-radius: var(--radius-sm);
   font-size: 12px;
-  color: #c0392b;
+  color: var(--danger);
 }
 .import-error-list li { padding: 2px 0; }
 
@@ -466,7 +461,7 @@ img.admin-product-img { font-size: inherit; }
 .import-valid-item:last-child { border-bottom: none; }
 .import-valid-item span:last-child { color: var(--text-soft); font-weight: 600; white-space: nowrap; }
 
-/* ---- EMPTY STATE ---- */
+/* EMPTY STATE */
 .empty-admin-state {
   text-align: center;
   padding: 80px 40px;
@@ -475,11 +470,10 @@ img.admin-product-img { font-size: inherit; }
 }
 
 .empty-admin-state.visible { display: block; }
-.empty-admin-icon { font-size: 60px; display: block; margin-bottom: 14px; opacity: 0.38; }
 .empty-admin-state h3 { font-size: 22px; color: var(--text-mid); margin-bottom: 8px; }
 .empty-admin-state p  { font-size: 14px; font-weight: 500; }
 
-/* ---- CONFIRM DIALOG ---- */
+/* CONFIRM DIALOG */
 .confirm-overlay {
   position: fixed;
   inset: 0;
@@ -511,14 +505,13 @@ img.admin-product-img { font-size: inherit; }
 
 .confirm-overlay.active .confirm-box { transform: scale(1); }
 
-.confirm-icon  { font-size: 44px; display: block; margin-bottom: 10px; }
 .confirm-title { font-size: 20px; color: var(--text-dark); margin-bottom: 8px; }
 .confirm-text  { font-size: 14px; color: var(--text-soft); margin-bottom: 24px; font-weight: 500; line-height: 1.6; }
 
 .confirm-actions { display: flex; gap: 12px; justify-content: center; }
 .confirm-actions .btn { flex: 1; justify-content: center; }
 
-/* ---- TABS ---- */
+/* TABS */
 .admin-tabs {
   display: flex;
   border-bottom: 2px solid var(--border);
@@ -559,7 +552,7 @@ img.admin-product-img { font-size: inherit; }
   height: 16px;
   padding: 0 4px;
   border-radius: 8px;
-  background: #c0392b;
+  background: var(--danger);
   color: #fff;
   font-size: 10px;
   font-weight: 800;
@@ -575,7 +568,7 @@ img.admin-product-img { font-size: inherit; }
   100% { transform: scale(1); }
 }
 
-/* ---- SETTINGS ---- */
+/* SETTINGS */
 .settings-form { max-width: 580px; }
 
 .settings-section {
@@ -587,11 +580,9 @@ img.admin-product-img { font-size: inherit; }
 }
 
 .settings-section-title {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
-  color: var(--text-soft);
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
+  color: var(--text-mid);
   margin-bottom: 18px;
 }
 
@@ -605,7 +596,7 @@ img.admin-product-img { font-size: inherit; }
 .settings-actions { max-width: 220px; }
 .settings-actions .btn { flex: 1; justify-content: center; }
 
-/* ---- VARIANT BUILDER ---- */
+/* VARIANT BUILDER */
 .variant-builder-header {
   display: flex;
   align-items: center;
@@ -648,8 +639,8 @@ img.admin-product-img { font-size: inherit; }
 .variant-group-del {
   width: 26px; height: 26px;
   border: none;
-  background: #fde8e8;
-  color: #c0392b;
+  background: var(--danger-bg);
+  color: var(--danger);
   border-radius: 50%;
   cursor: pointer;
   font-size: 11px;
@@ -683,7 +674,7 @@ img.admin-product-img { font-size: inherit; }
   line-height: 1;
 }
 
-.variant-opt-del:hover { color: #c0392b; }
+.variant-opt-del:hover { color: var(--danger); }
 
 .btn-add-variant-opt {
   font-size: 12px;
@@ -698,9 +689,7 @@ img.admin-product-img { font-size: inherit; }
   text-underline-offset: 2px;
 }
 
-/* ================================================================
-   PRODUCT DESCRIPTION (admin card)
-   ================================================================ */
+/* PRODUCT DESCRIPTION (admin card) */
 .admin-product-desc {
   font-size: 12px;
   color: var(--text-soft);
@@ -713,9 +702,7 @@ img.admin-product-img { font-size: inherit; }
   overflow: hidden;
 }
 
-/* ================================================================
-   PROMO CODES
-   ================================================================ */
+/* PROMO CODES */
 .promos-list {
   display: flex;
   flex-direction: column;
@@ -732,7 +719,6 @@ img.admin-product-img { font-size: inherit; }
   justify-content: space-between;
   gap: 16px;
   box-shadow: var(--shadow-sm);
-  animation: fadeInUp 0.3s ease both;
 }
 
 .promo-code-text {
@@ -766,7 +752,7 @@ img.admin-product-img { font-size: inherit; }
   border-radius: 20px;
 }
 
-.promo-tag-active   { background: #e7f9ef; color: #1a7a3c; }
+.promo-tag-active   { background: #e7f9ef; color: var(--wa-chip-fg); }
 .promo-tag-inactive { background: #f3f4f6; color: #6b7280; }
 
 .promo-card-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
@@ -801,9 +787,7 @@ img.admin-product-img { font-size: inherit; }
 
 .promo-type-opt input { position: absolute; opacity: 0; pointer-events: none; }
 
-/* ================================================================
-   ORDERS
-   ================================================================ */
+/* ORDERS */
 
 .orders-filter-bar {
   display: flex;
@@ -901,9 +885,9 @@ img.admin-product-img { font-size: inherit; }
   margin-bottom: 4px;
 }
 
-.badge-confirmed { background: #fef3c7; color: #b45309; }
-.badge-done      { background: #dcfce7; color: #15803d; }
-.badge-cancelled { background: #fee2e2; color: #b91c1c; }
+.badge-confirmed { background: var(--status-progress-bg); color: var(--status-progress-fg); }
+.badge-done      { background: var(--status-done-bg); color: var(--status-done-fg); }
+.badge-cancelled { background: var(--status-cancel-bg); color: var(--status-cancel-fg); }
 
 .order-total {
   font-weight: 800;
@@ -978,7 +962,7 @@ img.admin-product-img { font-size: inherit; }
 }
 
 .order-detail-discount {
-  color: #15803d;
+  color: var(--success);
   font-size: 13px;
 }
 
@@ -1018,7 +1002,7 @@ img.admin-product-img { font-size: inherit; }
 
 /* Button variants for orders */
 .btn-wa {
-  background: #15803d;
+  background: var(--success);
   color: #fff;
   border: none;
   border-radius: var(--radius-md);
@@ -1031,7 +1015,7 @@ img.admin-product-img { font-size: inherit; }
 .btn-wa:hover { background: #1ebe59; }
 
 .btn-success {
-  background: #15803d;
+  background: var(--success);
   color: #fff;
   border: none;
   border-radius: var(--radius-md);
@@ -1041,7 +1025,7 @@ img.admin-product-img { font-size: inherit; }
   cursor: pointer;
   transition: background 0.15s;
 }
-.btn-success:hover { background: #0f6b34; }
+.btn-success:hover { background: var(--success-hover); }
 
 .btn-outline {
   background: transparent;
@@ -1056,9 +1040,7 @@ img.admin-product-img { font-size: inherit; }
 }
 .btn-outline:hover { background: var(--latte-light); }
 
-/* ================================================================
-   PRINT LABEL — @media print hides everything except #printLabel
-   ================================================================ */
+/* PRINT LABEL : @media print hides everything except #printLabel */
 
 @media print {
   body > *:not(#printLabel) { display: none !important; }
@@ -1120,12 +1102,12 @@ img.admin-product-img { font-size: inherit; }
   }
 }
 
-/* ---- Pending order styles ---- */
+/* Pending order styles */
 .order-card-pending { border-left: 4px solid #f59e0b; }
-.badge-pending { background: #fef3c7; color: #92400e; }
+.badge-pending { background: var(--status-pending-bg); color: var(--status-pending-fg); }
 
 .btn-confirm-quick {
-  background: #15803d;
+  background: var(--success);
   color: #fff;
   border: none;
   border-radius: var(--radius-sm);
@@ -1135,7 +1117,7 @@ img.admin-product-img { font-size: inherit; }
   cursor: pointer;
   transition: background 0.15s;
 }
-.btn-confirm-quick:hover { background: #0f6b34; }
+.btn-confirm-quick:hover { background: var(--success-hover); }
 
 /* Error state for admin lists (R-27): shown instead of the empty state when
    the fetch itself failed, so a broken RLS policy or lost session never reads
@@ -1148,7 +1130,7 @@ img.admin-product-img { font-size: inherit; }
   text-align: center;
   padding: 48px 24px;
   margin: 8px 0;
-  background: #fde8e8;
+  background: var(--danger-bg);
   border: 1.5px solid #f5c2c2;
   border-radius: var(--radius-md);
   color: #7a1f16;
@@ -1161,3 +1143,28 @@ img.admin-product-img { font-size: inherit; }
    the 6px that suited the old 28px buttons (R-03, "targets too close"). */
 .promo-card-actions { gap: 10px; }
 .variant-opts-list { gap: 8px; }
+
+/* Dashboard focal point. The one decision an admin makes on this screen is
+   "is there anything waiting for me to confirm?", so that answer gets the
+   top of the page and its own action; revenue and traffic follow as context. */
+.dash-focus {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px 22px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-sm);
+}
+.dash-focus.needs-action {
+  border-color: var(--status-pending-fg);
+  background: var(--status-pending-bg);
+}
+.dash-focus-label { font-size: 13px; font-weight: 700; color: var(--text-mid); }
+.dash-focus-value { font-size: 26px; font-weight: 800; color: var(--text-dark); margin: 2px 0 4px; }
+.dash-focus.needs-action .dash-focus-value { color: var(--status-pending-fg); }
+.dash-focus-sub { font-size: 13px; color: var(--text-mid); max-width: 46ch; line-height: 1.5; }

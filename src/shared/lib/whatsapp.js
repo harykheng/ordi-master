@@ -52,10 +52,10 @@ export function buildQrisConfirmMessage({
 }
 
 export const ORDER_STATUS_LABELS = {
-  pending:   '⏳ Menunggu Konfirmasi',
-  confirmed: '🆕 Diproses',
-  done:      '✅ Selesai',
-  cancelled: '❌ Dibatalkan',
+  pending:   'Menunggu Konfirmasi',
+  confirmed: 'Diproses',
+  done:      'Selesai',
+  cancelled: 'Dibatalkan',
 };
 
 // Message the admin sends to a customer summarizing their order

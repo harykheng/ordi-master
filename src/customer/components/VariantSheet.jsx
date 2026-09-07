@@ -23,7 +23,7 @@ export default function VariantSheet({ product, onClose }) {
   const extra = Object.values(selected).reduce((s, v) => s + v.price, 0);
   const total = product ? (product.price + extra) * qty : 0;
 
-  // Stock is tracked per product, not per variant — cap by what's left after
+  // Stock is tracked per product, not per variant, cap by what's left after
   // whatever's already sitting in the cart across other variants of this product.
   const alreadyInCart = product ? getProductCartQty(state.cart, product.id) : 0;
   const maxQty = product?.stock_qty == null ? 20 : Math.max(0, Math.min(20, product.stock_qty - alreadyInCart));

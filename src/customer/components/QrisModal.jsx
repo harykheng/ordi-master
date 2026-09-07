@@ -105,7 +105,7 @@ export default function QrisModal({ pendingOrder, settings, onClose, onConfirmed
 
           <p className="qp-hint">Scan dengan aplikasi bank atau e-wallet kamu</p>
 
-          <button className="btn-qp-save" onClick={saveQrisImage}>⬇ Simpan QR</button>
+          <button className="btn-qp-save" onClick={saveQrisImage}>Simpan QR</button>
 
           <button className="btn-qp-confirm" onClick={confirmPayment} disabled={confirming}>
             {confirming ? 'Menyimpan...' : 'Konfirmasi Pesanan'}

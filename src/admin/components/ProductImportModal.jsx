@@ -106,7 +106,7 @@ export default function ProductImportModal({ isOpen, onClose, onImported }) {
     setImporting(true);
     try {
       await importProducts(valid.map((r) => r.product));
-      showToast(`${valid.length} produk berhasil di-import ✅`, 'success');
+      showToast(`${valid.length} produk berhasil di-import`, 'success');
       reset();
       onImported();
       onClose();
@@ -123,7 +123,7 @@ export default function ProductImportModal({ isOpen, onClose, onImported }) {
       <div className="import-intro">
         <p>Upload file CSV berisi daftar produk. Kolom yang dibaca: <strong>Nama, Deskripsi, Harga, Stok, Badge New, Badge Terlaris, Tampil di Katalog</strong>.</p>
         <p className="form-hint">Foto &amp; varian tidak bisa lewat CSV. Tambahkan manual lewat Edit setelah produk ke-import.</p>
-        <button type="button" className="btn btn-secondary import-template-btn" onClick={downloadTemplate}>⬇ Download Template CSV</button>
+        <button type="button" className="btn btn-secondary import-template-btn" onClick={downloadTemplate}>Download Template CSV</button>
       </div>
 
       <div className="form-group">
@@ -135,8 +135,8 @@ export default function ProductImportModal({ isOpen, onClose, onImported }) {
       {(valid.length > 0 || invalid.length > 0) && (
         <div className="import-preview">
           <div className="import-summary">
-            <span className="import-summary-ok">✅ {valid.length} produk siap di-import</span>
-            {invalid.length > 0 && <span className="import-summary-err">⚠️ {invalid.length} baris dilewati</span>}
+            <span className="import-summary-ok">{valid.length} produk siap di-import</span>
+            {invalid.length > 0 && <span className="import-summary-err">{invalid.length} baris dilewati</span>}
           </div>
 
           {invalid.length > 0 && (

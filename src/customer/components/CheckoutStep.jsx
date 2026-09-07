@@ -55,7 +55,7 @@ export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris, on
       } else {
         dispatch({ type: 'APPLY_PROMO', promo });
         const label = promo.discount_type === 'percent' ? `${promo.discount_value}%` : formatPrice(promo.discount_value);
-        setPromoResult({ type: 'success', msg: `Yeay! Diskon ${label} berhasil diterapkan 🎉` });
+        setPromoResult({ type: 'success', msg: `Yeay! Diskon ${label} berhasil diterapkan` });
       }
     } catch {
       setPromoResult({ type: 'error', msg: 'Gagal cek kode. Coba lagi ya!' });
@@ -88,7 +88,6 @@ export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris, on
 
           <div className="co-meta-card">
             <div className="co-meta-row">
-              <span className="co-meta-icon">📅</span>
               <div>
                 <div className="co-meta-label">Tanggal</div>
                 <div className="co-meta-value">{state.selectedDateLabel || '-'}</div>
@@ -96,7 +95,6 @@ export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris, on
             </div>
             <div className="co-meta-divider"></div>
             <div className="co-meta-row">
-              <span className="co-meta-icon">{state.orderType === 'pickup' ? '🏠' : '🛵'}</span>
               <div>
                 <div className="co-meta-label">Tipe Pesanan</div>
                 <div className="co-meta-value">{state.orderType === 'pickup' ? 'Pickup' : 'Delivery'}</div>
@@ -107,14 +105,13 @@ export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris, on
           {state.orderType === 'pickup' ? (
             <div className="co-pickup-card">
               <div className="co-meta-row">
-                <span className="co-meta-icon">📍</span>
-                <div>
+                  <div>
                   <div className="co-meta-label">Lokasi Pickup</div>
                   <div className="co-meta-value">{storeName}</div>
                   <div className="co-pickup-addr">{storeAddress}</div>
                   {storeMapsUrl && (
                     <a className="pickup-maps-link" href={storeMapsUrl} target="_blank" rel="noopener noreferrer" style={{ marginTop: 8, display: 'inline-flex' }}>
-                      Buka di Google Maps →
+                      Buka di Google Maps
                     </a>
                   )}
                 </div>
@@ -124,7 +121,6 @@ export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris, on
             <div>
               <div className="co-pickup-card" style={{ marginTop: 12 }}>
                 <div className="co-meta-row">
-                  <span className="co-meta-icon">🏪</span>
                   <div>
                     <div className="co-meta-label">Dikirim dari</div>
                     <div className="co-meta-value">{storeName}</div>
@@ -151,7 +147,6 @@ export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris, on
             role="button"
             tabIndex={0}
           >
-            <div className="profile-card-avatar">👤</div>
             <div className="profile-card-info">
               <div className="profile-card-name">
                 {state.isProfileFilled ? state.profile.name : 'Tambahkan detail pemesan'}
@@ -191,13 +186,13 @@ export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris, on
           </div>
           {discount > 0 && (
             <div className="co-discount-row">
-              <span className="co-total-label">🎟 Diskon</span>
+              <span className="co-total-label">Diskon</span>
               <span className="co-discount-amount">−{formatPrice(discount)}</span>
             </div>
           )}
           {state.selectedShipping && state.orderType === 'delivery' && (
             <div className="co-shipping-row">
-              <span className="co-total-label">🛵 Ongkir</span>
+              <span className="co-total-label">Ongkir</span>
               <span className="co-shipping-amount">{formatPrice(state.selectedShipping.price)}</span>
             </div>
           )}
@@ -225,11 +220,11 @@ export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris, on
             <div className="promo-result" style={{ display: 'flex' }}>
               {promoResult.type === 'success' ? (
                 <>
-                  <span className="promo-ok">✅ {promoResult.msg}</span>
+                  <span className="promo-ok">{promoResult.msg}</span>
                   <button className="promo-remove-btn" onClick={removePromo}>Hapus</button>
                 </>
               ) : (
-                <span className="promo-err">❌ {promoResult.msg}</span>
+                <span className="promo-err">{promoResult.msg}</span>
               )}
             </div>
           )}
@@ -250,7 +245,7 @@ export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris, on
 
         <div className="co-submit" style={{ position: 'relative' }}>
           <button className="btn-wa-send" onClick={onSubmitQris}>
-            Bayar via QRIS 💳
+            Bayar via QRIS
           </button>
           {config.demoMode && (
             <TierBadge tier="bayar" onCompare={onCompareTiers} style={{ top: -12, left: 'auto', right: 8 }} align="right" />

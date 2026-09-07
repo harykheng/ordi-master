@@ -5,7 +5,7 @@ import { formatPrice } from '../../shared/lib/format.js';
 import AdminErrorState from './AdminErrorState.jsx';
 
 // Only orders an admin has actually confirmed (checked the payment proof)
-// count as revenue — 'pending' is just "QRIS generated, customer claims they
+// count as revenue, 'pending' is just "QRIS generated, customer claims they
 // paid" and hasn't been verified yet, so it doesn't belong in a revenue
 // figure. 'cancelled' is excluded too, obviously.
 const REVENUE_STATUSES = ['confirmed', 'done'];
@@ -35,7 +35,7 @@ function toDateKey(d) {
   return d.toISOString().slice(0, 10);
 }
 
-export default function DashboardTab() {
+export default function DashboardTab({ onGoToOrders }) {
   const { orders, loading, error, refetch } = useOrders();
   const { visits, loading: visitsLoading, error: visitsError } = useDailyVisits(7);
 
@@ -106,6 +106,7 @@ export default function DashboardTab() {
       monthRevenue: sumTotal(monthOrders),
       monthOrderCount: monthOrders.length,
       statusCounts,
+      pendingCount: statusCounts.pending || 0,
       days,
       maxDayRevenue,
       topProducts,
@@ -127,7 +128,7 @@ export default function DashboardTab() {
         <div className="admin-page-header">
           <div>
             <h2 className="admin-page-title">Dashboard</h2>
-            <p className="admin-page-subtitle">Ringkasan performa toko</p>
+            <p className="admin-page-subtitle">Apa yang perlu kamu kerjakan hari ini</p>
           </div>
         </div>
         <AdminErrorState what="data pesanan" error={error} onRetry={refetch} />
@@ -140,35 +141,51 @@ export default function DashboardTab() {
       <div className="admin-page-header">
         <div>
           <h2 className="admin-page-title">Dashboard</h2>
-          <p className="admin-page-subtitle">Ringkasan performa toko</p>
+          <p className="admin-page-subtitle">Apa yang perlu kamu kerjakan hari ini</p>
         </div>
+      </div>
+
+      <div className={`dash-focus${stats.pendingCount > 0 ? ' needs-action' : ''}`}>
+        <div>
+          <div className="dash-focus-label">Menunggu konfirmasi kamu</div>
+          <div className="dash-focus-value">
+            {stats.pendingCount > 0
+              ? `${stats.pendingCount} pesanan`
+              : 'Tidak ada, semua sudah diproses'}
+          </div>
+          <div className="dash-focus-sub">
+            {stats.pendingCount > 0
+              ? 'Pelanggan mengaku sudah bayar. Cek bukti transfernya, lalu konfirmasi.'
+              : 'Pesanan baru akan muncul di sini begitu masuk.'}
+          </div>
+        </div>
+        {stats.pendingCount > 0 && onGoToOrders && (
+          <button type="button" className="btn btn-primary" onClick={onGoToOrders}>
+            Buka Pesanan
+          </button>
+        )}
       </div>
 
       <div className="dash-stats-grid">
         <div className="dash-stat-card">
-          <span className="dash-stat-icon">💰</span>
-          <div className="dash-stat-label">Pendapatan Hari Ini</div>
+          <div className="dash-stat-label">Pendapatan hari ini</div>
           <div className="dash-stat-value">{formatPrice(stats.todayRevenue)}</div>
         </div>
         <div className="dash-stat-card">
-          <span className="dash-stat-icon">📦</span>
-          <div className="dash-stat-label">Pesanan Hari Ini</div>
+          <div className="dash-stat-label">Pesanan hari ini</div>
           <div className="dash-stat-value">{stats.todayOrderCount}</div>
         </div>
         <div className="dash-stat-card">
-          <span className="dash-stat-icon">🛍</span>
-          <div className="dash-stat-label">Item Terjual Hari Ini</div>
+          <div className="dash-stat-label">Item terjual hari ini</div>
           <div className="dash-stat-value">{stats.todayItemCount}</div>
         </div>
         <div className="dash-stat-card">
-          <span className="dash-stat-icon">📈</span>
-          <div className="dash-stat-label">Omset Bulan Ini</div>
+          <div className="dash-stat-label">Omset bulan ini</div>
           <div className="dash-stat-value">{formatPrice(stats.monthRevenue)}</div>
           <div className="dash-stat-sub">{stats.monthOrderCount} pesanan</div>
         </div>
         <div className="dash-stat-card">
-          <span className="dash-stat-icon">👀</span>
-          <div className="dash-stat-label">Pengunjung Hari Ini</div>
+          <div className="dash-stat-label">Pengunjung hari ini</div>
           <div className="dash-stat-value">{visitsLoading ? '…' : visitsError ? 'n/a' : visitStats.todayCount}</div>
           <div className="dash-stat-sub">
             {visitsError ? 'Data pengunjung gagal dimuat' : `${visitStats.weekCount} dalam 7 hari`}
@@ -177,7 +194,7 @@ export default function DashboardTab() {
       </div>
 
       <div className="dash-section">
-        <h3 className="dash-section-title">Pengunjung 7 Hari Terakhir</h3>
+        <h3 className="dash-section-title">Berapa orang buka katalog per hari, 7 hari terakhir?</h3>
         <div className="dash-chart">
           {visitStats.days.map((d, i) => (
             <div className="dash-chart-col" key={i}>
@@ -195,7 +212,7 @@ export default function DashboardTab() {
       </div>
 
       <div className="dash-section">
-        <h3 className="dash-section-title">Pendapatan 7 Hari Terakhir</h3>
+        <h3 className="dash-section-title">Pendapatan per hari, 7 hari terakhir (hanya pesanan terkonfirmasi dan selesai)</h3>
         <div className="dash-chart">
           {stats.days.map((d, i) => (
             <div className="dash-chart-col" key={i}>
@@ -215,15 +232,15 @@ export default function DashboardTab() {
       <div className="dash-section">
         <h3 className="dash-section-title">Status Pesanan</h3>
         <div className="dash-status-grid">
-          <div className="dash-status-pill dash-status-pending">🕐 Menunggu <strong>{stats.statusCounts.pending || 0}</strong></div>
-          <div className="dash-status-pill dash-status-confirmed">🆕 Diproses <strong>{stats.statusCounts.confirmed || 0}</strong></div>
-          <div className="dash-status-pill dash-status-done">✅ Selesai <strong>{stats.statusCounts.done || 0}</strong></div>
-          <div className="dash-status-pill dash-status-cancelled">❌ Dibatalkan <strong>{stats.statusCounts.cancelled || 0}</strong></div>
+          <div className="dash-status-pill dash-status-pending">Menunggu <strong>{stats.statusCounts.pending || 0}</strong></div>
+          <div className="dash-status-pill dash-status-confirmed">Diproses <strong>{stats.statusCounts.confirmed || 0}</strong></div>
+          <div className="dash-status-pill dash-status-done">Selesai <strong>{stats.statusCounts.done || 0}</strong></div>
+          <div className="dash-status-pill dash-status-cancelled">Dibatalkan <strong>{stats.statusCounts.cancelled || 0}</strong></div>
         </div>
       </div>
 
       <div className="dash-section">
-        <h3 className="dash-section-title">Produk Terlaris Bulan Ini</h3>
+        <h3 className="dash-section-title">Produk apa yang paling laku bulan ini?</h3>
         {stats.topProducts.length === 0 ? (
           <p className="dash-empty-note">Belum ada penjualan bulan ini.</p>
         ) : (
