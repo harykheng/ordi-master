@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import { formatPrice } from '../../shared/lib/format.js';
 import { useBodyScrollLock } from '../../shared/hooks/useBodyScrollLock.js';
+import { useDialogKeyboard } from '../../shared/hooks/useDialogKeyboard.js';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { config } from '../../shared/lib/config.js';
 
@@ -10,11 +11,13 @@ import { config } from '../../shared/lib/config.js';
 // pendingOrder/confirmedOrder state). Deliberately has no "Konfirmasi Pesanan"
 // button: that flow already ran once via QrisModal, re-running it here would
 // try to insert the same order_number again and error on the unique constraint.
-export default function QrisViewModal({ order, onClose }) {
+export default function QrisViewModal({ order, settings, onClose }) {
   const isOpen = Boolean(order);
   useBodyScrollLock(isOpen);
   const canvasRef = useRef(null);
+  const cardRef = useRef(null);
   const showToast = useToast();
+  useDialogKeyboard({ active: isOpen, onClose, containerRef: cardRef });
 
   useEffect(() => {
     if (order && canvasRef.current) {
@@ -37,11 +40,11 @@ export default function QrisViewModal({ order, onClose }) {
   if (!order) return null;
 
   return (
-    <div className="qview-overlay" onClick={onClose} role="dialog" aria-label="QRIS Pembayaran">
-      <div className="qview-card" onClick={(e) => e.stopPropagation()}>
+    <div className="qview-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="QRIS Pembayaran">
+      <div className="qview-card" ref={cardRef} onClick={(e) => e.stopPropagation()}>
         <button className="qview-close" onClick={onClose} aria-label="Tutup">✕</button>
 
-        <div className="qp-store-badge">☕ {config.storeName}</div>
+        <div className="qp-store-badge">{settings?.brand_icon || '🏪'} {settings?.brand_name || config.storeName}</div>
 
         <div className="qp-qr-card">
           <canvas ref={canvasRef}></canvas>

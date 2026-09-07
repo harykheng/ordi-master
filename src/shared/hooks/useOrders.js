@@ -13,24 +13,28 @@ export function useOrders() {
   const refetch = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error: err } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (err) {
+      if (err) {
+        setError(err);
+        return;
+      }
+
+      const now = Date.now();
+      setOrders((data || []).filter((o) => {
+        if (o.status !== 'pending') return true;
+        return now - new Date(o.created_at).getTime() < PENDING_EXPIRE_MS;
+      }));
+    } catch (err) {
+      // Network/CORS failures reject instead of resolving with { error }.
       setError(err);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const now = Date.now();
-    const filtered = (data || []).filter((o) => {
-      if (o.status !== 'pending') return true;
-      return now - new Date(o.created_at).getTime() < PENDING_EXPIRE_MS;
-    });
-    setOrders(filtered);
-    setLoading(false);
   }, []);
 
   useEffect(() => { refetch(); }, [refetch]);

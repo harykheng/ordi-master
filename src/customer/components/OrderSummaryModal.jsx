@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useCart } from '../CartContext.jsx';
 import { formatPrice } from '../../shared/lib/format.js';
 import { useBodyScrollLock } from '../../shared/hooks/useBodyScrollLock.js';
+import { useDialogKeyboard } from '../../shared/hooks/useDialogKeyboard.js';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { config } from '../../shared/lib/config.js';
 import QrisViewModal from './QrisViewModal.jsx';
@@ -13,6 +14,8 @@ export default function OrderSummaryModal({ order, settings, onClose }) {
   const showToast = useToast();
   const [copied, setCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
+  const scrollRef = useRef(null);
+  useDialogKeyboard({ active: isOpen && !showQr, onClose: handleClose, containerRef: scrollRef });
 
   if (!order) return null;
 
@@ -22,7 +25,7 @@ export default function OrderSummaryModal({ order, settings, onClose }) {
   const storeOpenHours = settings?.store_hours || config.storeOpenHours;
 
   function sendWhatsAppProof() {
-    if (order.waUrl) window.open(order.waUrl, '_blank');
+    window.open(order.waUrl, '_blank');
     dispatch({ type: 'RESET_ORDER' });
     onClose();
     showToast('Pesanan dikonfirmasi! Kirim bukti bayar via WA ya 🎉', 'success');
@@ -63,8 +66,8 @@ export default function OrderSummaryModal({ order, settings, onClose }) {
     : [];
 
   return (
-    <div className="oss-overlay" style={{ display: isOpen ? 'flex' : 'none' }} role="dialog" aria-label="Ringkasan Pesanan">
-      <div className="oss-scroll">
+    <div className="oss-overlay" style={{ display: isOpen ? 'flex' : 'none' }} role="dialog" aria-modal="true" aria-label="Ringkasan Pesanan">
+      <div className="oss-scroll" ref={scrollRef}>
         <div className="oss-topbar">
           <button className="oss-close" onClick={handleClose} aria-label="Tutup">✕</button>
         </div>
@@ -77,12 +80,19 @@ export default function OrderSummaryModal({ order, settings, onClose }) {
         </div>
 
         <div className="oss-warning">
-          <span>⚠️</span> WAJIB — KIRIM FOTO BUKTI PEMBAYARAN
+          <span>⚠️</span> WAJIB: KIRIM FOTO BUKTI PEMBAYARAN
         </div>
 
-        <button className="btn-oss-wa" onClick={sendWhatsAppProof}>
-          💬 Kirim Bukti Transfer via WhatsApp
-        </button>
+        {order.waUrl ? (
+          <button className="btn-oss-wa" onClick={sendWhatsAppProof}>
+            💬 Kirim Bukti Transfer via WhatsApp
+          </button>
+        ) : (
+          <div className="oss-wa-missing">
+            Nomor WhatsApp toko belum diatur, jadi bukti transfer belum bisa dikirim dari sini.
+            Hubungi {storeName} langsung dan sebutkan kode pesanan di bawah.
+          </div>
+        )}
 
         <button className="btn-oss-qr" onClick={() => setShowQr(true)}>
           📷 Tampilkan QR lagi
@@ -123,7 +133,7 @@ export default function OrderSummaryModal({ order, settings, onClose }) {
                 <div className="oss-item-left">
                   <div className="oss-item-name">{it.nm}</div>
                   {it.vl?.length > 0
-                    ? it.vl.map((v, j) => <div className="oss-item-var" key={j}>— {v}</div>)
+                    ? it.vl.map((v, j) => <div className="oss-item-var" key={j}>· {v}</div>)
                     : <div className="oss-item-meta">× {it.qty}</div>}
                 </div>
                 <div className="oss-item-price">{formatPrice(it.sub)}</div>
@@ -145,7 +155,7 @@ export default function OrderSummaryModal({ order, settings, onClose }) {
         </div>
       </div>
 
-      {showQr && <QrisViewModal order={order} onClose={() => setShowQr(false)} />}
+      {showQr && <QrisViewModal order={order} settings={settings} onClose={() => setShowQr(false)} />}
     </div>
   );
 }

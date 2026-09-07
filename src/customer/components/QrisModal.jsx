@@ -2,16 +2,19 @@ import { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { formatPrice } from '../../shared/lib/format.js';
 import { useBodyScrollLock } from '../../shared/hooks/useBodyScrollLock.js';
+import { useDialogKeyboard } from '../../shared/hooks/useDialogKeyboard.js';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { insertOrder } from '../../shared/lib/orders.js';
 import { buildQrisConfirmMessage, waLink } from '../../shared/lib/whatsapp.js';
 import { config } from '../../shared/lib/config.js';
 
-export default function QrisModal({ pendingOrder, onClose, onConfirmed }) {
+export default function QrisModal({ pendingOrder, settings, onClose, onConfirmed }) {
   const isOpen = Boolean(pendingOrder);
   useBodyScrollLock(isOpen);
   const canvasRef = useRef(null);
+  const pageRef = useRef(null);
   const [confirming, setConfirming] = useState(false);
+  useDialogKeyboard({ active: isOpen, onClose, containerRef: pageRef });
   const showToast = useToast();
 
   useEffect(() => {
@@ -83,15 +86,15 @@ export default function QrisModal({ pendingOrder, onClose, onConfirmed }) {
   }
 
   return (
-    <div id="qrisModal" style={{ display: isOpen ? 'block' : 'none' }}>
-      <div className="qp-page">
+    <div id="qrisModal" role="dialog" aria-modal="true" aria-label="Pembayaran QRIS" style={{ display: isOpen ? 'block' : 'none' }}>
+      <div className="qp-page" ref={pageRef}>
         <div className="qp-topbar">
           <button className="qp-back" onClick={onClose} aria-label="Kembali">←</button>
           <span className="qp-topbar-title">Pembayaran QRIS</span>
         </div>
 
         <div className="qp-body">
-          <div className="qp-store-badge">☕ {config.storeName}</div>
+          <div className="qp-store-badge">{settings?.brand_icon || '🏪'} {settings?.brand_name || config.storeName}</div>
 
           <div className="qp-qr-card">
             <canvas ref={canvasRef}></canvas>

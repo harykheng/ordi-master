@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useToast } from '../../shared/components/Toast.jsx';
+import { onKeyActivate } from '../../shared/hooks/useDialogKeyboard.js';
 
 // Reusable drag/drop + click-to-upload image picker with preview.
 // Reports the selected File via onFileSelect; parent owns the "existing URL"
@@ -44,7 +45,11 @@ export default function ImageUploadDropzone({ existingUrl, onFileSelect, onRemov
   return (
     <div
       className={`image-upload-area${dragOver ? ' dragover' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-label="Pilih atau seret foto"
       onClick={() => inputRef.current?.click()}
+      onKeyDown={onKeyActivate(() => inputRef.current?.click())}
       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
       onDragLeave={() => setDragOver(false)}
       onDrop={(e) => {

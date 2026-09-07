@@ -434,7 +434,7 @@
   z-index: 1;
 }
 
-.badge-new        { background: #fff3e0; color: #c05000; }
+.badge-new        { background: #fff3e0; color: #9a3e00; }
 .badge-bestseller { background: var(--primary); color: #fff; }
 .badge-oos        { background: #4a4a4a; color: #fff; }
 
@@ -444,7 +444,7 @@
 .product-stock-hint {
   font-size: 11px;
   font-weight: 700;
-  color: #c05000;
+  color: #9a3e00;
   margin-top: 2px;
 }
 
@@ -468,7 +468,7 @@
 }
 
 .product-card:hover .product-image-wrap img { transform: scale(1.08); }
-.product-image-placeholder { font-size: 42px; opacity: 0.3; }
+.product-image-placeholder { font-size: 42px; opacity: 0.55; }
 
 /* ---- PRODUCT INFO ---- */
 .product-name {
@@ -487,8 +487,8 @@
 .product-controls { display: flex; align-items: center; gap: 8px; }
 
 .qty-btn {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border: 2px solid var(--border);
   border-radius: 50%;
   background: var(--white);
@@ -791,7 +791,7 @@
   padding: 12px 14px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: 16px;
   font-family: inherit;
   color: var(--text-dark);
 }
@@ -1093,7 +1093,7 @@
 .btn-wa-send {
   width: 100%;
   padding: 18px;
-  background: #25d366;
+  background: #15803d;
   color: var(--white);
   border: none;
   border-radius: var(--radius-lg);
@@ -1106,9 +1106,9 @@
 }
 
 .btn-wa-send:hover {
-  background: #1da851;
+  background: #0f6b34;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(37,211,102,0.3);
+  box-shadow: 0 8px 24px rgba(21,128,61,0.3);
 }
 
 .btn-wa-send:active { transform: translateY(0); }
@@ -1213,7 +1213,7 @@
   transition: background 0.2s, transform 0.15s;
 }
 
-.btn-pick-variant:hover  { background: var(--latte); }
+.btn-pick-variant:hover  { background: var(--latte); color: var(--text-dark); }
 .btn-pick-variant:active { transform: scale(0.95); }
 .btn-pick-variant:disabled { background: #c9c2ba; cursor: not-allowed; transform: none; }
 
@@ -1374,7 +1374,7 @@
 .vs-add-btn { width: 100%; justify-content: center; padding: 14px; font-size: 15px; }
 .vs-add-btn:disabled { background: #c9c2ba; cursor: not-allowed; }
 
-.vs-stock-hint { font-size: 12px; font-weight: 700; color: #c05000; }
+.vs-stock-hint { font-size: 12px; font-weight: 700; color: #9a3e00; }
 
 /* ================================================================
    PRODUCT DESCRIPTION on catalog card
@@ -1406,7 +1406,7 @@
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--text-dark);
@@ -1432,7 +1432,7 @@
   flex-shrink: 0;
 }
 
-.promo-apply-btn:hover    { background: var(--latte); }
+.promo-apply-btn:hover    { background: var(--latte); color: var(--text-dark); }
 .promo-apply-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .promo-result {
@@ -1773,13 +1773,13 @@
 
 .profile-card-sub {
   font-size: 12px;
-  color: #a08878;
+  color: var(--text-soft);
   margin-top: 2px;
 }
 
 .profile-card-arrow {
   font-size: 20px;
-  color: #c4a898;
+  color: var(--text-soft);
   flex-shrink: 0;
 }
 
@@ -1789,7 +1789,7 @@
 /* Label optional hint */
 .label-opt {
   font-weight: 400;
-  color: #a08878;
+  color: var(--text-soft);
   font-size: 12px;
 }
 
@@ -1878,7 +1878,7 @@
   width: calc(100% - 32px);
   margin: 0 16px 16px;
   padding: 16px;
-  background: #25d366;
+  background: #15803d;
   color: var(--white);
   border: none;
   border-radius: var(--radius-lg);
@@ -1889,7 +1889,7 @@
   transition: all 0.2s ease;
   letter-spacing: -0.01em;
 }
-.btn-oss-wa:hover { background: #1da851; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,211,102,0.3); }
+.btn-oss-wa:hover { background: #0f6b34; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(21,128,61,0.3); }
 
 .btn-oss-qr {
   display: block;
@@ -2047,4 +2047,17 @@
   padding-top: 10px;
   margin-top: 6px;
   border-top: 1.5px solid var(--border);
+}
+
+/* Shown in place of the "kirim bukti via WA" button when no store WhatsApp
+   number is configured, so the flow never ends on a dead control (R-26). */
+.oss-wa-missing {
+  margin: 0 16px 12px;
+  padding: 12px 14px;
+  background: #fff3cd;
+  border: 1.5px solid #f4c842;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.5;
+  color: #7a5c00;
 }

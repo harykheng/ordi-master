@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useProducts } from '../../shared/hooks/useProducts.js';
-import { formatPrice } from '../../shared/lib/format.js';
+import { formatPrice, productInitial } from '../../shared/lib/format.js';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { useConfirmDialog } from '../../shared/components/ConfirmDialog.jsx';
 import { deleteProduct } from '../../shared/lib/products.js';
 import ProductFormModal from './ProductFormModal.jsx';
 import ProductImportModal from './ProductImportModal.jsx';
+import AdminErrorState from './AdminErrorState.jsx';
 
 export default function ProductsTab() {
-  const { products, loading, refetch } = useProducts();
+  const { products, loading, error, refetch } = useProducts();
   const { confirm, close } = useConfirmDialog();
   const showToast = useToast();
   const [formOpen, setFormOpen] = useState(false);
@@ -44,7 +45,7 @@ export default function ProductsTab() {
       <div className="admin-page-header">
         <div>
           <h2 className="admin-page-title">Daftar Produk</h2>
-          <p className="admin-page-subtitle">{loading ? 'Memuat...' : `${products.length} produk`}</p>
+          <p className="admin-page-subtitle">{loading ? 'Memuat...' : error ? 'Data tidak termuat' : `${products.length} produk`}</p>
         </div>
         <div className="admin-page-header-actions">
           <button className="btn btn-secondary" onClick={() => setImportOpen(true)}>⬆ Import CSV</button>
@@ -59,7 +60,9 @@ export default function ProductsTab() {
         </div>
       )}
 
-      {!loading && products.length === 0 && (
+      {!loading && error && <AdminErrorState what="produk" error={error} onRetry={refetch} />}
+
+      {!loading && !error && products.length === 0 && (
         <div className="empty-admin-state visible">
           <span className="empty-admin-icon">📦</span>
           <h3>Belum ada produk</h3>
@@ -67,14 +70,14 @@ export default function ProductsTab() {
         </div>
       )}
 
-      {!loading && products.length > 0 && (
+      {!loading && !error && products.length > 0 && (
         <div className="products-admin-grid">
           {products.map((p, i) => (
             <div className="admin-product-card" key={p.id} style={{ animationDelay: `${Math.min(i, 6) * 55}ms` }}>
               {p.image_url ? (
                 <img className="admin-product-img" src={p.image_url} alt={p.name} loading="lazy" />
               ) : (
-                <div className="admin-product-img">☕</div>
+                <div className="admin-product-img" aria-hidden="true">{productInitial(p.name)}</div>
               )}
               <div className="admin-product-info">
                 <div className="admin-product-name">{p.name}</div>

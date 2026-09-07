@@ -22,7 +22,7 @@ export default function OngkirOptions() {
           <span>😔</span>
           <div>
             <strong>Di luar jangkauan delivery</strong>
-            <div>{shippingStaticKm?.toFixed(1)} km dari toko — maks. 10 km</div>
+            <div>{shippingStaticKm?.toFixed(1)} km dari toko, maksimal 10 km</div>
           </div>
         </div>
       </div>
@@ -50,17 +50,19 @@ export default function OngkirOptions() {
         {shippingOptions.map((o, i) => {
           const isSelected = selectedShipping?.label === `${o.courierName} - ${o.serviceName}`;
           return (
-            <div
+            <button
+              type="button"
               key={`${o.courierCode}-${o.serviceName}`}
               className={`ongkir-option-item${isSelected ? ' selected' : ''}`}
+              aria-pressed={isSelected}
               onClick={() => dispatch({ type: 'SELECT_SHIPPING_OPTION', index: i })}
             >
               <div className="ongkir-left">
-                <div className="ongkir-courier">{o.courierName} — {o.serviceName}</div>
+                <div className="ongkir-courier">{o.courierName} · {o.serviceName}</div>
                 <div className="ongkir-eta">{o.duration || ''}</div>
               </div>
               <div className="ongkir-price">{formatPrice(o.price)}</div>
-            </div>
+            </button>
           );
         })}
       </div>
