@@ -10,13 +10,19 @@ export function usePromos() {
   const refetch = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await supabase
-      .from('promo_codes')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (err) setError(err);
-    else setPromos(data || []);
-    setLoading(false);
+    try {
+      const { data, error: err } = await supabase
+        .from('promo_codes')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (err) setError(err);
+      else setPromos(data || []);
+    } catch (err) {
+      // Network/CORS failures reject instead of resolving with { error }.
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { refetch(); }, [refetch]);

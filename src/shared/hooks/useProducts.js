@@ -14,10 +14,16 @@ export function useProducts({ onlyVisible = false } = {}) {
     let query = supabase.from('products').select('*').order('created_at', { ascending: false });
     if (onlyVisible) query = query.eq('is_visible', true);
 
-    const { data, error: err } = await query;
-    if (err) setError(err);
-    else setProducts(data || []);
-    setLoading(false);
+    try {
+      const { data, error: err } = await query;
+      if (err) setError(err);
+      else setProducts(data || []);
+    } catch (err) {
+      // Network/CORS failures reject instead of resolving with { error }.
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
   }, [onlyVisible]);
 
   useEffect(() => { refetch(); }, [refetch]);

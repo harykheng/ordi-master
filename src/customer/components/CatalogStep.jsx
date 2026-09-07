@@ -5,6 +5,7 @@ import { config } from '../../shared/lib/config.js';
 import { formatPrice } from '../../shared/lib/format.js';
 import { cartCount, cartTotal } from '../../shared/lib/cart.js';
 import { waLink } from '../../shared/lib/whatsapp.js';
+import { onKeyActivate } from '../../shared/hooks/useDialogKeyboard.js';
 import ProductCard from './ProductCard.jsx';
 
 export default function CatalogStep({ settings, onPickVariant }) {
@@ -15,7 +16,7 @@ export default function CatalogStep({ settings, onPickVariant }) {
   const brandName = settings?.brand_name || config.storeName;
   const logoUrl = settings?.logo_url;
   const logoTextUrl = settings?.logo_text_url;
-  const brandIcon = settings?.brand_icon || '☕';
+  const brandIcon = settings?.brand_icon || '🏪';
   const bannerTitle = settings?.banner_title || config.bannerTitle;
   const bannerSub = settings?.banner_subtitle || config.bannerSubtitle;
   const bannerImg = settings?.banner_image_url;
@@ -54,9 +55,13 @@ export default function CatalogStep({ settings, onPickVariant }) {
             <span className="topbar-brand-name">{brandName}</span>
           )}
         </div>
-        <a className="btn-wa-icon" href={waHelpUrl} target="_blank" rel="noopener noreferrer" aria-label="Butuh bantuan?">
-          💬
-        </a>
+        {waHelpUrl ? (
+          <a className="btn-wa-icon" href={waHelpUrl} target="_blank" rel="noopener noreferrer" aria-label="Butuh bantuan?">
+            💬
+          </a>
+        ) : (
+          <span style={{ width: 36 }}></span>
+        )}
       </header>
 
       <div className="order-info-strip">
@@ -75,7 +80,7 @@ export default function CatalogStep({ settings, onPickVariant }) {
             <div className="banner-title">{bannerTitle}</div>
             <div className="banner-sub">{bannerSub}</div>
           </div>
-          <div className="banner-deco">☕</div>
+          <div className="banner-deco" aria-hidden="true">{brandIcon}</div>
         </div>
       </div>
 
@@ -97,7 +102,7 @@ export default function CatalogStep({ settings, onPickVariant }) {
           )}
           {!loading && !error && products.length === 0 && (
             <div className="catalog-empty">
-              <span className="catalog-empty-icon">☕</span>
+              <span className="catalog-empty-icon" aria-hidden="true">{brandIcon}</span>
               <h3>Menu segera hadir!</h3>
               <p>Produk sedang kami siapkan.</p>
             </div>
@@ -124,7 +129,14 @@ export default function CatalogStep({ settings, onPickVariant }) {
           ))}
         </div>
 
-        <div className="csf-bar" onClick={() => setCartExpanded((v) => !v)} role="button" tabIndex={0} aria-expanded={cartExpanded}>
+        <div
+          className="csf-bar"
+          onClick={() => setCartExpanded((v) => !v)}
+          onKeyDown={onKeyActivate(() => setCartExpanded((v) => !v))}
+          role="button"
+          tabIndex={0}
+          aria-expanded={cartExpanded}
+        >
           <div className="csf-left">
             <div className="csf-icon">🛒</div>
             <div className="csf-info">

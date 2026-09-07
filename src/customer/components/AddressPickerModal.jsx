@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { config } from '../../shared/lib/config.js';
 import { useBodyScrollLock } from '../../shared/hooks/useBodyScrollLock.js';
+import { useDialogKeyboard } from '../../shared/hooks/useDialogKeyboard.js';
 import AddressMapPreview from './AddressMapPreview.jsx';
 
 async function fetchSuggestions(q) {
@@ -29,7 +30,14 @@ export default function AddressPickerModal({ isOpen, onClose, onConfirm, initial
   const [note, setNote] = useState('');
   const timerRef = useRef(null);
   const inputRef = useRef(null);
+  const overlayRef = useRef(null);
   useBodyScrollLock(isOpen);
+  // Escape steps back to search from confirm, and closes the picker from search.
+  useDialogKeyboard({
+    active: isOpen,
+    onClose: () => (step === 'confirm' ? setStep('search') : onClose()),
+    containerRef: overlayRef,
+  });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -76,7 +84,14 @@ export default function AddressPickerModal({ isOpen, onClose, onConfirm, initial
     // .profile-overlay, which closes the whole sheet on any click that
     // bubbles to it — stopPropagation here so interacting with the picker
     // doesn't accidentally close the profile sheet underneath it.
-    <div className="address-picker-overlay" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="address-picker-overlay"
+      ref={overlayRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Pilih Alamat"
+      onClick={(e) => e.stopPropagation()}
+    >
       {step === 'search' ? (
         <>
           <header className="address-picker-header">
@@ -105,13 +120,13 @@ export default function AddressPickerModal({ isOpen, onClose, onConfirm, initial
             {results.map((r, i) => {
               const title = (r.display_place || r.display_name || '').split(',')[0];
               return (
-                <div key={i} className="address-picker-result-item" onClick={() => pickResult(r)}>
+                <button type="button" key={i} className="address-picker-result-item" onClick={() => pickResult(r)}>
                   <span className="address-picker-result-icon">📍</span>
                   <div>
                     <div className="address-picker-result-title">{title}</div>
                     <div className="address-picker-result-sub">{r.display_name}</div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

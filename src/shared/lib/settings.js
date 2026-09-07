@@ -29,7 +29,7 @@ export async function saveSettings({
   const { error } = await supabase.from('settings').upsert({
     id: 1,
     brand_name: brandName,
-    brand_icon: brandIcon || '☕',
+    brand_icon: brandIcon || '🏪',
     logo_url: logoUrl,
     logo_text_url: logoTextUrl,
     store_address: storeAddress,

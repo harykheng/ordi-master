@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
-import { formatPrice } from '../../shared/lib/format.js';
+import { useEffect, useRef, useState } from 'react';
+import { formatPrice, productInitial } from '../../shared/lib/format.js';
 import { useCart } from '../CartContext.jsx';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { getProductCartQty } from '../../shared/lib/cart.js';
+import { useDialogKeyboard } from '../../shared/hooks/useDialogKeyboard.js';
 
 export default function VariantSheet({ product, onClose }) {
   const { state, dispatch } = useCart();
@@ -16,6 +17,8 @@ export default function VariantSheet({ product, onClose }) {
   }, [product]);
 
   const isOpen = Boolean(product);
+  const sheetRef = useRef(null);
+  useDialogKeyboard({ active: isOpen, onClose, containerRef: sheetRef });
   const groups = product?.variants || [];
   const extra = Object.values(selected).reduce((s, v) => s + v.price, 0);
   const total = product ? (product.price + extra) * qty : 0;
@@ -53,8 +56,14 @@ export default function VariantSheet({ product, onClose }) {
   }
 
   return (
-    <div className={`variant-overlay${isOpen ? ' active' : ''}`} onClick={onClose}>
-      <div className="variant-sheet" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`variant-overlay${isOpen ? ' active' : ''}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Pilih Varian"
+      onClick={onClose}
+    >
+      <div className="variant-sheet" ref={sheetRef} onClick={(e) => e.stopPropagation()}>
         <div className="variant-sheet-drag"></div>
 
         <div className="variant-sheet-header">
@@ -63,7 +72,7 @@ export default function VariantSheet({ product, onClose }) {
               {product?.image_url ? (
                 <img className="variant-sheet-img" src={product.image_url} alt={product.name} />
               ) : (
-                <span className="variant-sheet-img-ph">☕</span>
+                <span className="variant-sheet-img-ph" aria-hidden="true">{productInitial(product?.name)}</span>
               )}
             </div>
             <div className="variant-sheet-info">
@@ -116,7 +125,7 @@ export default function VariantSheet({ product, onClose }) {
             </div>
           </div>
           <button className="btn btn-primary vs-add-btn" onClick={confirmAdd} disabled={maxQty <= 0}>
-            {maxQty <= 0 ? 'Stok Habis' : `Tambah ke Keranjang — ${formatPrice(total)}`}
+            {maxQty <= 0 ? 'Stok Habis' : `Tambah ke Keranjang · ${formatPrice(total)}`}
           </button>
         </div>
       </div>

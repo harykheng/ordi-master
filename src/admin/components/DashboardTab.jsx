@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useOrders } from '../../shared/hooks/useOrders.js';
 import { useDailyVisits } from '../../shared/hooks/useDailyVisits.js';
 import { formatPrice } from '../../shared/lib/format.js';
+import AdminErrorState from './AdminErrorState.jsx';
 
 // Only orders an admin has actually confirmed (checked the payment proof)
 // count as revenue — 'pending' is just "QRIS generated, customer claims they
@@ -35,8 +36,8 @@ function toDateKey(d) {
 }
 
 export default function DashboardTab() {
-  const { orders, loading } = useOrders();
-  const { visits, loading: visitsLoading } = useDailyVisits(7);
+  const { orders, loading, error, refetch } = useOrders();
+  const { visits, loading: visitsLoading, error: visitsError } = useDailyVisits(7);
 
   const visitStats = useMemo(() => {
     const now = new Date();
@@ -120,6 +121,20 @@ export default function DashboardTab() {
     );
   }
 
+  if (error) {
+    return (
+      <div>
+        <div className="admin-page-header">
+          <div>
+            <h2 className="admin-page-title">Dashboard</h2>
+            <p className="admin-page-subtitle">Ringkasan performa toko</p>
+          </div>
+        </div>
+        <AdminErrorState what="data pesanan" error={error} onRetry={refetch} />
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="admin-page-header">
@@ -141,7 +156,7 @@ export default function DashboardTab() {
           <div className="dash-stat-value">{stats.todayOrderCount}</div>
         </div>
         <div className="dash-stat-card">
-          <span className="dash-stat-icon">☕</span>
+          <span className="dash-stat-icon">🛍</span>
           <div className="dash-stat-label">Item Terjual Hari Ini</div>
           <div className="dash-stat-value">{stats.todayItemCount}</div>
         </div>
@@ -154,8 +169,10 @@ export default function DashboardTab() {
         <div className="dash-stat-card">
           <span className="dash-stat-icon">👀</span>
           <div className="dash-stat-label">Pengunjung Hari Ini</div>
-          <div className="dash-stat-value">{visitsLoading ? '—' : visitStats.todayCount}</div>
-          <div className="dash-stat-sub">{visitStats.weekCount} dalam 7 hari</div>
+          <div className="dash-stat-value">{visitsLoading ? '…' : visitsError ? 'n/a' : visitStats.todayCount}</div>
+          <div className="dash-stat-sub">
+            {visitsError ? 'Data pengunjung gagal dimuat' : `${visitStats.weekCount} dalam 7 hari`}
+          </div>
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { useToast } from '../../shared/components/Toast.jsx';
 import { updateOrderStatus } from '../../shared/lib/orders.js';
 import { downloadCsv } from '../../shared/lib/csv.js';
 import OrderDetailModal from './OrderDetailModal.jsx';
+import AdminErrorState from './AdminErrorState.jsx';
 
 const FILTERS = [
   { key: 'pending', label: '🕐 Menunggu' },
@@ -54,7 +55,7 @@ function orderToCsvRow(o) {
 }
 
 export default function OrdersTab() {
-  const { orders, loading, refetch } = useOrders();
+  const { orders, loading, error, refetch } = useOrders();
   const showToast = useToast();
   const [filter, setFilter] = useState('pending');
   const [detailOrder, setDetailOrder] = useState(null);
@@ -89,7 +90,7 @@ export default function OrdersTab() {
         <div>
           <h2 className="admin-page-title">Pesanan Masuk</h2>
           <p className="admin-page-subtitle">
-            {loading ? 'Memuat...' : orders.length === 0
+            {loading ? 'Memuat...' : error ? 'Data tidak termuat' : orders.length === 0
               ? '0 pesanan'
               : pendingCount > 0
                 ? `${orders.length} pesanan · ${pendingCount} menunggu konfirmasi`
@@ -118,7 +119,9 @@ export default function OrdersTab() {
         </div>
       )}
 
-      {!loading && filtered.length === 0 && (
+      {!loading && error && <AdminErrorState what="pesanan" error={error} onRetry={refetch} />}
+
+      {!loading && !error && filtered.length === 0 && (
         <div className="empty-admin-state visible">
           <span className="empty-admin-icon">📦</span>
           <h3>Belum ada pesanan</h3>
@@ -126,7 +129,7 @@ export default function OrdersTab() {
         </div>
       )}
 
-      {!loading && filtered.length > 0 && (
+      {!loading && !error && filtered.length > 0 && (
         <div className="orders-list">
           {filtered.map((order) => {
             const items = Array.isArray(order.items) ? order.items : [];
