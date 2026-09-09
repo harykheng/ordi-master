@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CartProvider, useCart } from './CartContext.jsx';
 import { useSettings } from '../shared/hooks/useSettings.js';
+import { useFavicon } from '../shared/hooks/useFavicon.js';
 import { useToast } from '../shared/components/Toast.jsx';
 import { config } from '../shared/lib/config.js';
 import { trackVisit } from '../shared/lib/visits.js';
@@ -18,6 +19,7 @@ function AppShell() {
   const { state } = useCart();
   const { settings } = useSettings();
   const showToast = useToast();
+  useFavicon(settings?.favicon_url);
 
   const [variantProduct, setVariantProduct] = useState(null);
   const [isProfileOpen, setProfileOpen] = useState(false);
