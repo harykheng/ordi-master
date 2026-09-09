@@ -14,14 +14,17 @@ async function uploadSettingsImage(file, prefix) {
 export async function saveSettings({
   brandName, brandIcon, storeAddress, storeHours, storeMapsUrl,
   bannerTitle, bannerSubtitle, instagramUrl, tiktokUrl,
-  logoFile, logoTextFile, bannerImageFile,
-  existingLogoUrl, existingLogoTextUrl, existingBannerImageUrl,
+  logoFile, logoTextFile, faviconFile, bannerImageFile,
+  existingLogoUrl, existingLogoTextUrl, existingFaviconUrl, existingBannerImageUrl,
 }) {
   let logoUrl = existingLogoUrl || null;
   if (logoFile) logoUrl = await uploadSettingsImage(logoFile, 'logo');
 
   let logoTextUrl = existingLogoTextUrl || null;
   if (logoTextFile) logoTextUrl = await uploadSettingsImage(logoTextFile, 'logo-text');
+
+  let faviconUrl = existingFaviconUrl || null;
+  if (faviconFile) faviconUrl = await uploadSettingsImage(faviconFile, 'favicon');
 
   let bannerImageUrl = existingBannerImageUrl || null;
   if (bannerImageFile) bannerImageUrl = await uploadSettingsImage(bannerImageFile, 'banner');
@@ -32,6 +35,7 @@ export async function saveSettings({
     brand_icon: brandIcon || '🏪',
     logo_url: logoUrl,
     logo_text_url: logoTextUrl,
+    favicon_url: faviconUrl,
     store_address: storeAddress,
     store_hours: storeHours,
     store_maps_url: storeMapsUrl || null,
@@ -44,5 +48,5 @@ export async function saveSettings({
   });
   if (error) throw error;
 
-  return { logoUrl, logoTextUrl, bannerImageUrl };
+  return { logoUrl, logoTextUrl, faviconUrl, bannerImageUrl };
 }
