@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useAuth } from '../AuthContext.jsx';
 import { config } from '../../shared/lib/config.js';
 import { useSettings } from '../../shared/hooks/useSettings.js';
+import { useFavicon } from '../../shared/hooks/useFavicon.js';
 
 export default function LoginScreen() {
   const { login } = useAuth();
   const { settings } = useSettings();
   const [email, setEmail] = useState('');
+  useFavicon(settings?.favicon_url);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -29,7 +31,9 @@ export default function LoginScreen() {
     <div className="login-screen">
       <div className="login-card">
         <div className="login-logo">
-          <span className="logo-icon">{settings?.brand_icon || '🏪'}</span>
+          {settings?.logo_url
+            ? <img className="login-logo-img" src={settings.logo_url} alt="" />
+            : <span className="logo-icon">{settings?.brand_icon || '🏪'}</span>}
           <div className="logo-text">{config.storeName}</div>
         </div>
         <p className="login-subtitle">Masuk ke Dashboard Admin</p>
