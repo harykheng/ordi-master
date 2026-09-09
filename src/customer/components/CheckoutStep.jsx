@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCart } from '../CartContext.jsx';
+import { useShipping } from '../hooks/useShipping.js';
 import { config } from '../../shared/lib/config.js';
 import { formatPrice, productInitial } from '../../shared/lib/format.js';
-import { cartTotal, getDiscountAmount, cartFinalTotal } from '../../shared/lib/cart.js';
+import { cartCount, cartTotal, getDiscountAmount, cartFinalTotal } from '../../shared/lib/cart.js';
 import { fetchActivePromoByCode } from '../../shared/lib/promos.js';
 import { onKeyActivate } from '../../shared/hooks/useDialogKeyboard.js';
 import OngkirOptions from './OngkirOptions.jsx';
@@ -10,11 +11,34 @@ import TierBadge from './TierBadge.jsx';
 
 export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris, onCompareTiers }) {
   const { state, dispatch } = useCart();
+  const { calculate } = useShipping();
   const [promoInput, setPromoInput] = useState('');
   const [promoResult, setPromoResult] = useState(null); // { type: 'success'|'error', msg }
   const [promoChecking, setPromoChecking] = useState(false);
+  const autoCheckedCoords = useRef(null);
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
+
+  // Alamat yang tersimpan dari kunjungan sebelumnya (localStorage profile) sudah
+  // bawa koordinat, jadi ongkirnya dicek sekali begitu customer masuk ke Detail
+  // Pesanan, tanpa dia harus buka modal profil lalu tekan Simpan cuma buat itu.
+  // Ini bukan pelanggaran aturan "cek ongkir sekali per save" di CLAUDE.md:
+  // pemicunya masuk-ke-step-3, bukan perubahan alamat, dan dijaga dua lapis
+  // (shippingStatus harus 'idle' + ref kunci per pasangan koordinat) supaya
+  // mengetik alamat tetap tidak pernah nembak Biteship.
+  useEffect(() => {
+    if (state.orderType !== 'delivery') return;
+    if (state.shippingStatus !== 'idle') return;
+    const { lat, lng } = state.profile;
+    if (!lat || !lng) return;
+
+    const coordKey = `${lat},${lng}`;
+    if (autoCheckedCoords.current === coordKey) return;
+    autoCheckedCoords.current = coordKey;
+
+    const weightGrams = cartCount(state.cart) * config.defaultItemWeightG;
+    calculate(lat, lng, weightGrams, cartTotal(state.cart));
+  }, [state.orderType, state.shippingStatus, state.profile, state.cart, calculate]);
 
   const storeName = settings?.brand_name || config.storeName;
   const storeAddress = settings?.store_address || config.storeAddress;
@@ -26,7 +50,11 @@ export default function CheckoutStep({ settings, onOpenProfile, onSubmitQris, on
   function goBack() {
     dispatch({ type: 'SET_STEP', step: 2 });
     dispatch({ type: 'REMOVE_PROMO' });
-    dispatch({ type: 'SET_SHIPPING', shipping: null });
+    // CLEAR_SHIPPING, bukan SET_SHIPPING null: isi cart bisa berubah di katalog,
+    // jadi hasil ongkir lama harus dibuang total supaya balik ke sini memicu
+    // cek ulang (efek auto-cek di atas cuma jalan kalau statusnya 'idle').
+    dispatch({ type: 'CLEAR_SHIPPING' });
+    autoCheckedCoords.current = null;
     window.scrollTo(0, 0);
   }
 

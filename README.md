@@ -99,6 +99,7 @@ CREATE TABLE settings (
   brand_icon       TEXT,
   logo_url         TEXT,
   logo_text_url    TEXT,
+  favicon_url      TEXT,
   store_address    TEXT,
   store_hours      TEXT,
   store_maps_url   TEXT,
@@ -217,7 +218,7 @@ CREATE POLICY "Admin update images"
 
 1. Di sidebar Supabase, buka **Authentication** → **Users**
 2. Klik **Add user** → **Create new user**
-3. Isi email dan password yang akan dipakai untuk login ke `/admin.html`
+3. Isi email dan password yang akan dipakai untuk login ke `/admin/`
 
 ---
 
@@ -252,10 +253,18 @@ VITE_TIKTOK_URL=https://tiktok.com/@tokomu
 # Daftar di https://locationiq.com untuk dapat API key
 VITE_LOCATIONIQ_KEY=pk.xxxxxxxxxxxxxxxxxxxx
 
-# Koordinat toko — dipakai sebagai titik asal pengecekan ongkir, dan fallback
-# tarif jarak statis (Haversine) kalau Biteship gagal/tidak tersedia
+# Koordinat toko — dipakai sebagai titik asal pengecekan ongkir, fallback tarif
+# jarak statis (Haversine) kalau Biteship gagal/tidak tersedia, DAN titik pusat
+# pengurutan hasil autocomplete alamat (lihat VITE_ADDRESS_SEARCH_RADIUS_KM)
 VITE_STORE_LAT=-6.2308
 VITE_STORE_LNG=106.6480
+
+# Radius (km) area yang diprioritaskan saat customer mencari alamat. Bukan batas
+# jangkauan delivery (itu ditentukan cek ongkir), cuma bilang ke LocationIQ
+# "cari di sekitar sini dulu" supaya nama tempat yang kembar antar kota tidak
+# ketuker. Naikkan kalau pelanggan tersebar luas, turunkan kalau kota besar dan
+# nama jalannya banyak yang mirip. Kosong = 50
+VITE_ADDRESS_SEARCH_RADIUS_KM=50
 
 # Estimasi berat per item (gram) untuk hitung ongkir Biteship — produk di sini
 # tidak nyimpen berat per-produk, jadi dipakai angka rata-rata per pesanan
@@ -371,7 +380,7 @@ ordi-master/
 │       │                            (Haversine), cart.js, format.js, whatsapp.js, config.js
 │       │                            (baca env var), supabaseClient.js, products/promos/orders/
 │       │                            settings.js (mutation functions)
-│       ├── hooks/                 ← useProducts, usePromos, useOrders, useSettings
+│       ├── hooks/                 ← useProducts, usePromos, useOrders, useSettings, useFavicon
 │       └── components/            ← Modal, Toast, ConfirmDialog (shell generik)
 ├── css/
 │   ├── main.css                ← Style bersama (warna, font, animasi, modal umum)
@@ -434,7 +443,11 @@ Klik **📋 Detail** pada satu pesanan untuk:
 **🔔 Notifikasi pesanan baru** — begitu ada pesanan masuk, admin yang lagi buka dashboard langsung dapat toast + bunyi + badge angka di tab "Pesanan" (real-time lewat Supabase Realtime, bukan polling). Cuma jalan selagi tab dashboard-nya kebuka di browser — bukan push notification asli ke HP/notifikasi sistem (itu butuh service worker + infrastruktur Web Push, di luar scope "client-side by default" project ini). Butuh Realtime diaktifkan buat tabel `orders` — sudah termasuk di `supabase-setup.sql` §6, atau aktifkan manual dari Supabase Dashboard → **Database** → **Replication**.
 
 ### Tab Pengaturan
-Ubah nama brand, ikon/logo, alamat & jam operasional toko, link Google Maps, banner katalog (judul, subjudul, foto), dan link Instagram/TikTok — semua tersimpan di tabel `settings` dan langsung berlaku di katalog tanpa perlu edit kode.
+Ubah nama brand, ikon/logo, favicon, alamat & jam operasional toko, link Google Maps, banner katalog (judul, subjudul, foto), dan link Instagram/TikTok — semua tersimpan di tabel `settings` dan langsung berlaku di katalog tanpa perlu edit kode.
+
+**Favicon** (`favicon_url`) — ikon kecil di tab browser. Di-upload lewat form ini, bukan dengan mengganti file di `public/`, supaya tiap klien bisa punya ikon sendiri tanpa build ulang. Dipakai di ketiga aplikasi (katalog, lacak pesanan, dashboard admin) dan dipasang saat runtime oleh `useFavicon()` (`src/shared/hooks/`), yang membuang link ikon statis dari `index.html` lalu memasang `<link rel="icon">` + `<link rel="apple-touch-icon">` sendiri. Kalau kosong, file di `public/` yang dipakai. Format: PNG/ICO/SVG, maks 1 MB, paling rapi kalau persegi minimal 180 x 180 px.
+
+**Logo Ikon** (`logo_url`) — selain jadi ikon header katalog, ini juga satu-satunya ikon yang tampil di header dashboard admin dan kartu login admin. Tidak ada emoji default di header admin: kalau `logo_url` kosong, header cuma menampilkan nama toko.
 
 ### Ganti Nomor WhatsApp Admin
 Ubah `VITE_ADMIN_WHATSAPP` di `.env` (dan di env var hosting kalau sudah deploy), lalu redeploy.

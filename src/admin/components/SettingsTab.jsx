@@ -20,6 +20,8 @@ export default function SettingsTab() {
   const [existingLogoUrl, setExistingLogoUrl] = useState(null);
   const [logoTextFile, setLogoTextFile] = useState(null);
   const [existingLogoTextUrl, setExistingLogoTextUrl] = useState(null);
+  const [faviconFile, setFaviconFile] = useState(null);
+  const [existingFaviconUrl, setExistingFaviconUrl] = useState(null);
   const [bannerImageFile, setBannerImageFile] = useState(null);
   const [existingBannerImageUrl, setExistingBannerImageUrl] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -39,6 +41,7 @@ export default function SettingsTab() {
     });
     setExistingLogoUrl(settings.logo_url || null);
     setExistingLogoTextUrl(settings.logo_text_url || null);
+    setExistingFaviconUrl(settings.favicon_url || null);
     setExistingBannerImageUrl(settings.banner_image_url || null);
   }, [settings]);
 
@@ -59,13 +62,16 @@ export default function SettingsTab() {
         tiktokUrl: form.tiktokUrl.trim(),
         logoFile,
         logoTextFile,
+        faviconFile,
         bannerImageFile,
         existingLogoUrl,
         existingLogoTextUrl,
+        existingFaviconUrl,
         existingBannerImageUrl,
       });
       setLogoFile(null);
       setLogoTextFile(null);
+      setFaviconFile(null);
       setBannerImageFile(null);
       showToast('Pengaturan berhasil disimpan!', 'success');
       await refetch();
@@ -118,9 +124,9 @@ export default function SettingsTab() {
               maxSizeMB={2}
               hint="PNG, JPG, WEBP, SVG, maks 2 MB"
             />
-            <p className="form-hint">Mascot/ikon kecil di header. Tampil kalau tidak ada logo ikon, fallback ke emoji di atas.</p>
+            <p className="form-hint">Mascot/ikon kecil. Menggantikan emoji di atas pada header katalog, dan jadi satu-satunya ikon yang tampil di header dashboard admin. Kalau kosong, header admin cuma tampil nama toko.</p>
           </div>
-          <div className="form-group" style={{ marginBottom: 0 }}>
+          <div className="form-group">
             <label>Logo Teks / Wordmark (gambar, opsional)</label>
             <ImageUploadDropzone
               existingUrl={existingLogoTextUrl}
@@ -130,6 +136,18 @@ export default function SettingsTab() {
               hint="PNG, JPG, WEBP, SVG, maks 2 MB"
             />
             <p className="form-hint">Ganti tulisan "Nama Brand" di header dengan gambar logo teks kamu sendiri. Kalau kosong, tampil sebagai teks biasa.</p>
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Favicon (ikon tab browser, opsional)</label>
+            <ImageUploadDropzone
+              existingUrl={existingFaviconUrl}
+              onFileSelect={setFaviconFile}
+              onRemove={() => { setFaviconFile(null); setExistingFaviconUrl(null); }}
+              maxSizeMB={1}
+              accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,.ico"
+              hint="PNG, ICO, SVG, maks 1 MB"
+            />
+            <p className="form-hint">Ikon kecil di tab browser, dipakai di halaman katalog, lacak pesanan, dan dashboard ini. Paling rapi kalau gambarnya persegi, minimal 180 x 180 px. Kalau kosong, ikon bawaan yang dipakai.</p>
           </div>
         </div>
 

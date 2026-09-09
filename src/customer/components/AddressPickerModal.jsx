@@ -1,15 +1,77 @@
 import { useEffect, useRef, useState } from 'react';
 import { config } from '../../shared/lib/config.js';
+import { haversineDistance } from '../../shared/lib/shipping.js';
 import { useBodyScrollLock } from '../../shared/hooks/useBodyScrollLock.js';
 import { useDialogKeyboard } from '../../shared/hooks/useDialogKeyboard.js';
 import AddressMapPreview from './AddressMapPreview.jsx';
 
+// Hasil dikelompokkan per pita jarak selebar ini sebelum diurutkan. Dalam satu
+// pita, urutan relevansi dari LocationIQ dipertahankan apa adanya (Array.sort
+// stabil), jadi "Mall Taman Anggrek" tetap menang dari "Jalan Anggrek" kecil
+// yang kebetulan 500 m lebih dekat. Yang dibuang cuma kasus beda kota.
+const DISTANCE_BAND_KM = 10;
+
+function hasStoreCoords() {
+  return Number.isFinite(config.storeLat) && Number.isFinite(config.storeLng);
+}
+
+// Kotak bias di sekitar toko buat parameter `viewbox` LocationIQ. Sengaja TANPA
+// `bounded=1`: bounded memotong keras hasil di luar kotak, jadi alamat yang
+// benar tapi sedikit di luar radius bakal hilang sama sekali dan customer buntu
+// tanpa jalan keluar. Yang berhak menolak alamat kejauhan itu cek ongkir, bukan
+// kotak pencarian.
+function storeViewbox() {
+  if (!hasStoreCoords()) return null;
+  const { storeLat: lat, storeLng: lng, addressSearchRadiusKm: radiusKm } = config;
+  const dLat = radiusKm / 111;
+  // 1 derajat bujur menyempit mengikuti cos(lintang), floor-nya jaga-jaga
+  // supaya tidak meledak jadi tak hingga di dekat kutub.
+  const dLng = radiusKm / (111 * Math.max(Math.cos((lat * Math.PI) / 180), 0.01));
+  return `${lng - dLng},${lat - dLat},${lng + dLng},${lat + dLat}`;
+}
+
+function distanceBand(km) {
+  // Hasil tanpa koordinat valid ditaruh paling belakang, bukan bikin
+  // comparator balik NaN (itu bikin urutannya acak).
+  if (!Number.isFinite(km)) return Number.MAX_SAFE_INTEGER;
+  return Math.floor(km / DISTANCE_BAND_KM);
+}
+
+// LocationIQ mengurutkan murni pakai relevansi teks, tidak tahu toko ini di
+// mana, jadi "Taman Anggrek" bisa mengembalikan yang di Bandung lebih dulu
+// daripada yang 2 km dari toko di Jakarta. `viewbox` sudah membenahi kandidat
+// yang dikembalikan, urutan akhirnya dibereskan di sini.
+function withDistanceSorted(results) {
+  if (!hasStoreCoords()) return results.map((r) => ({ ...r, distanceKm: null }));
+  return results
+    .map((r) => {
+      const lat = parseFloat(r.lat);
+      const lng = parseFloat(r.lon);
+      const distanceKm = Number.isFinite(lat) && Number.isFinite(lng)
+        ? haversineDistance(config.storeLat, config.storeLng, lat, lng)
+        : null;
+      return { ...r, distanceKm };
+    })
+    .sort((a, b) => distanceBand(a.distanceKm) - distanceBand(b.distanceKm));
+}
+
 async function fetchSuggestions(q) {
   try {
-    const url = `https://api.locationiq.com/v1/autocomplete?key=${config.locationIqKey}&q=${encodeURIComponent(q)}&limit=8&dedupe=1&accept-language=id&countrycodes=id`;
-    const res = await fetch(url);
+    const params = new URLSearchParams({
+      key: config.locationIqKey,
+      q,
+      limit: '8',
+      dedupe: '1',
+      'accept-language': 'id',
+      countrycodes: 'id',
+    });
+    const viewbox = storeViewbox();
+    if (viewbox) params.set('viewbox', viewbox);
+
+    const res = await fetch(`https://api.locationiq.com/v1/autocomplete?${params.toString()}`);
     if (!res.ok) return [];
-    return await res.json();
+    const data = await res.json();
+    return Array.isArray(data) ? withDistanceSorted(data) : [];
   } catch {
     return []; // silent, customer can still search again
   }
@@ -124,6 +186,9 @@ export default function AddressPickerModal({ isOpen, onClose, onConfirm, initial
                   <div>
                     <div className="address-picker-result-title">{title}</div>
                     <div className="address-picker-result-sub">{r.display_name}</div>
+                    {Number.isFinite(r.distanceKm) && (
+                      <div className="address-picker-result-dist">{r.distanceKm.toFixed(1)} km dari toko</div>
+                    )}
                   </div>
                 </button>
               );
