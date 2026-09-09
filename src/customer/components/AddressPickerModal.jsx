@@ -30,6 +30,27 @@ function storeViewbox() {
   return `${lng - dLng},${lat - dLat},${lng + dLng},${lat + dLat}`;
 }
 
+// LocationIQ kadang mengembalikan nama tempat huruf besar semua ("TAMAN
+// ANGGREK"), karena begitu isinya di OSM. Dirapikan per segmen (dipisah koma),
+// dan HANYA kalau segmen itu memang huruf besar semua dan cukup panjang.
+// Batas panjangnya penting: singkatan yang wajar di alamat Indonesia ("RW 08",
+// "RT 01", "BSD", "PIK") harus lolos apa adanya, jangan sampai jadi "Rw 08".
+const MIN_ALLCAPS_LETTERS = 5;
+
+function tidyCase(text) {
+  if (!text) return '';
+  return text
+    .split(',')
+    .map((segment) => {
+      const letters = segment.replace(/[^\p{L}]/gu, '');
+      if (letters.length < MIN_ALLCAPS_LETTERS) return segment;
+      // Ada huruf kecilnya, berarti penulisannya sudah normal, jangan disentuh.
+      if (letters !== letters.toUpperCase()) return segment;
+      return segment.replace(/\p{L}[\p{L}']*/gu, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
+    })
+    .join(',');
+}
+
 function distanceBand(km) {
   // Hasil tanpa koordinat valid ditaruh paling belakang, bukan bikin
   // comparator balik NaN (itu bikin urutannya acak).
@@ -129,7 +150,7 @@ export default function AddressPickerModal({ isOpen, onClose, onConfirm, initial
   }
 
   function pickResult(r) {
-    const label = r.display_name || r.display_place || '';
+    const label = tidyCase(r.display_name || r.display_place || '');
     setSelected({ label, lat: parseFloat(r.lat), lng: parseFloat(r.lon) });
     setStep('confirm');
   }
@@ -180,12 +201,19 @@ export default function AddressPickerModal({ isOpen, onClose, onConfirm, initial
               <div className="address-picker-status">Ketik minimal 3 huruf untuk mulai cari</div>
             )}
             {results.map((r, i) => {
-              const title = (r.display_place || r.display_name || '').split(',')[0];
+              const title = tidyCase((r.display_place || r.display_name || '').split(',')[0]);
               return (
                 <button type="button" key={i} className="address-picker-result-item" onClick={() => pickResult(r)}>
-                  <div>
+                  {/* Penanda lokasi, murni dekorasi: tiap baris di daftar ini memang
+                      alamat, jadi ikonnya tidak membawa informasi pembeda dan
+                      disembunyikan dari screen reader. SVG, bukan emoji 📍, supaya
+                      warnanya ikut palet dan bentuknya sama di semua HP. */}
+                  <svg className="address-picker-result-pin" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" />
+                  </svg>
+                  <div className="address-picker-result-text">
                     <div className="address-picker-result-title">{title}</div>
-                    <div className="address-picker-result-sub">{r.display_name}</div>
+                    <div className="address-picker-result-sub">{tidyCase(r.display_name)}</div>
                     {Number.isFinite(r.distanceKm) && (
                       <div className="address-picker-result-dist">{r.distanceKm.toFixed(1)} km dari toko</div>
                     )}
