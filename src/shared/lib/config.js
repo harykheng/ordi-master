@@ -15,6 +15,11 @@ export const config = {
   storeLat: parseFloat(import.meta.env.VITE_STORE_LAT),
   storeLng: parseFloat(import.meta.env.VITE_STORE_LNG),
   defaultItemWeightG: parseInt(import.meta.env.VITE_DEFAULT_ITEM_WEIGHT_G, 10) || 300,
+  // Radius (km) kotak bias pencarian alamat di sekitar toko. Bukan batas
+  // jangkauan delivery (itu urusan cek ongkir), cuma bilang ke LocationIQ
+  // "cari di sekitar sini dulu" supaya nama tempat yang kembar antar kota
+  // (Taman Anggrek Jakarta vs Bandung) tidak ketuker.
+  addressSearchRadiusKm: parseInt(import.meta.env.VITE_ADDRESS_SEARCH_RADIUS_KM, 10) || 50,
   qrisStatic: import.meta.env.VITE_QRIS_STATIC,
   // Sales-demo-only UI (tier badges/tooltips on main's full-feature build) ,
   // never set this in a real client deployment, main ships all 3 tiers'
