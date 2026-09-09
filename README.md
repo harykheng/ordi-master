@@ -253,10 +253,18 @@ VITE_TIKTOK_URL=https://tiktok.com/@tokomu
 # Daftar di https://locationiq.com untuk dapat API key
 VITE_LOCATIONIQ_KEY=pk.xxxxxxxxxxxxxxxxxxxx
 
-# Koordinat toko — dipakai sebagai titik asal pengecekan ongkir, dan fallback
-# tarif jarak statis (Haversine) kalau Biteship gagal/tidak tersedia
+# Koordinat toko — dipakai sebagai titik asal pengecekan ongkir, fallback tarif
+# jarak statis (Haversine) kalau Biteship gagal/tidak tersedia, DAN titik pusat
+# pengurutan hasil autocomplete alamat (lihat VITE_ADDRESS_SEARCH_RADIUS_KM)
 VITE_STORE_LAT=-6.2308
 VITE_STORE_LNG=106.6480
+
+# Radius (km) area yang diprioritaskan saat customer mencari alamat. Bukan batas
+# jangkauan delivery (itu ditentukan cek ongkir), cuma bilang ke LocationIQ
+# "cari di sekitar sini dulu" supaya nama tempat yang kembar antar kota tidak
+# ketuker. Naikkan kalau pelanggan tersebar luas, turunkan kalau kota besar dan
+# nama jalannya banyak yang mirip. Kosong = 50
+VITE_ADDRESS_SEARCH_RADIUS_KM=50
 
 # Estimasi berat per item (gram) untuk hitung ongkir Biteship — produk di sini
 # tidak nyimpen berat per-produk, jadi dipakai angka rata-rata per pesanan
