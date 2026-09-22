@@ -6,6 +6,7 @@ import { useToast } from '../shared/components/Toast.jsx';
 import { config } from '../shared/lib/config.js';
 import { trackVisit } from '../shared/lib/visits.js';
 import { cartTotal, getDiscountAmount, cartFinalTotal, cartSnapshot, cartStockItems } from '../shared/lib/cart.js';
+import { useCapacity } from '../shared/hooks/useCapacity.js';
 import { qrisToDynamic } from '../shared/lib/qris.js';
 import OrderTypeStep from './components/OrderTypeStep.jsx';
 import CatalogStep from './components/CatalogStep.jsx';
@@ -22,6 +23,11 @@ function AppShell() {
   useFavicon(settings?.favicon_url);
 
   const [variantProduct, setVariantProduct] = useState(null);
+
+  // Satu fetch buat tanggal yang dipilih, dipakai bareng katalog dan sheet
+  // varian: dua-duanya harus membatasi dari angka yang sama, kalau dipanggil
+  // sendiri-sendiri keduanya bisa melihat sisa slot yang berbeda.
+  const { usage: capacityUsage } = useCapacity(state.selectedDate);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [pendingOrder, setPendingOrder] = useState(null);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
@@ -100,7 +106,7 @@ function AppShell() {
   return (
     <>
       {state.step === 1 && <OrderTypeStep settings={settings} />}
-      {state.step === 2 && <CatalogStep settings={settings} onPickVariant={setVariantProduct} />}
+      {state.step === 2 && <CatalogStep settings={settings} capacityUsage={capacityUsage} onPickVariant={setVariantProduct} />}
       {state.step === 3 && (
         <CheckoutStep
           settings={settings}
@@ -109,7 +115,7 @@ function AppShell() {
         />
       )}
 
-      <VariantSheet product={variantProduct} onClose={() => setVariantProduct(null)} />
+      <VariantSheet product={variantProduct} capacityUsage={capacityUsage} onClose={() => setVariantProduct(null)} />
       <ProfileModal isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
       <QrisModal
         pendingOrder={pendingOrder}
