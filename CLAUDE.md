@@ -26,8 +26,8 @@ Kalau branch ini (`tier-1`) lagi dikerjain langsung: `OrderTypeStep.jsx` punya t
 | `src/customer/` | Aplikasi React customer: `App.jsx` (step switcher + modal orchestration), `CartContext.jsx` (state global order flow via `useReducer`, profile di-persist ke `localStorage`), `components/`, `hooks/useShipping.js` |
 | `src/admin/` | Aplikasi React admin: `App.jsx` (tab shell + live order alert), `AuthContext.jsx` (Supabase Auth session), `hooks/useNewOrderAlerts.js` (Realtime), `components/` |
 | `src/tracking/` | Aplikasi React lacak pesanan: `App.jsx` (form kode+WA), `components/OrderStatusCard.jsx` |
-| `src/shared/lib/` | Pure functions dipakai ketiga app: `qris.js` (crc16/qrisToDynamic), `shipping.js` (Haversine), `cart.js` (cart math + `cartStockItems`), `format.js`, `whatsapp.js` (message builder + `ORDER_STATUS_LABELS`), `csv.js` (hand-rolled parse/download, no library), `production.js` (rekap produksi per tanggal, pure function di atas baris `orders`), `config.js` (baca env var `VITE_*`), `supabaseClient.js`, `products.js`/`promos.js`/`orders.js`/`settings.js`/`visits.js` (mutation & RPC call functions ke Supabase) |
-| `src/shared/hooks/` | `useProducts`, `usePromos`, `useOrders`, `useSettings`, `useDailyVisits` — data-fetching hooks dipakai lintas app. Plus `useFavicon` (pasang `settings.favicon_url` ke `<link rel="icon">` saat runtime, dipanggil ketiga app) |
+| `src/shared/lib/` | Pure functions dipakai ketiga app: `qris.js` (crc16/qrisToDynamic), `shipping.js` (Haversine), `cart.js` (cart math + `cartStockItems`), `format.js`, `whatsapp.js` (message builder + `ORDER_STATUS_LABELS`), `csv.js` (hand-rolled parse/download, no library), `production.js` (rekap produksi per tanggal, pure function di atas baris `orders`), `capacity.js` (hitung sisa slot, pure), `config.js` (baca env var `VITE_*`), `supabaseClient.js`, `products.js`/`promos.js`/`orders.js`/`settings.js`/`visits.js` (mutation & RPC call functions ke Supabase) |
+| `src/shared/hooks/` | `useProducts`, `usePromos`, `useOrders`, `useSettings`, `useDailyVisits`, `useCapacity` — data-fetching hooks dipakai lintas app. Plus `useFavicon` (pasang `settings.favicon_url` ke `<link rel="icon">` saat runtime, dipanggil ketiga app) |
 | `src/shared/components/` | `Modal.jsx` (shell generik modal admin), `Toast.jsx` (+ `useToast()`), `ConfirmDialog.jsx` (+ `useConfirmDialog()`) |
 | `css/main.css` / `catalog.css` / `admin.css` | Style dari versi vanilla, di-import apa adanya sebagai global stylesheet, semua class name sama persis |
 | `css/tracking.css` | Style halaman lacak pesanan (baru, gak ada padanan di versi vanilla — reuse var/class dari `main.css`/`catalog.css`) |
@@ -53,7 +53,7 @@ Pilih pickup/delivery + tanggal (chip 7 hari dari `buildDateChips()` di `shared/
 - `useProducts({ onlyVisible: true })` ambil dari tabel `products` (RLS sudah filter `is_visible=true` juga, filter di query cuma optimisasi).
 - Produk tanpa varian: qty stepper langsung (dispatch `SET_CART_QTY`). Produk dengan varian: buka `VariantSheet` (state lokal `selected`/`qty`, konfirm dispatch `ADD_TO_CART` dengan `cartKey` gabungan label varian).
 - Cart math (`cartCount`, `cartTotal`, `getDiscountAmount`, `cartFinalTotal`, `getProductCartQty`, `cartStockItems`) semua pure function di `shared/lib/cart.js` — dipanggil dengan `state.cart` sebagai parameter, bukan baca state global langsung.
-- **Stok** (`product.stock_qty`, `NULL` = tak terbatas): kalau 0, `ProductCard` nampilin badge "Habis" + disable semua kontrol. Kalau terbatas, qty stepper di-cap ke sisa stok (dikurangi qty yang udah di cart), dan `VariantSheet` cap qty-nya juga berdasarkan total qty lintas-varian produk yang sama (stok dilacak per-produk, bukan per-varian).
+- **Stok & kuota** (`product.stock_qty` dan `product.daily_capacity`, `NULL` = tak terbatas): batas efektifnya yang paling ketat di antara keduanya, lihat "Stok, Kuota Harian & `place_order()`" di bawah. Kalau 0, `ProductCard` nampilin badge "Habis" (stok) atau "Penuh" (kuota tanggal) + disable semua kontrol; kalau kuotanya diisi, kartu nampilin "Sisa N slot" yang ikut turun sesuai isi keranjang. Kalau terbatas, qty stepper di-cap ke sisa stok (dikurangi qty yang udah di cart), dan `VariantSheet` cap qty-nya juga berdasarkan total qty lintas-varian produk yang sama (stok dilacak per-produk, bukan per-varian).
 - **Cart bar** (`catalog-sticky-footer`) bisa di-tap buat expand ke atas, nampilin list item + qty + subtotal per item — bukan cuma badge total doang.
 
 ### Step 3 — `CheckoutStep.jsx`
@@ -134,13 +134,37 @@ Form yang upsert ke tabel `settings` (row `id=1`) lewat `saveSettings()` (`share
 
 ---
 
-## Stok & `place_order()`
+## Stok, Kuota Harian & `place_order()`
 
 `products.stock_qty` (`NULL` = gak dilacak/selalu tersedia). Checkout **tidak pernah** insert langsung ke `orders` — selalu lewat `supabase.rpc('place_order', { order_data, stock_items })` (definisi di `supabase-setup.sql` §7, `src/shared/lib/orders.js`'s `insertOrder()`). Alasannya WAJIB backend, bukan gaya-gayaan: cek-lalu-kurangi stok dari browser (read stok → cek cukup → insert order) punya race condition kalau 2 customer checkout produk yang sama nyaris bersamaan — dua-duanya bisa lolos cek sebelum salah satu sempat nulis hasil kurangnya, jadi oversell.
 
 `place_order()` jalan sebagai satu transaksi Postgres: tiap item di `stock_items` dikurangi dari `stock_qty` HANYA kalau cukup; begitu ada satu item gagal, **seluruh transaksi rollback** (termasuk item lain yang sempat kepotong di iterasi sebelumnya) dan order gak jadi ke-insert — customer dapet toast `STOK_HABIS: <nama produk> stoknya tidak cukup`. `SECURITY DEFINER` biar function ini bisa UPDATE `stock_qty` walau `anon` sengaja gak dikasih policy UPDATE langsung ke `products`.
 
-Sudah pernah divalidasi langsung ke Postgres lokal (bukan cuma dibaca): order normal, stok kurang → block+rollback, produk unlimited (NULL) gak pernah kepotong, order multi-item yang salah satu itemnya gagal → semua item ikut rollback.
+### Kuota harian (`products.daily_capacity`)
+
+Konsep **kedua yang terpisah** dari stok, bisa aktif bareng di produk yang sama. `stock_qty` itu satu angka global yang dikurangi permanen (cocok buat barang stok); `daily_capacity` itu berapa banyak yang sanggup **dibuat untuk satu tanggal pengambilan**, berlaku per `orders.order_date` dan otomatis penuh lagi di tanggal berikutnya (cocok buat toko yang batasnya tenaga produksi). `NULL` = tidak dibatasi.
+
+Ini yang bikin Ordi bisa dipakai toko PO tanpa flow terpisah: tanggal sudah dipilih duluan di step 1, kuota tinggal nempel di tanggal itu.
+
+**Terpakainya dihitung ulang dari tabel `orders`, BUKAN disimpan sebagai counter kayak `stock_qty`.** Ini keputusan sadar, jangan diubah jadi counter "biar lebih cepat" tanpa membaca ini dulu:
+
+1. Order dibatalkan otomatis melepas slotnya. `updateOrderStatus()` cuma flip kolom status dan gak pernah balikin apa-apa, jadi counter bakal bikin tiap pembatalan menghanguskan slot permanen.
+2. Order `pending` yang gak pernah diverifikasi ikut lepas sendiri lewat batas 24 jam, jadi yang buka QRIS terus kabur gak ngunci slot selamanya.
+3. Angka terpakai gak bisa drift dari kenyataan.
+
+Batas 24 jam itu **sengaja sama** dengan `PENDING_EXPIRE_MS` di `useOrders.js`. Ubah salah satu = ubah dua-duanya, kalau enggak ada pesanan yang ngunci kuota padahal adminnya sendiri udah gak lihat di daftar.
+
+`active_order_item_qty()` (`supabase-setup.sql` §7) jadi SATU-SATUNYA definisi "item yang masih menghitung", dipakai bareng `get_capacity_usage()` (buat browser) dan `place_order()` (buat cek atomic), biar dua sisi gak mungkin punya definisi yang beda. Item tanpa `pid` (baris sebelum `cartSnapshot()` nyimpen id produk) gak ikut terhitung.
+
+Cek kuota di `place_order()` **diagregasi per produk dulu**, beda dari loop stok di bawahnya yang gak perlu. Bukan gaya penulisan: stok berkurang langsung di tabel `products` jadi iterasi kedua lihat hasil yang pertama, sedangkan kuota dihitung dari `orders` yang belum ke-insert, jadi dua varian produk yang sama masing-masing 3 bakal lolos dua kali terhadap sisa 5. `SELECT ... FOR UPDATE` ngunci baris produknya (urut per `product_id`, biar urutan ambil kunci selalu sama) dan itu yang bikin dua checkout barengan aman.
+
+Di customer: `useCapacity(dateKey)` fetch sekali di `src/customer/App.jsx`, diteruskan ke `CatalogStep` dan `VariantSheet` **dari satu sumber yang sama** (kalau masing-masing fetch sendiri, sheet varian bisa ngebolehin lebih banyak dari yang dijanjiin kartunya). `productLimit()` (`shared/lib/capacity.js`) ambil yang paling ketat antara stok dan kuota. Kartu produk mbedain **"Habis"** (barangnya gak ada) dari **"Penuh"** (tanggal ini yang penuh, tanggal lain masih bisa) — jangan disamain, itu yang bikin customer nyerah padahal cuma perlu geser tanggal.
+
+Gagal fetch kuota sengaja gak mblokir katalog (produk tampil tanpa batas), karena yang nolak beneran tetap `place_order()` di server.
+
+### Validasi
+
+Sudah pernah divalidasi langsung ke Postgres lokal (bukan cuma dibaca). Stok: order normal, stok kurang → block+rollback, produk unlimited (NULL) gak pernah kepotong, order multi-item yang salah satu itemnya gagal → semua item ikut rollback. Kuota: kuota penuh ditolak `KUOTA_HABIS:`, kuota kepisah per tanggal, pembatalan dan pending kedaluwarsa melepas slot, pending yang masih baru tetap ngunci, penolakan me-rollback order DAN stok, item tanpa `pid` gak ikut ngitung, dua varian produk sama dalam satu keranjang dijumlahin dulu, plus dua tes konkurensi (satu checkout mblokir yang lain sampai commit lalu yang kedua ditolak, dan 12 checkout serentak terhadap kuota 5 menghasilkan tepat 5 pesanan).
 
 ---
 
