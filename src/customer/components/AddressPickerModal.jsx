@@ -1,15 +1,98 @@
 import { useEffect, useRef, useState } from 'react';
 import { config } from '../../shared/lib/config.js';
+import { haversineDistance } from '../../shared/lib/shipping.js';
 import { useBodyScrollLock } from '../../shared/hooks/useBodyScrollLock.js';
 import { useDialogKeyboard } from '../../shared/hooks/useDialogKeyboard.js';
 import AddressMapPreview from './AddressMapPreview.jsx';
 
+// Hasil dikelompokkan per pita jarak selebar ini sebelum diurutkan. Dalam satu
+// pita, urutan relevansi dari LocationIQ dipertahankan apa adanya (Array.sort
+// stabil), jadi "Mall Taman Anggrek" tetap menang dari "Jalan Anggrek" kecil
+// yang kebetulan 500 m lebih dekat. Yang dibuang cuma kasus beda kota.
+const DISTANCE_BAND_KM = 10;
+
+function hasStoreCoords() {
+  return Number.isFinite(config.storeLat) && Number.isFinite(config.storeLng);
+}
+
+// Kotak bias di sekitar toko buat parameter `viewbox` LocationIQ. Sengaja TANPA
+// `bounded=1`: bounded memotong keras hasil di luar kotak, jadi alamat yang
+// benar tapi sedikit di luar radius bakal hilang sama sekali dan customer buntu
+// tanpa jalan keluar. Yang berhak menolak alamat kejauhan itu cek ongkir, bukan
+// kotak pencarian.
+function storeViewbox() {
+  if (!hasStoreCoords()) return null;
+  const { storeLat: lat, storeLng: lng, addressSearchRadiusKm: radiusKm } = config;
+  const dLat = radiusKm / 111;
+  // 1 derajat bujur menyempit mengikuti cos(lintang), floor-nya jaga-jaga
+  // supaya tidak meledak jadi tak hingga di dekat kutub.
+  const dLng = radiusKm / (111 * Math.max(Math.cos((lat * Math.PI) / 180), 0.01));
+  return `${lng - dLng},${lat - dLat},${lng + dLng},${lat + dLat}`;
+}
+
+// LocationIQ kadang mengembalikan nama tempat huruf besar semua ("TAMAN
+// ANGGREK"), karena begitu isinya di OSM. Dirapikan per segmen (dipisah koma),
+// dan HANYA kalau segmen itu memang huruf besar semua dan cukup panjang.
+// Batas panjangnya penting: singkatan yang wajar di alamat Indonesia ("RW 08",
+// "RT 01", "BSD", "PIK") harus lolos apa adanya, jangan sampai jadi "Rw 08".
+const MIN_ALLCAPS_LETTERS = 5;
+
+function tidyCase(text) {
+  if (!text) return '';
+  return text
+    .split(',')
+    .map((segment) => {
+      const letters = segment.replace(/[^\p{L}]/gu, '');
+      if (letters.length < MIN_ALLCAPS_LETTERS) return segment;
+      // Ada huruf kecilnya, berarti penulisannya sudah normal, jangan disentuh.
+      if (letters !== letters.toUpperCase()) return segment;
+      return segment.replace(/\p{L}[\p{L}']*/gu, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
+    })
+    .join(',');
+}
+
+function distanceBand(km) {
+  // Hasil tanpa koordinat valid ditaruh paling belakang, bukan bikin
+  // comparator balik NaN (itu bikin urutannya acak).
+  if (!Number.isFinite(km)) return Number.MAX_SAFE_INTEGER;
+  return Math.floor(km / DISTANCE_BAND_KM);
+}
+
+// LocationIQ mengurutkan murni pakai relevansi teks, tidak tahu toko ini di
+// mana, jadi "Taman Anggrek" bisa mengembalikan yang di Bandung lebih dulu
+// daripada yang 2 km dari toko di Jakarta. `viewbox` sudah membenahi kandidat
+// yang dikembalikan, urutan akhirnya dibereskan di sini.
+function withDistanceSorted(results) {
+  if (!hasStoreCoords()) return results.map((r) => ({ ...r, distanceKm: null }));
+  return results
+    .map((r) => {
+      const lat = parseFloat(r.lat);
+      const lng = parseFloat(r.lon);
+      const distanceKm = Number.isFinite(lat) && Number.isFinite(lng)
+        ? haversineDistance(config.storeLat, config.storeLng, lat, lng)
+        : null;
+      return { ...r, distanceKm };
+    })
+    .sort((a, b) => distanceBand(a.distanceKm) - distanceBand(b.distanceKm));
+}
+
 async function fetchSuggestions(q) {
   try {
-    const url = `https://api.locationiq.com/v1/autocomplete?key=${config.locationIqKey}&q=${encodeURIComponent(q)}&limit=8&dedupe=1&accept-language=id&countrycodes=id`;
-    const res = await fetch(url);
+    const params = new URLSearchParams({
+      key: config.locationIqKey,
+      q,
+      limit: '8',
+      dedupe: '1',
+      'accept-language': 'id',
+      countrycodes: 'id',
+    });
+    const viewbox = storeViewbox();
+    if (viewbox) params.set('viewbox', viewbox);
+
+    const res = await fetch(`https://api.locationiq.com/v1/autocomplete?${params.toString()}`);
     if (!res.ok) return [];
-    return await res.json();
+    const data = await res.json();
+    return Array.isArray(data) ? withDistanceSorted(data) : [];
   } catch {
     return []; // silent, customer can still search again
   }
@@ -67,7 +150,7 @@ export default function AddressPickerModal({ isOpen, onClose, onConfirm, initial
   }
 
   function pickResult(r) {
-    const label = r.display_name || r.display_place || '';
+    const label = tidyCase(r.display_name || r.display_place || '');
     setSelected({ label, lat: parseFloat(r.lat), lng: parseFloat(r.lon) });
     setStep('confirm');
   }
@@ -118,12 +201,22 @@ export default function AddressPickerModal({ isOpen, onClose, onConfirm, initial
               <div className="address-picker-status">Ketik minimal 3 huruf untuk mulai cari</div>
             )}
             {results.map((r, i) => {
-              const title = (r.display_place || r.display_name || '').split(',')[0];
+              const title = tidyCase((r.display_place || r.display_name || '').split(',')[0]);
               return (
                 <button type="button" key={i} className="address-picker-result-item" onClick={() => pickResult(r)}>
-                  <div>
+                  {/* Penanda lokasi, murni dekorasi: tiap baris di daftar ini memang
+                      alamat, jadi ikonnya tidak membawa informasi pembeda dan
+                      disembunyikan dari screen reader. SVG, bukan emoji 📍, supaya
+                      warnanya ikut palet dan bentuknya sama di semua HP. */}
+                  <svg className="address-picker-result-pin" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" />
+                  </svg>
+                  <div className="address-picker-result-text">
                     <div className="address-picker-result-title">{title}</div>
-                    <div className="address-picker-result-sub">{r.display_name}</div>
+                    <div className="address-picker-result-sub">{tidyCase(r.display_name)}</div>
+                    {Number.isFinite(r.distanceKm) && (
+                      <div className="address-picker-result-dist">{r.distanceKm.toFixed(1)} km dari toko</div>
+                    )}
                   </div>
                 </button>
               );

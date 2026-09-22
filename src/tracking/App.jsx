@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { config } from '../shared/lib/config.js';
+import { useSettings } from '../shared/hooks/useSettings.js';
+import { useFavicon } from '../shared/hooks/useFavicon.js';
 import { lookupOrder } from '../shared/lib/orders.js';
 import { useToast } from '../shared/components/Toast.jsx';
 import OrderStatusCard from './components/OrderStatusCard.jsx';
@@ -8,7 +10,9 @@ const params = new URLSearchParams(window.location.search);
 
 export default function App() {
   const showToast = useToast();
+  const { settings } = useSettings();
   const [orderNumber, setOrderNumber] = useState(params.get('order') || '');
+  useFavicon(settings?.favicon_url);
   const [wa, setWa] = useState('');
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState(null);

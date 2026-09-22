@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { config } from '../shared/lib/config.js';
 import { useSettings } from '../shared/hooks/useSettings.js';
+import { useFavicon } from '../shared/hooks/useFavicon.js';
 import { AuthProvider, useAuth } from './AuthContext.jsx';
 import { ConfirmDialogProvider } from '../shared/components/ConfirmDialog.jsx';
 import { useNewOrderAlerts } from './hooks/useNewOrderAlerts.js';
@@ -24,6 +25,7 @@ function Dashboard() {
   const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState('dashboard');
   const newOrders = useNewOrderAlerts();
+  useFavicon(settings?.favicon_url);
 
   function selectTab(key) {
     setActiveTab(key);
@@ -33,8 +35,13 @@ function Dashboard() {
   return (
     <div className="admin-layout active">
       <header className="admin-header">
+        {/* Cuma logo ikon yang di-upload di Pengaturan yang tampil di sini.
+            Tidak ada emoji default: ikon bawaan yang bukan milik klien lebih
+            mengganggu daripada slot yang kosong. */}
         <div className="logo">
-          <span className="logo-icon">{settings?.brand_icon || '🏪'}</span>
+          {settings?.logo_url && (
+            <img className="logo-img" src={settings.logo_url} alt="" />
+          )}
           <div className="logo-text">{config.storeName} Admin</div>
         </div>
         <div className="admin-header-right">
