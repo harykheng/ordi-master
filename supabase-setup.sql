@@ -24,12 +24,16 @@ CREATE TABLE IF NOT EXISTS products (
   is_visible    BOOLEAN     NOT NULL DEFAULT true,
   variants      JSONB       DEFAULT '[]'::jsonb,
   stock_qty     INTEGER,
+  daily_capacity INTEGER,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Safe to re-run on an existing install that predates stock_qty.
 ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_qty INTEGER;
 COMMENT ON COLUMN products.stock_qty IS 'NULL = stok tidak dilacak (selalu tersedia). Angka = stok dikurangi otomatis oleh place_order() tiap ada order.';
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS daily_capacity INTEGER;
+COMMENT ON COLUMN products.daily_capacity IS 'NULL = kapasitas harian tidak dibatasi. Angka = berapa banyak produk ini sanggup dibuat untuk SATU tanggal pengambilan. Beda dari stock_qty: stock_qty itu satu angka global yang dikurangi permanen, daily_capacity berlaku per orders.order_date dan otomatis penuh lagi di tanggal berikutnya. Terpakainya dihitung dari tabel orders (lihat get_capacity_usage() di §7), bukan disimpan sebagai counter.';
 
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 
@@ -194,8 +198,83 @@ END $$;
 
 
 -- ----------------------------------------------------------------
--- 7. FUNCTION place_order() — insert order + kurangi stok, atomic
+-- 7. KUOTA HARIAN + FUNCTION place_order()
 -- ----------------------------------------------------------------
+-- Dua konsep berbeda dipakai bareng di sini:
+--
+--   products.stock_qty       satu angka global, dikurangi permanen tiap ada
+--                            order. Cocok buat barang yang memang stok.
+--   products.daily_capacity  berapa banyak yang sanggup DIBUAT untuk satu
+--                            tanggal pengambilan. Tidak pernah dikurangi:
+--                            terpakainya dihitung ulang dari tabel orders,
+--                            jadi tanggal berikutnya otomatis penuh lagi.
+--
+-- Kenapa kuota dihitung, bukan disimpan sebagai counter seperti stock_qty:
+--   1. Pesanan dibatalkan otomatis melepas slotnya, tanpa perlu function
+--      pengembali kuota (updateOrderStatus() cuma mengubah kolom status).
+--   2. Pesanan `pending` yang tidak pernah diverifikasi ikut lepas sendiri
+--      lewat batas 24 jam di bawah, jadi orang yang membuka QRIS lalu kabur
+--      tidak mengunci slot selamanya.
+--   3. Angka terpakai tidak bisa melenceng dari kenyataan, karena cuma ada
+--      satu sumber.
+--
+-- Batas 24 jam itu SENGAJA sama dengan PENDING_EXPIRE_MS di
+-- src/shared/hooks/useOrders.js, yang menyembunyikan pending kedaluwarsa dari
+-- daftar admin. Kalau salah satunya diubah, ubah dua-duanya, kalau tidak
+-- pesanan bisa mengunci kuota padahal adminnya sendiri sudah tidak melihatnya.
+
+-- Baris item pesanan yang masih menghitung untuk satu tanggal. Dipakai
+-- get_capacity_usage() di bawah DAN place_order(), supaya browser dan cek
+-- atomic saat checkout tidak mungkin memakai definisi "masih berlaku" yang
+-- berbeda.
+--
+-- Item tanpa `pid` (baris yang ditulis sebelum cartSnapshot() menyimpan id
+-- produk, lihat src/shared/lib/cart.js) tidak ikut terhitung: tidak ada cara
+-- mencocokkannya ke produk yang bisa diandalkan, dan menebak lewat nama akan
+-- salah begitu produknya di-rename.
+CREATE OR REPLACE FUNCTION active_order_item_qty(p_date DATE)
+RETURNS TABLE (product_id UUID, qty INTEGER)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  SELECT (item->>'pid')::UUID, (item->>'qty')::INTEGER
+  FROM orders o
+  CROSS JOIN LATERAL jsonb_array_elements(
+    CASE WHEN jsonb_typeof(o.items) = 'array' THEN o.items ELSE '[]'::jsonb END
+  ) AS item
+  WHERE o.order_date = p_date
+    AND o.status <> 'cancelled'
+    AND NOT (o.status = 'pending' AND o.created_at < now() - INTERVAL '24 hours')
+    AND item->>'pid' IS NOT NULL;
+$$;
+
+
+-- Dipanggil browser lewat rpc() buat menampilkan sisa slot di katalog.
+-- Balikannya SENGAJA sempit: cuma (product_id, terpakai) untuk satu tanggal,
+-- dan cuma untuk produk yang kapasitasnya memang dibatasi. Tidak ada satu pun
+-- kolom pesanan yang ikut keluar, jadi ini tidak membuka apa pun yang tidak
+-- sudah tampil di katalog sebagai "sisa N". `orders` tetap tanpa policy SELECT
+-- untuk anon, pola yang sama dengan lookup_order() di §8.
+CREATE OR REPLACE FUNCTION get_capacity_usage(p_date DATE)
+RETURNS TABLE (product_id UUID, used INTEGER)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  SELECT a.product_id, SUM(a.qty)::INTEGER
+  FROM active_order_item_qty(p_date) a
+  JOIN products p ON p.id = a.product_id
+  WHERE p.daily_capacity IS NOT NULL
+  GROUP BY a.product_id;
+$$;
+
+GRANT EXECUTE ON FUNCTION get_capacity_usage(DATE) TO anon;
+GRANT EXECUTE ON FUNCTION get_capacity_usage(DATE) TO authenticated;
+
+
 -- Dipanggil dari browser lewat supabase.rpc('place_order', ...) sebagai
 -- pengganti insert langsung ke `orders`. Alasannya WAJIB backend (bukan
 -- sekadar preferensi): cek-lalu-kurangi stok dari JS punya race condition
@@ -207,6 +286,12 @@ END $$;
 -- stok yang sudah sempat jalan di item sebelumnya) di-rollback dan order
 -- TIDAK jadi ke-insert. Produk dengan stock_qty NULL dianggap tak terbatas,
 -- tidak pernah dikurangi/gagal.
+--
+-- Function ini juga menegakkan products.daily_capacity untuk
+-- order_data->>'order_date' (lihat penjelasan kuota di awal §7). Alasan harus
+-- di sini sama persis dengan alasan stok: browser bisa membaca sisa kuota lalu
+-- checkout, tapi tidak bisa menjamin tidak ada order lain yang menyelip di
+-- antara keduanya.
 --
 -- SECURITY DEFINER supaya bisa UPDATE products.stock_qty walau anon tidak
 -- (dan sengaja tidak diberi) policy UPDATE langsung ke tabel products —
@@ -221,7 +306,56 @@ DECLARE
   item JSONB;
   affected INTEGER;
   prod_name TEXT;
+  v_order_date DATE := (order_data->>'order_date')::DATE;
+  v_product_id UUID;
+  v_qty INTEGER;
+  v_capacity INTEGER;
+  v_used INTEGER;
 BEGIN
+  -- Cek kuota harian dulu, sebelum stok dikurangi, supaya pesanan yang lewat
+  -- kuota tidak sempat menyentuh stock_qty sama sekali.
+  --
+  -- Diagregasi per produk (bukan diiterasi per baris stock_items seperti loop
+  -- stok di bawah) karena cara menghitungnya beda. Stok berkurang langsung di
+  -- tabel products, jadi iterasi kedua sudah melihat hasil iterasi pertama.
+  -- Kuota dihitung dari tabel orders, dan order ini belum di-insert, jadi tiap
+  -- iterasi akan membaca angka terpakai yang sama: dua varian dari produk yang
+  -- sama masing-masing 3 buah akan lolos dua kali terhadap sisa 5, lalu
+  -- menghasilkan 6. Menjumlahkannya dulu menutup celah itu.
+  --
+  -- SELECT ... FOR UPDATE mengunci baris produknya, dan itu yang membuat cek
+  -- ini aman terhadap dua checkout bersamaan: transaksi kedua menunggu sampai
+  -- yang pertama commit, lalu menghitung ulang dengan order pertama sudah
+  -- masuk. Diurutkan per product_id supaya semua transaksi mengambil kunci
+  -- dalam urutan yang sama, jadi dua order dengan produk yang sama tapi urutan
+  -- keranjang berbeda tidak bisa saling mengunci.
+  FOR v_product_id, v_qty IN
+    SELECT (e->>'product_id')::UUID, SUM((e->>'qty')::INTEGER)
+    FROM jsonb_array_elements(stock_items) e
+    GROUP BY 1
+    ORDER BY 1
+  LOOP
+    SELECT daily_capacity, name INTO v_capacity, prod_name
+    FROM products WHERE id = v_product_id
+    FOR UPDATE;
+
+    IF v_capacity IS NOT NULL THEN
+      SELECT COALESCE(SUM(qty), 0) INTO v_used
+      FROM active_order_item_qty(v_order_date)
+      WHERE product_id = v_product_id;
+
+      IF v_used + v_qty > v_capacity THEN
+        IF v_capacity - v_used > 0 THEN
+          RAISE EXCEPTION 'KUOTA_HABIS: % untuk tanggal itu sisa % lagi',
+            COALESCE(prod_name, 'Produk ini'), v_capacity - v_used;
+        ELSE
+          RAISE EXCEPTION 'KUOTA_HABIS: % sudah penuh untuk tanggal itu',
+            COALESCE(prod_name, 'Produk ini');
+        END IF;
+      END IF;
+    END IF;
+  END LOOP;
+
   FOR item IN SELECT * FROM jsonb_array_elements(stock_items)
   LOOP
     UPDATE products

@@ -84,7 +84,7 @@ Pilih pickup/delivery + tanggal (chip 7 hari dari `buildDateChips()` di `shared/
 
 Halaman standalone (`/tracking/`), gak ada CartProvider/state global — cuma form lookup: kode pesanan + nomor WhatsApp pemesan. Prefill kode via query param `?order=<kode>` kalau datang dari link `OrderSummaryModal`.
 
-- `lookupOrder(orderNumber, customerWa)` di `shared/lib/orders.js` manggil `supabase.rpc('lookup_order', { p_order_number, p_customer_wa })` — **bukan** `SELECT` langsung, karena `orders` RLS sengaja insert-only untuk `anon` (privasi data pelanggan lain). Function ini (definisi di `supabase-setup.sql` §7) cuma balikin 1 row kalau **kode DAN nomor WA cocok berbarengan**; `SECURITY DEFINER` biar bisa baca tabel tanpa buka policy SELECT publik yang bisa di-scan buat ngintip semua pesanan.
+- `lookupOrder(orderNumber, customerWa)` di `shared/lib/orders.js` manggil `supabase.rpc('lookup_order', { p_order_number, p_customer_wa })` — **bukan** `SELECT` langsung, karena `orders` RLS sengaja insert-only untuk `anon` (privasi data pelanggan lain). Function ini (definisi di `supabase-setup.sql` §8) cuma balikin 1 row kalau **kode DAN nomor WA cocok berbarengan**; `SECURITY DEFINER` biar bisa baca tabel tanpa buka policy SELECT publik yang bisa di-scan buat ngintip semua pesanan.
 - `OrderStatusCard.jsx` render status (`ORDER_STATUS_LABELS` dari `whatsapp.js`, sama persis kayak yang admin lihat), item, alamat/kurir kalau delivery, dan rincian total.
 - Gak ketemu → pesan "Pesanan tidak ditemukan", gak dibedain apakah kode salah atau WA salah (sengaja, biar gak jadi celah buat nebak-nebak kode pesanan orang lain).
 
@@ -135,7 +135,7 @@ Form yang upsert ke tabel `settings` (row `id=1`) lewat `saveSettings()` (`share
 
 ## Stok & `place_order()`
 
-`products.stock_qty` (`NULL` = gak dilacak/selalu tersedia). Checkout **tidak pernah** insert langsung ke `orders` — selalu lewat `supabase.rpc('place_order', { order_data, stock_items })` (definisi di `supabase-setup.sql` §6, `src/shared/lib/orders.js`'s `insertOrder()`). Alasannya WAJIB backend, bukan gaya-gayaan: cek-lalu-kurangi stok dari browser (read stok → cek cukup → insert order) punya race condition kalau 2 customer checkout produk yang sama nyaris bersamaan — dua-duanya bisa lolos cek sebelum salah satu sempat nulis hasil kurangnya, jadi oversell.
+`products.stock_qty` (`NULL` = gak dilacak/selalu tersedia). Checkout **tidak pernah** insert langsung ke `orders` — selalu lewat `supabase.rpc('place_order', { order_data, stock_items })` (definisi di `supabase-setup.sql` §7, `src/shared/lib/orders.js`'s `insertOrder()`). Alasannya WAJIB backend, bukan gaya-gayaan: cek-lalu-kurangi stok dari browser (read stok → cek cukup → insert order) punya race condition kalau 2 customer checkout produk yang sama nyaris bersamaan — dua-duanya bisa lolos cek sebelum salah satu sempat nulis hasil kurangnya, jadi oversell.
 
 `place_order()` jalan sebagai satu transaksi Postgres: tiap item di `stock_items` dikurangi dari `stock_qty` HANYA kalau cukup; begitu ada satu item gagal, **seluruh transaksi rollback** (termasuk item lain yang sempat kepotong di iterasi sebelumnya) dan order gak jadi ke-insert — customer dapet toast `STOK_HABIS: <nama produk> stoknya tidak cukup`. `SECURITY DEFINER` biar function ini bisa UPDATE `stock_qty` walau `anon` sengaja gak dikasih policy UPDATE langsung ke `products`.
 
