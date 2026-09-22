@@ -303,6 +303,9 @@ img.admin-product-img { font-size: inherit; }
 .admin-tag.tag-stock-unlimited { background: var(--latte-xlight); color: var(--text-soft); }
 .admin-tag.tag-stock       { background: #e3f2fd; color: #1565c0; }
 .admin-tag.tag-stock-empty { background: #fdecea; color: var(--danger); }
+/* Kuota harian, sengaja beda warna dari tag stok di atas: dua konsep berbeda
+   yang bisa aktif bersamaan di produk yang sama. 5.71:1 di latarnya. */
+.admin-tag.tag-capacity     { background: #e0f2f1; color: #00695c; }
 
 .admin-product-actions { display: flex; gap: 8px; }
 

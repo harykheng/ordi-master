@@ -4,10 +4,10 @@ import { useToast } from '../../shared/components/Toast.jsx';
 import { downloadCsv, parseCsvObjects } from '../../shared/lib/csv.js';
 import { importProducts } from '../../shared/lib/products.js';
 
-const TEMPLATE_HEADERS = ['Nama', 'Deskripsi', 'Harga', 'Stok', 'Badge New', 'Badge Terlaris', 'Tampil di Katalog'];
+const TEMPLATE_HEADERS = ['Nama', 'Deskripsi', 'Harga', 'Stok', 'Kuota per Tanggal', 'Badge New', 'Badge Terlaris', 'Tampil di Katalog'];
 const TEMPLATE_EXAMPLE_ROWS = [
-  ['Produk Contoh A', 'Deskripsi singkat, boleh dikosongkan', '18000', '', 'TRUE', 'FALSE', 'TRUE'],
-  ['Produk Contoh B', '', '22000', '10', 'FALSE', 'TRUE', 'TRUE'],
+  ['Produk Contoh A', 'Deskripsi singkat, boleh dikosongkan', '18000', '', '', 'TRUE', 'FALSE', 'TRUE'],
+  ['Produk Contoh B', '', '22000', '10', '20', 'FALSE', 'TRUE', 'TRUE'],
 ];
 
 function parseBool(str, defaultVal) {
@@ -38,6 +38,15 @@ function validateRow(raw, rowNum) {
     }
   }
 
+  const capacityStr = (raw['Kuota per Tanggal'] || '').trim();
+  let dailyCapacity = null;
+  if (capacityStr !== '') {
+    dailyCapacity = parseInt(capacityStr, 10);
+    if (Number.isNaN(dailyCapacity) || dailyCapacity < 0) {
+      return { ok: false, rowNum, reason: `Kuota per tanggal tidak valid ("${capacityStr}")` };
+    }
+  }
+
   return {
     ok: true,
     rowNum,
@@ -46,6 +55,7 @@ function validateRow(raw, rowNum) {
       description: (raw['Deskripsi'] || '').trim(),
       price,
       stockQty,
+      dailyCapacity,
       isNew: parseBool(raw['Badge New'], false),
       isBestseller: parseBool(raw['Badge Terlaris'], false),
       isVisible: parseBool(raw['Tampil di Katalog'], true),
