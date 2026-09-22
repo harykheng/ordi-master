@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useOrders } from '../../shared/hooks/useOrders.js';
-import { formatPrice, formatOrderDate } from '../../shared/lib/format.js';
+import { formatPrice, formatOrderDate, formatDateKey, todayKey } from '../../shared/lib/format.js';
+import { buildOrderDateOptions, buildProductionRecap, orderDateKey } from '../../shared/lib/production.js';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { updateOrderStatus } from '../../shared/lib/orders.js';
 import { downloadCsv } from '../../shared/lib/csv.js';
@@ -58,10 +59,26 @@ export default function OrdersTab() {
   const { orders, loading, error, refetch } = useOrders();
   const showToast = useToast();
   const [filter, setFilter] = useState('pending');
+  const [dateFilter, setDateFilter] = useState('all');
   const [detailOrder, setDetailOrder] = useState(null);
 
   const pendingCount = orders.filter((o) => o.status === 'pending').length;
-  const filtered = filter === 'all' ? orders : orders.filter((o) => o.status === filter);
+
+  const dateOptions = useMemo(() => buildOrderDateOptions(orders), [orders]);
+
+  // Deliberately independent of the status filter above: this answers "what do I
+  // have to make on this date", which does not change because the admin is
+  // currently looking at the Selesai tab. The note under the heading says so.
+  const recap = useMemo(
+    () => (dateFilter === 'all' ? null : buildProductionRecap(orders, dateFilter)),
+    [orders, dateFilter],
+  );
+
+  const filtered = orders.filter((o) => {
+    if (filter !== 'all' && o.status !== filter) return false;
+    if (dateFilter !== 'all' && orderDateKey(o) !== dateFilter) return false;
+    return true;
+  });
 
   async function quickConfirm(order) {
     try {
@@ -79,8 +96,8 @@ export default function OrdersTab() {
       return;
     }
     const filterLabel = filter === 'all' ? 'semua' : filter;
-    const today = new Date().toISOString().slice(0, 10);
-    downloadCsv(`pesanan-${filterLabel}-${today}.csv`, CSV_HEADERS, filtered.map(orderToCsvRow));
+    const dateLabel = dateFilter === 'all' ? todayKey() : dateFilter;
+    downloadCsv(`pesanan-${filterLabel}-${dateLabel}.csv`, CSV_HEADERS, filtered.map(orderToCsvRow));
     showToast(`${filtered.length} pesanan berhasil di-export`, 'success');
   }
 
@@ -100,17 +117,76 @@ export default function OrdersTab() {
         <button className="btn btn-secondary" onClick={exportCsv} disabled={loading}>Export CSV</button>
       </div>
 
-      <div className="orders-filter-bar">
+      <div className="orders-filter-bar" role="group" aria-label="Filter status pesanan">
         {FILTERS.map((f) => (
           <button
             key={f.key}
             className={`order-filter-btn${filter === f.key ? ' active' : ''}`}
+            aria-pressed={filter === f.key}
             onClick={() => setFilter(f.key)}
           >
             {f.label}
           </button>
         ))}
       </div>
+
+      {!loading && !error && dateOptions.length > 0 && (
+        <div className="orders-date-bar" role="group" aria-label="Filter tanggal pengambilan">
+          <button
+            className={`order-date-btn${dateFilter === 'all' ? ' active' : ''}`}
+            aria-pressed={dateFilter === 'all'}
+            onClick={() => setDateFilter('all')}
+          >
+            Semua tanggal
+          </button>
+          {dateOptions.map((opt) => (
+            <button
+              key={opt.key}
+              className={`order-date-btn${dateFilter === opt.key ? ' active' : ''}${opt.isPast ? ' is-past' : ''}`}
+              aria-pressed={dateFilter === opt.key}
+              onClick={() => setDateFilter(opt.key)}
+            >
+              <span>{formatDateKey(opt.key)}</span>
+              <span className="odb-count" aria-label={`${opt.count} pesanan`}>{opt.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!loading && !error && recap && (
+        <section className="production-recap">
+          <div className="pr-head">
+            <h3 className="pr-title">Rekap produksi · {formatDateKey(dateFilter)}</h3>
+            <span className="pr-count">{recap.itemCount} item</span>
+          </div>
+          <p className="pr-note">
+            Dari {recap.orderCount} pesanan
+            {recap.pendingCount > 0 ? `, ${recap.pendingCount} belum dikonfirmasi` : ''}.
+            Pesanan yang dibatalkan tidak dihitung, dan angka ini tidak ikut filter status di atas.
+          </p>
+          {recap.rows.length === 0 ? (
+            <p className="pr-empty">Belum ada item buat tanggal ini.</p>
+          ) : (
+            <ul className="pr-list">
+              {recap.rows.map((row) => (
+                <li className="pr-row" key={row.name}>
+                  <div className="pr-row-main">
+                    <span className="pr-name">{row.name}</span>
+                    <span className="pr-qty">{row.qty}</span>
+                  </div>
+                  {row.variants.length > 0 && (
+                    <div className="pr-variants">
+                      {row.variants.map((v) => (
+                        <span className="pr-variant" key={v.label}>{v.label} {v.qty}</span>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {loading && (
         <div className="loading-state" style={{ display: 'flex' }}>
@@ -123,8 +199,17 @@ export default function OrdersTab() {
 
       {!loading && !error && filtered.length === 0 && (
         <div className="empty-admin-state visible">
-                    <h3>Belum ada pesanan</h3>
-          <p>Pesanan yang dikonfirmasi dari WhatsApp akan muncul di sini</p>
+          {dateFilter === 'all' ? (
+            <>
+              <h3>Belum ada pesanan</h3>
+              <p>Pesanan yang dikonfirmasi dari WhatsApp akan muncul di sini</p>
+            </>
+          ) : (
+            <>
+              <h3>Tidak ada pesanan di tanggal ini</h3>
+              <p>Coba ganti tanggal, atau pilih status lain di atas</p>
+            </>
+          )}
         </div>
       )}
 
