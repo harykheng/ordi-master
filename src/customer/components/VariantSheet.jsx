@@ -3,9 +3,10 @@ import { formatPrice, productInitial } from '../../shared/lib/format.js';
 import { useCart } from '../CartContext.jsx';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { getProductCartQty } from '../../shared/lib/cart.js';
+import { productLimit } from '../../shared/lib/capacity.js';
 import { useDialogKeyboard } from '../../shared/hooks/useDialogKeyboard.js';
 
-export default function VariantSheet({ product, onClose }) {
+export default function VariantSheet({ product, capacityUsage, onClose }) {
   const { state, dispatch } = useCart();
   const showToast = useToast();
   const [selected, setSelected] = useState({}); // { groupName: { label, price } }
@@ -23,10 +24,12 @@ export default function VariantSheet({ product, onClose }) {
   const extra = Object.values(selected).reduce((s, v) => s + v.price, 0);
   const total = product ? (product.price + extra) * qty : 0;
 
-  // Stock is tracked per product, not per variant, cap by what's left after
-  // whatever's already sitting in the cart across other variants of this product.
+  // Stock and daily capacity are both tracked per product, not per variant, so
+  // cap by whichever is tighter, minus whatever's already sitting in the cart
+  // across other variants of this product.
   const alreadyInCart = product ? getProductCartQty(state.cart, product.id) : 0;
-  const maxQty = product?.stock_qty == null ? 20 : Math.max(0, Math.min(20, product.stock_qty - alreadyInCart));
+  const limit = product ? productLimit(product, capacityUsage) : Infinity;
+  const maxQty = limit === Infinity ? 20 : Math.max(0, Math.min(20, limit - alreadyInCart));
 
   function selectChip(groupName, option) {
     setSelected((prev) => ({ ...prev, [groupName]: { label: option.label, price: option.price || 0 } }));
@@ -38,7 +41,7 @@ export default function VariantSheet({ product, onClose }) {
 
   function confirmAdd() {
     if (maxQty <= 0) {
-      showToast('Stok produk ini sudah habis di keranjang kamu!', 'error');
+      showToast('Sisa yang bisa dipesan untuk produk ini sudah masuk semua ke keranjang kamu!', 'error');
       return;
     }
     for (const g of groups) {
