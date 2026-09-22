@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { formatPrice, productInitial } from '../../shared/lib/format.js';
 import { getProductCartQty } from '../../shared/lib/cart.js';
+import { productLimit, remainingCapacity } from '../../shared/lib/capacity.js';
 import { useCart } from '../CartContext.jsx';
 
-export default function ProductCard({ product, index, onPickVariant }) {
+export default function ProductCard({ product, index, capacityUsage, onPickVariant }) {
   const { state, dispatch } = useCart();
   const [imgError, setImgError] = useState(false);
   const hasVariants = product.variants && product.variants.length > 0;
@@ -12,20 +13,47 @@ export default function ProductCard({ product, index, onPickVariant }) {
     : (state.cart[product.id]?.qty || 0);
 
   const stockQty = product.stock_qty;
-  const isOutOfStock = stockQty != null && stockQty <= 0;
-  const remaining = stockQty == null ? Infinity : stockQty - qty;
-  const isLowStock = stockQty != null && stockQty > 0 && stockQty <= 5;
+  const slotsLeft = remainingCapacity(product, capacityUsage);
+
+  // Batas efektif: yang paling ketat antara stok (angka global) dan kuota untuk
+  // tanggal yang dipilih. `remaining` di bawah itu sisa yang masih boleh
+  // ditambahkan, jadi sudah dikurangi isi keranjang sekarang.
+  const limit = productLimit(product, capacityUsage);
+  const isSoldOut = limit <= 0;
+  const remaining = limit - qty;
+
+  // Dua sebab kehabisan, dua kata yang berbeda: "Habis" berarti barangnya tidak
+  // ada, "Penuh" berarti tanggal inilah yang sudah penuh dan tanggal lain masih
+  // bisa. Menyamakan keduanya bikin customer menyerah padahal cuma perlu geser
+  // tanggal.
+  const soldOutLabel = stockQty != null && stockQty <= 0 ? 'Habis' : 'Penuh';
+
+  // Sisa slot ditampilkan tiap kali tokonya memang menetapkan kuota, bukan cuma
+  // saat tinggal sedikit: angka itu sendiri yang memberi tahu customer bahwa
+  // toko ini jalan per tanggal, tanpa perlu paragraf penjelasan. Sisa stok tetap
+  // pakai ambang lama, karena stok bukan penanda cara kerja toko.
+  //
+  // Angkanya ikut turun saat produk masuk keranjang, dan hilang begitu habis.
+  // Menampilkan sisa slot toko apa adanya (tanpa dikurangi isi keranjang) lebih
+  // akurat secara harfiah, tapi di kartu yang tombol tambahnya sudah mati,
+  // "Sisa 3 slot" terbaca sebagai kontradiksi. Yang ditanya customer di sini
+  // bukan "toko ini sisa berapa" tapi "saya masih boleh nambah berapa".
+  const hint = isSoldOut ? null
+    : slotsLeft !== Infinity && slotsLeft <= (stockQty == null ? Infinity : stockQty)
+      ? (remaining > 0 ? `Sisa ${remaining} slot` : null)
+    : stockQty != null && stockQty <= 5 ? `Sisa ${stockQty}`
+    : null;
 
   function updateQty(delta) {
-    const next = Math.max(0, Math.min(qty + delta, stockQty == null ? Infinity : stockQty));
+    const next = Math.max(0, Math.min(qty + delta, limit));
     dispatch({ type: 'SET_CART_QTY', key: product.id, product, qty: next });
   }
 
   return (
-    <div className={`product-card${isOutOfStock ? ' product-card-oos' : ''}`}>
-      {isOutOfStock && <div className="product-badge badge-oos">Habis</div>}
-      {!isOutOfStock && product.is_bestseller && <div className="product-badge badge-bestseller">Terlaris</div>}
-      {!isOutOfStock && !product.is_bestseller && product.is_new && <div className="product-badge badge-new">Baru</div>}
+    <div className={`product-card${isSoldOut ? ' product-card-oos' : ''}`}>
+      {isSoldOut && <div className="product-badge badge-oos">{soldOutLabel}</div>}
+      {!isSoldOut && product.is_bestseller && <div className="product-badge badge-bestseller">Terlaris</div>}
+      {!isSoldOut && !product.is_bestseller && product.is_new && <div className="product-badge badge-new">Baru</div>}
 
       <div className="product-image-wrap">
         {product.image_url && !imgError ? (
@@ -39,18 +67,18 @@ export default function ProductCard({ product, index, onPickVariant }) {
         <div className="product-name">{product.name}</div>
         {product.description && <div className="product-desc">{product.description}</div>}
         <div className="product-price">{formatPrice(product.price)}</div>
-        {!isOutOfStock && isLowStock && <div className="product-stock-hint">Sisa {stockQty}</div>}
+        {hint && <div className="product-stock-hint">{hint}</div>}
       </div>
 
-      {isOutOfStock ? (
+      {isSoldOut ? (
         <div className="product-controls">
-          <button className="btn-pick-variant" disabled>Habis</button>
+          <button className="btn-pick-variant" disabled>{soldOutLabel}</button>
         </div>
       ) : hasVariants ? (
         <div className="product-controls">
           <button className="btn-pick-variant" onClick={() => onPickVariant(product)} disabled={remaining <= 0}>
             {qty > 0 && <span className="vbadge" style={{ display: 'flex' }}>{qty}</span>}
-            {remaining <= 0 ? 'Stok penuh' : 'Pilih'}
+            {remaining <= 0 ? 'Maks tercapai' : 'Pilih'}
           </button>
         </div>
       ) : (

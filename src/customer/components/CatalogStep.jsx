@@ -8,7 +8,7 @@ import { waLink } from '../../shared/lib/whatsapp.js';
 import { onKeyActivate } from '../../shared/hooks/useDialogKeyboard.js';
 import ProductCard from './ProductCard.jsx';
 
-export default function CatalogStep({ settings, onPickVariant }) {
+export default function CatalogStep({ settings, capacityUsage, onPickVariant }) {
   const { state, dispatch } = useCart();
   const { products, loading, error } = useProducts({ onlyVisible: true });
   const [cartExpanded, setCartExpanded] = useState(false);
@@ -107,7 +107,7 @@ export default function CatalogStep({ settings, onPickVariant }) {
             </div>
           )}
           {!loading && !error && products.map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} onPickVariant={onPickVariant} />
+            <ProductCard key={p.id} product={p} index={i} capacityUsage={capacityUsage} onPickVariant={onPickVariant} />
           ))}
         </div>
       </main>
