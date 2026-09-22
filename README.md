@@ -41,6 +41,7 @@ CREATE TABLE products (
   is_visible    BOOLEAN     NOT NULL DEFAULT true,
   variants      JSONB       DEFAULT '[]'::jsonb,
   stock_qty     INTEGER,
+  daily_capacity INTEGER,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -65,6 +66,8 @@ CREATE POLICY "Admin delete products"
 > `variants` menyimpan array grup varian, misalnya `[{ "name": "Ukuran", "options": [{ "label": "S", "extraPrice": 0 }, { "label": "L", "extraPrice": 5000 }] }]`. Diisi lewat form admin, opsional.
 
 > `stock_qty` — `NULL` berarti stok tidak dilacak (produk selalu tersedia, ini default-nya). Diisi angka kalau stoknya terbatas; otomatis dikurangi tiap ada pesanan masuk lewat function `place_order()` (lihat bagian `orders` di bawah), dan katalog customer otomatis nampilin badge "Habis" begitu stoknya 0.
+
+> `daily_capacity` — berapa banyak produk ini sanggup **dibuat untuk satu tanggal pengambilan** (kapasitas produksi harian). `NULL` (default) berarti tidak dibatasi. Ini beda konsep dari `stock_qty` dan keduanya bisa dipakai bersamaan: `stock_qty` itu satu angka global yang dikurangi permanen, cocok buat barang stok; `daily_capacity` berlaku per `orders.order_date` dan otomatis penuh lagi di tanggal berikutnya, cocok buat toko yang terbatas tenaga produksi ("sehari cuma sanggup 20 box"). Terpakainya **tidak disimpan sebagai counter**, tapi dihitung dari tabel `orders`, jadi pesanan yang dibatalkan otomatis melepas slotnya dan pesanan `pending` yang tidak diverifikasi dalam 24 jam ikut lepas sendiri. Katalog customer menampilkan sisa slot untuk tanggal yang dipilih, dan `place_order()` menolak checkout yang melewatinya.
 
 #### `promo_codes` — Kode promo
 
@@ -163,15 +166,21 @@ CREATE POLICY "Admin full access orders"
 
 > `qris_string` menyimpan QRIS dinamis (hasil generate dari QRIS statis toko + nominal) supaya admin/customer bisa menampilkan ulang QR-nya kapan saja lewat tombol "Tampilkan QR lagi" — ini bukan kredensial rahasia, aman disimpan apa adanya.
 
-#### `place_order()` — insert order + kurangi stok, dalam satu transaksi
+#### `place_order()` — insert order + kurangi stok + cek kuota, dalam satu transaksi
 
 Frontend **tidak** insert langsung ke `orders` — semua checkout lewat `supabase.rpc('place_order', { order_data, stock_items })`. Alasannya: cek-lalu-kurangi stok dari browser punya race condition kalau 2 customer checkout produk yang sama nyaris bersamaan. Function Postgres ini mengurangi `stock_qty` tiap item (gagal & rollback semuanya kalau ada satu item yang stoknya kurang — order pun tidak jadi ke-insert) dan insert order-nya, semua dalam satu transaksi atomic. Produk dengan `stock_qty NULL` dianggap tak terbatas, tidak pernah gagal/dikurangi.
 
-Definisi lengkapnya ada di `supabase-setup.sql` §6 — copy dari situ kalau setup manual satu-satu, jangan ditulis ulang manual di sini (biar tidak drift).
+Function ini juga menegakkan `daily_capacity` untuk tanggal pengambilan yang dipilih, sebelum stok disentuh. Kalau lewat kuota, error-nya diawali `KUOTA_HABIS:` (sama polanya dengan `STOK_HABIS:`) dan seluruh transaksi rollback. Kuota dihitung ulang dari tabel `orders` di dalam transaksi yang sama, dengan baris produknya dikunci `SELECT ... FOR UPDATE`, jadi dua checkout yang berebut slot terakhir dijamin cuma satu yang lolos.
+
+#### `get_capacity_usage()` — sisa slot buat katalog
+
+Dipanggil katalog customer lewat `supabase.rpc('get_capacity_usage', { p_date })` buat menampilkan sisa slot per produk di tanggal yang dipilih. Balikannya sengaja sempit: cuma `(product_id, used)` dan cuma untuk produk yang `daily_capacity`-nya memang diisi, jadi tidak ada data pesanan yang ikut keluar dan `orders` tetap tanpa policy SELECT untuk `anon` (pola yang sama dengan `lookup_order()`).
+
+Definisi lengkap ketiganya ada di `supabase-setup.sql` §7 — copy dari situ kalau setup manual satu-satu, jangan ditulis ulang manual di sini (biar tidak drift).
 
 #### `lookup_order()` — cek status pesanan tanpa login
 
-Dipakai halaman `/tracking/`. Karena `orders` RLS sengaja insert-only untuk `anon` (lihat catatan di atas), customer tidak pernah dikasih SELECT langsung ke tabel ini — function ini jadi satu-satunya jalan cek status, dan cuma balikin 1 baris kalau kode pesanan **dan** nomor WhatsApp-nya cocok berbarengan. Definisi lengkapnya ada di `supabase-setup.sql` §7.
+Dipakai halaman `/tracking/`. Karena `orders` RLS sengaja insert-only untuk `anon` (lihat catatan di atas), customer tidak pernah dikasih SELECT langsung ke tabel ini — function ini jadi satu-satunya jalan cek status, dan cuma balikin 1 baris kalau kode pesanan **dan** nomor WhatsApp-nya cocok berbarengan. Definisi lengkapnya ada di `supabase-setup.sql` §8.
 
 #### `track_visit()` — hitung pengunjung katalog per hari
 
