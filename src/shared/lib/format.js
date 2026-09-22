@@ -54,3 +54,39 @@ export function productInitial(name) {
   const ch = (name || '').trim().charAt(0);
   return ch ? ch.toUpperCase() : '·';
 }
+
+// 'YYYY-MM-DD' for a Date, read from its local parts. Deliberately not
+// toISOString().split('T')[0], which converts to UTC first and therefore names
+// the previous day for anyone east of Greenwich during the early morning.
+export function dateKeyOf(date) {
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${mm}-${dd}`;
+}
+
+export function todayKey() {
+  return dateKeyOf(new Date());
+}
+
+// Short label for a 'YYYY-MM-DD' key, e.g. 'Hari ini' / 'Besok' / 'Sen 25 Sep'.
+// Recomputed from the key on purpose rather than reusing orders.order_date_label:
+// that label is frozen when the order is placed, so an order taken yesterday for
+// the next day still reads "Besok" today, when it has become "Hari ini".
+export function formatDateKey(key) {
+  const parts = String(key || '').split('-');
+  if (parts.length !== 3) return String(key || '');
+  const [y, m, d] = parts.map(Number);
+  const date = new Date(y, m - 1, d);
+  // Round-tripping the parsed date back to a key rejects everything a plain NaN
+  // check misses: an out-of-range month (MONTHS[12] would print "undefined") and
+  // a day that rolls into the next month (31 Feb becoming 3 Mar).
+  if (dateKeyOf(date) !== key) return String(key);
+
+  const today = new Date();
+  if (key === dateKeyOf(today)) return 'Hari ini';
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  if (key === dateKeyOf(tomorrow)) return 'Besok';
+
+  return `${DAYS[date.getDay()]} ${d} ${MONTHS[m - 1]}`;
+}
