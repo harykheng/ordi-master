@@ -29,8 +29,17 @@ export function getProductCartQty(cart, productId) {
 }
 
 // Serializes the cart into the shape stored in orders.items / used in WA messages.
+//
+// `pid` is the product id, carried alongside the display fields so anything that
+// aggregates sold items per product (the per-date production recap in the admin
+// Orders tab, and the per-date capacity check that will read these rows from
+// Postgres) has a key that survives a rename. Matching on `nm` alone silently
+// splits a product into two the moment the shop edits its name. Rows written
+// before this field existed simply don't have it, so every reader must treat it
+// as optional, display grouping still keys on `nm` for that reason.
 export function cartSnapshot(cart) {
   return Object.values(cart).map(({ product, qty, variantLabels, extraPrice = 0 }) => ({
+    pid: product.id,
     nm: product.name,
     qty,
     vl: variantLabels || [],
