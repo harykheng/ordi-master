@@ -5,7 +5,7 @@ import { onKeyActivate } from '../../shared/hooks/useDialogKeyboard.js';
 // Reusable drag/drop + click-to-upload image picker with preview.
 // Reports the selected File via onFileSelect; parent owns the "existing URL"
 // (already-saved image) vs "new file" (pending upload) distinction.
-export default function ImageUploadDropzone({ existingUrl, onFileSelect, onRemove, maxSizeMB = 5, hint }) {
+export default function ImageUploadDropzone({ existingUrl, onFileSelect, onRemove, maxSizeMB = 5, hint, accept = 'image/png,image/jpeg,image/webp' }) {
   const [file, setFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef(null);
@@ -63,7 +63,7 @@ export default function ImageUploadDropzone({ existingUrl, onFileSelect, onRemov
         ref={inputRef}
         type="file"
         className="image-upload-input"
-        accept="image/png,image/jpeg,image/webp"
+        accept={accept}
         onChange={(e) => acceptFile(e.target.files[0])}
         style={{ display: 'none' }}
       />

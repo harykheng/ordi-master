@@ -22,6 +22,7 @@
 
 .login-logo { text-align: center; margin-bottom: 28px; }
 .login-logo .logo-icon { font-size: 52px; display: block; margin-bottom: 6px; }
+.login-logo .login-logo-img { height: 56px; width: auto; max-width: 180px; object-fit: contain; display: block; margin: 0 auto 6px; }
 .login-logo .logo-text { font-size: 38px; font-weight: 800; color: var(--primary); letter-spacing: -0.02em; }
 
 .login-subtitle {
@@ -62,16 +63,28 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: 0 2px 16px rgba(85, 49, 37, 0.25);
 }
 
-.admin-header .logo-text { color: var(--cream); font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
-.admin-header .logo-icon { font-size: 20px; }
+/* Sejajar kiri-kanan, bukan bertumpuk: tanpa display:flex, .logo-img (inline)
+   dan .logo-text (block) jatuh atas-bawah dan bikin header ikut tinggi. */
+.admin-header .logo { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.admin-header .logo-img { height: 30px; width: auto; max-width: 110px; object-fit: contain; display: block; flex-shrink: 0; }
+.admin-header .logo-text {
+  color: var(--cream);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-.admin-header-right { display: flex; align-items: center; gap: 14px; }
+.admin-header-right { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
 
 .admin-user-email {
   font-size: 13px;
