@@ -5,7 +5,7 @@ import { useToast } from '../../shared/components/Toast.jsx';
 import { saveProduct } from '../../shared/lib/products.js';
 
 const EMPTY_FORM = {
-  name: '', description: '', price: '', stockQty: '',
+  name: '', description: '', price: '', stockQty: '', dailyCapacity: '',
   isNew: false, isBestseller: false, isVisible: true,
   variantGroups: [],
 };
@@ -25,6 +25,7 @@ export default function ProductFormModal({ isOpen, product, onClose, onSaved }) 
         description: product.description || '',
         price: product.price,
         stockQty: product.stock_qty == null ? '' : product.stock_qty,
+        dailyCapacity: product.daily_capacity == null ? '' : product.daily_capacity,
         isNew: product.is_new,
         isBestseller: product.is_bestseller,
         isVisible: product.is_visible,
@@ -91,6 +92,7 @@ export default function ProductFormModal({ isOpen, product, onClose, onSaved }) 
         description: form.description.trim(),
         price: parseInt(form.price, 10),
         stockQty: form.stockQty === '' ? null : parseInt(form.stockQty, 10),
+        dailyCapacity: form.dailyCapacity === '' ? null : parseInt(form.dailyCapacity, 10),
         isNew: form.isNew,
         isBestseller: form.isBestseller,
         isVisible: form.isVisible,
@@ -144,6 +146,15 @@ export default function ProductFormModal({ isOpen, product, onClose, onSaved }) 
             value={form.stockQty} onChange={(e) => setForm((f) => ({ ...f, stockQty: e.target.value }))}
           />
           <p className="form-hint">Otomatis berkurang tiap ada pesanan masuk. Kosongkan kalau stoknya selalu tersedia.</p>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="productCapacity">Kuota per tanggal <span style={{ fontWeight: 500, color: 'var(--text-soft)' }}>(opsional)</span></label>
+          <input
+            type="number" id="productCapacity" placeholder="Kosongkan = tidak dibatasi" min="0" step="1"
+            value={form.dailyCapacity} onChange={(e) => setForm((f) => ({ ...f, dailyCapacity: e.target.value }))}
+          />
+          <p className="form-hint">Berapa banyak yang sanggup kamu buat untuk satu tanggal pengambilan. Beda dari stok: kuota ini penuh lagi tiap ganti tanggal, jadi cocok kalau yang terbatas itu tenaga produksi, bukan barangnya.</p>
         </div>
 
         <div className="form-group">
