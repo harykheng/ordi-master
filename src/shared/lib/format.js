@@ -14,7 +14,10 @@ export function buildDateChips() {
   for (let i = 0; i < 7; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
-    const value = d.toISOString().split('T')[0];
+    // dateKeyOf, not toISOString(), which converts to UTC first: in WIB (UTC+7)
+    // a visit before 07:00 would key every chip to the previous calendar day, so
+    // the chip reading "Hari ini" would store yesterday as the order date.
+    const value = dateKeyOf(d);
     const isToday = i === 0;
     const isTomorrow = i === 1;
     const label = isToday
