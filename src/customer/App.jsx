@@ -7,6 +7,7 @@ import { config } from '../shared/lib/config.js';
 import { trackVisit } from '../shared/lib/visits.js';
 import { cartTotal, getDiscountAmount, cartFinalTotal, cartSnapshot, cartStockItems } from '../shared/lib/cart.js';
 import { insertOrder } from '../shared/lib/orders.js';
+import { useCapacity } from '../shared/hooks/useCapacity.js';
 import { buildOrderConfirmMessage, waLink } from '../shared/lib/whatsapp.js';
 import OrderTypeStep from './components/OrderTypeStep.jsx';
 import CatalogStep from './components/CatalogStep.jsx';
@@ -22,6 +23,10 @@ function AppShell() {
   useFavicon(settings?.favicon_url);
 
   const [variantProduct, setVariantProduct] = useState(null);
+
+  // Satu fetch buat tanggal yang dipilih, dipakai bareng katalog dan sheet
+  // varian: dua-duanya harus membatasi dari angka yang sama.
+  const { usage: capacityUsage } = useCapacity(state.selectedDate);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
   const [checkingOut, setCheckingOut] = useState(false);
@@ -118,8 +123,8 @@ function AppShell() {
       });
     } catch (err) {
       console.error('Checkout error:', err);
-      const stokHabisMatch = /STOK_HABIS: (.+)/.exec(err.message || '');
-      showToast(stokHabisMatch ? stokHabisMatch[1] : 'Gagal menyimpan pesanan. Coba lagi ya!', 'error');
+      const blockedMatch = /(?:STOK_HABIS|KUOTA_HABIS): (.+)/.exec(err.message || '');
+      showToast(blockedMatch ? blockedMatch[1] : 'Gagal menyimpan pesanan. Coba lagi ya!', 'error');
     } finally {
       setCheckingOut(false);
     }
@@ -128,7 +133,7 @@ function AppShell() {
   return (
     <>
       {state.step === 1 && <OrderTypeStep settings={settings} />}
-      {state.step === 2 && <CatalogStep settings={settings} onPickVariant={setVariantProduct} />}
+      {state.step === 2 && <CatalogStep settings={settings} capacityUsage={capacityUsage} onPickVariant={setVariantProduct} />}
       {state.step === 3 && (
         <CheckoutStep
           settings={settings}
@@ -138,7 +143,7 @@ function AppShell() {
         />
       )}
 
-      <VariantSheet product={variantProduct} onClose={() => setVariantProduct(null)} />
+      <VariantSheet product={variantProduct} capacityUsage={capacityUsage} onClose={() => setVariantProduct(null)} />
       <ProfileModal isOpen={isProfileOpen} onClose={() => setProfileOpen(false)} />
       <OrderSummaryModal
         order={confirmedOrder}
