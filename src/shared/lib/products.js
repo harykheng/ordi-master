@@ -15,7 +15,7 @@ async function uploadProductImage(file) {
 
 export async function saveProduct({
   productId, name, description, price, isNew, isBestseller, isVisible,
-  variants, stockQty, imageFile, existingImageUrl,
+  variants, stockQty, dailyCapacity, imageFile, existingImageUrl,
 }) {
   let imageUrl = existingImageUrl || null;
   if (imageFile) {
@@ -32,6 +32,7 @@ export async function saveProduct({
     is_visible: isVisible,
     variants,
     stock_qty: stockQty,
+    daily_capacity: dailyCapacity,
   };
 
   if (productId) {
@@ -61,6 +62,7 @@ export async function importProducts(rows) {
     is_bestseller: r.isBestseller,
     is_visible: r.isVisible,
     stock_qty: r.stockQty,
+    daily_capacity: r.dailyCapacity,
   }));
   const { error } = await supabase.from('products').insert(payload);
   if (error) throw error;
