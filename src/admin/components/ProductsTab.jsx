@@ -95,6 +95,9 @@ export default function ProductsTab() {
                   ) : (
                     <span className="admin-tag tag-stock">Stok {p.stock_qty}</span>
                   )}
+                  {p.daily_capacity != null && (
+                    <span className="admin-tag tag-capacity">Kuota {p.daily_capacity}/tanggal</span>
+                  )}
                 </div>
                 <div className="admin-product-actions">
                   <button className="btn-sm btn-edit" onClick={() => openEdit(p)}>Edit</button>
