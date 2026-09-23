@@ -183,9 +183,19 @@ Dipanggil katalog customer lewat `supabase.rpc('get_capacity_usage', { p_date })
 
 #### `get_full_dates()` — tanggal yang sudah tidak bisa dipesan
 
-Dipanggil halaman pertama lewat `supabase.rpc('get_full_dates', { p_from, p_to })`, balikannya daftar tanggal dalam rentang itu yang **tidak punya satu pun produk tersisa** (semua stoknya nol atau kuotanya penuh). Chip tanggalnya dimatikan dan ditandai "Penuh", jadi pelanggan tidak memilih tanggal, masuk katalog, lalu menemukan semuanya penuh dan harus mundur lagi. Dihitung di database karena jawabannya butuh semua produk dikali semua tanggal; mengerjakannya di browser berarti halaman pertama harus menarik daftar produk lebih dulu padahal yang dibutuhkannya cuma satu daftar tanggal. Toko yang belum punya produk tampil sama sekali tidak menghasilkan tanggal penuh.
+Dipanggil halaman pertama lewat `supabase.rpc('get_full_dates', { p_from, p_to })`, balikannya `(full_date, reason)` untuk tiap tanggal dalam rentang itu yang tidak bisa dipesan. `reason` `'closed'` berarti toko memang libur tanggal itu (lihat tabel `closed_dates`), `'full'` berarti **tidak ada satu pun produk tersisa** (semua stoknya nol atau kuotanya penuh). Libur diperiksa lebih dulu dan menang kalau keduanya berlaku. Chip tanggalnya dimatikan dan ditandai "Penuh", jadi pelanggan tidak memilih tanggal, masuk katalog, lalu menemukan semuanya penuh dan harus mundur lagi. Dihitung di database karena jawabannya butuh semua produk dikali semua tanggal; mengerjakannya di browser berarti halaman pertama harus menarik daftar produk lebih dulu padahal yang dibutuhkannya cuma satu daftar tanggal. Toko yang belum punya produk tampil sama sekali tidak menghasilkan tanggal penuh.
 
-Definisi lengkap ketiganya ada di `supabase-setup.sql` §7 — copy dari situ kalau setup manual satu-satu, jangan ditulis ulang manual di sini (biar tidak drift).
+#### `cancel_order()` — batalkan pesanan + kembalikan stok
+
+Dipanggil dashboard admin lewat `supabase.rpc('cancel_order', { p_order_id })` saat pesanan dibatalkan, menggantikan update kolom status biasa. Sebelum ini `updateOrderStatus()` cuma membalik kolom status dan tidak pernah mengembalikan apa pun, jadi tiap pembatalan menghanguskan `stock_qty` secara permanen. Kuota harian tidak kena karena dihitung ulang dari tabel `orders`, tapi stok itu counter sungguhan yang sudah terlanjur dikurangi.
+
+Idempoten: tombol Batalkan yang tertekan dua kali tidak menambah stok dua kali, karena hanya transisi pertama (`status <> 'cancelled'`) yang memulihkan. Produk dengan `stock_qty NULL` dilewati (tidak pernah dikurangi), begitu juga item tanpa `pid`. Hanya `authenticated`; `anon` di-`REVOKE` karena tidak pernah membatalkan pesanan siapa pun.
+
+#### `closed_dates` — tanggal toko tutup
+
+Tabel kecil berisi tanggal libur, diatur dari **Admin > Pengaturan > Tanggal Libur**. Ditegakkan `place_order()` (error diawali `TOKO_TUTUP:`), bukan cuma disembunyikan dari kalender, supaya menutup tanggal tidak jadi kosmetik: tanggal bisa saja ditutup setelah customer memilihnya. `anon` sengaja tidak diberi policy SELECT, karena customer melihat tanggal liburnya lewat `get_full_dates()` yang sudah melaporkan alasannya.
+
+Definisi lengkapnya ada di `supabase-setup.sql` §6b dan §7 — copy dari situ kalau setup manual satu-satu, jangan ditulis ulang manual di sini (biar tidak drift).
 
 #### `lookup_order()` — cek status pesanan tanpa login
 
