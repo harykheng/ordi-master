@@ -93,7 +93,7 @@ export default function OrderDetailModal({ isOpen, order, onClose, onStatusChang
         </div>
       </Modal>
 
-      <PrintLabel order={order} />
+      <PrintLabel orders={order ? [order] : []} />
     </>
   );
 }
