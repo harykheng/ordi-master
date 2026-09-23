@@ -441,6 +441,42 @@ img.admin-product-img { font-size: inherit; }
 
 .admin-page-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
+/* TANGGAL LIBUR */
+.closed-date-add {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.closed-date-add .form-group { flex: 1 1 150px; }
+.closed-date-add .btn { min-height: 48px; flex-shrink: 0; }
+
+.closed-date-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.closed-date-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.closed-date-label { font-size: 14px; font-weight: 700; color: var(--text-dark); }
+.closed-date-sub   { font-size: 12px; font-weight: 600; color: var(--text-soft); margin-top: 2px; }
+
+
 /* PRODUCT IMPORT MODAL */
 .product-import-box { max-width: 560px; }
 
