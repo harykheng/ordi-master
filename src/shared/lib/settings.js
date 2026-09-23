@@ -1,5 +1,13 @@
 import { supabase } from './supabaseClient.js';
 
+// Dijepit di sini juga, bukan cuma di CHECK constraint-nya, supaya form yang
+// dikosongkan menyimpan default yang masuk akal daripada ditolak database.
+function clampDays(value, fallback, min = 0) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(60, Math.floor(n)));
+}
+
 async function uploadSettingsImage(file, prefix) {
   const ext = file.name.split('.').pop().toLowerCase();
   const fileName = `${prefix}-${Date.now()}.${ext}`;
@@ -14,6 +22,7 @@ async function uploadSettingsImage(file, prefix) {
 export async function saveSettings({
   brandName, brandIcon, storeAddress, storeHours, storeMapsUrl,
   bannerTitle, bannerSubtitle, instagramUrl, tiktokUrl,
+  storeMode, preorderLeadDays, orderHorizonDays,
   logoFile, logoTextFile, faviconFile, bannerImageFile,
   existingLogoUrl, existingLogoTextUrl, existingFaviconUrl, existingBannerImageUrl,
 }) {
@@ -44,6 +53,12 @@ export async function saveSettings({
     banner_image_url: bannerImageUrl,
     instagram_url: instagramUrl || null,
     tiktok_url: tiktokUrl || null,
+    store_mode: storeMode === 'preorder' ? 'preorder' : 'sameday',
+    // Tenggang cuma berlaku di mode preorder. Dinolkan di mode sameday supaya
+    // angka sisa dari percobaan sebelumnya tidak diam-diam memotong kalender
+    // setelah admin balik ke mode biasa.
+    preorder_lead_days: storeMode === 'preorder' ? clampDays(preorderLeadDays, 0) : 0,
+    order_horizon_days: clampDays(orderHorizonDays, 7, 1),
     updated_at: new Date().toISOString(),
   });
   if (error) throw error;
