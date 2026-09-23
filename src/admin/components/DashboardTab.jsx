@@ -3,6 +3,8 @@ import { useOrders } from '../../shared/hooks/useOrders.js';
 import { useDailyVisits } from '../../shared/hooks/useDailyVisits.js';
 import { formatPrice } from '../../shared/lib/format.js';
 import AdminErrorState from './AdminErrorState.jsx';
+import { isProductionOrder, orderDateKey } from '../../shared/lib/production.js';
+import { dateKeyOf, todayKey } from '../../shared/lib/format.js';
 
 // Only orders an admin has actually confirmed (checked the payment proof)
 // count as revenue, 'pending' is just "QRIS generated, customer claims they
@@ -62,6 +64,27 @@ export default function DashboardTab({ onGoToOrders }) {
       maxDayCount,
     };
   }, [visits]);
+
+  // Sumbu yang berbeda dari kartu pendapatan di bawahnya, dan itu disengaja.
+  // Kartu pendapatan memakai `created_at` (kapan pesanan masuk) karena itu
+  // pertanyaan uang. Kartu ini memakai `order_date` (kapan pesanan harus siap)
+  // karena itu pertanyaan dapur. Untuk toko yang mengerjakan pesanan per
+  // tanggal, dua angka itu bisa jauh berbeda dan yang kedua tidak pernah
+  // terjawab dari dashboard sebelum ini.
+  //
+  // Statusnya pakai PRODUCTION_STATUSES lewat isProductionOrder(), bukan
+  // REVENUE_STATUSES: pesanan `pending` belum terverifikasi sebagai uang tapi
+  // tetap kerjaan yang mungkin mendarat.
+  const productionStats = useMemo(() => {
+    const besok = new Date();
+    besok.setDate(besok.getDate() + 1);
+
+    const forDate = (key) => {
+      const rows = orders.filter((o) => isProductionOrder(o) && orderDateKey(o) === key);
+      return { key, orderCount: rows.length, itemCount: sumItemCount(rows) };
+    };
+    return { hariIni: forDate(todayKey()), besok: forDate(dateKeyOf(besok)) };
+  }, [orders]);
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -167,6 +190,24 @@ export default function DashboardTab({ onGoToOrders }) {
       </div>
 
       <div className="dash-stats-grid">
+        <button
+          type="button"
+          className="dash-stat-card dash-stat-card-action"
+          onClick={() => onGoToOrders && onGoToOrders(productionStats.hariIni.key)}
+        >
+          <div className="dash-stat-label">Harus siap hari ini</div>
+          <div className="dash-stat-value">{productionStats.hariIni.orderCount}</div>
+          <div className="dash-stat-sub">{productionStats.hariIni.itemCount} item, lihat rincian</div>
+        </button>
+        <button
+          type="button"
+          className="dash-stat-card dash-stat-card-action"
+          onClick={() => onGoToOrders && onGoToOrders(productionStats.besok.key)}
+        >
+          <div className="dash-stat-label">Harus siap besok</div>
+          <div className="dash-stat-value">{productionStats.besok.orderCount}</div>
+          <div className="dash-stat-sub">{productionStats.besok.itemCount} item, lihat rincian</div>
+        </button>
         <div className="dash-stat-card">
           <div className="dash-stat-label">Pendapatan hari ini</div>
           <div className="dash-stat-value">{formatPrice(stats.todayRevenue)}</div>
