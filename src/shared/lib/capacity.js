@@ -22,3 +22,27 @@ export function productLimit(product, usage) {
   const stockLimit = product?.stock_qty == null ? Infinity : product.stock_qty;
   return Math.min(stockLimit, remainingCapacity(product, usage));
 }
+
+// Produk pertama di keranjang yang sudah tidak muat lagi di kuota tanggal yang
+// dipilih, atau null kalau semuanya masih muat.
+//
+// Dijumlahkan per produk dulu, bukan per baris keranjang: dua varian produk
+// yang sama masing-masing 3 buah itu 6 terhadap kuota yang sama, dan memeriksa
+// baris per baris akan meloloskan keduanya terhadap sisa 5. Alasannya sama
+// persis dengan kenapa place_order() mengagregasi stock_items sebelum
+// memeriksa kuota.
+export function findCapacityBlocker(cart, usage) {
+  const byProduct = new Map();
+  Object.values(cart || {}).forEach(({ product, qty }) => {
+    if (!product?.id) return;
+    const entry = byProduct.get(product.id) || { product, qty: 0 };
+    entry.qty += qty;
+    byProduct.set(product.id, entry);
+  });
+
+  for (const { product, qty } of byProduct.values()) {
+    const left = remainingCapacity(product, usage);
+    if (qty > left) return { name: product.name, remaining: left, wanted: qty };
+  }
+  return null;
+}
