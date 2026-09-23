@@ -134,7 +134,7 @@ function AppShell() {
       });
     } catch (err) {
       console.error('Checkout error:', err);
-      const blockedMatch = /(?:STOK_HABIS|KUOTA_HABIS): (.+)/.exec(err.message || '');
+      const blockedMatch = /(?:STOK_HABIS|KUOTA_HABIS|TOKO_TUTUP): (.+)/.exec(err.message || '');
       showToast(blockedMatch ? blockedMatch[1] : 'Gagal menyimpan pesanan. Coba lagi ya!', 'error');
     } finally {
       setCheckingOut(false);
