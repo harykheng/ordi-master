@@ -111,11 +111,37 @@ CREATE TABLE IF NOT EXISTS settings (
   banner_image_url TEXT,
   instagram_url    TEXT,
   tiktok_url       TEXT,
+  store_mode       TEXT    NOT NULL DEFAULT 'sameday',
+  preorder_lead_days INTEGER NOT NULL DEFAULT 0,
+  order_horizon_days INTEGER NOT NULL DEFAULT 7,
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS logo_text_url TEXT;
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS favicon_url TEXT;
+
+-- Mode toko. Mesinnya sama persis untuk keduanya; yang berbeda cuma kalender
+-- di langkah 1 dan kalimat di sekitarnya. 'sameday' = perilaku lama (boleh
+-- pesan untuk hari ini), 'preorder' = toko yang mengerjakan pesanan per
+-- tanggal dan butuh tenggang.
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS store_mode TEXT NOT NULL DEFAULT 'sameday';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS preorder_lead_days INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS order_horizon_days INTEGER NOT NULL DEFAULT 7;
+
+COMMENT ON COLUMN settings.store_mode IS 'sameday | preorder. Cuma mengubah kalender langkah 1 dan copy-nya, bukan alur atau tabel yang dipakai.';
+COMMENT ON COLUMN settings.preorder_lead_days IS 'Tenggang minimal dalam hari sebelum tanggal pengambilan paling awal. Diabaikan saat store_mode = sameday. Ini tenggang tingkat TOKO, bukan lead time per produk.';
+COMMENT ON COLUMN settings.order_horizon_days IS 'Berapa hari ke depan yang boleh dipilih customer, dihitung dari tanggal paling awal yang tersedia.';
+
+-- Postgres tidak punya ADD CONSTRAINT IF NOT EXISTS, jadi DROP dulu supaya
+-- file ini tetap aman di-re-run di instance yang sudah jalan.
+ALTER TABLE settings DROP CONSTRAINT IF EXISTS settings_store_mode_check;
+ALTER TABLE settings ADD  CONSTRAINT settings_store_mode_check CHECK (store_mode IN ('sameday', 'preorder'));
+
+ALTER TABLE settings DROP CONSTRAINT IF EXISTS settings_lead_days_check;
+ALTER TABLE settings ADD  CONSTRAINT settings_lead_days_check CHECK (preorder_lead_days BETWEEN 0 AND 60);
+
+ALTER TABLE settings DROP CONSTRAINT IF EXISTS settings_horizon_check;
+ALTER TABLE settings ADD  CONSTRAINT settings_horizon_check CHECK (order_horizon_days BETWEEN 1 AND 60);
 
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
@@ -273,6 +299,55 @@ $$;
 
 GRANT EXECUTE ON FUNCTION get_capacity_usage(DATE) TO anon;
 GRANT EXECUTE ON FUNCTION get_capacity_usage(DATE) TO authenticated;
+
+
+-- Tanggal dalam rentang yang SUDAH TIDAK BISA DIPESAN SAMA SEKALI: tidak ada
+-- satu pun produk tampil yang masih punya sisa di tanggal itu. Dipakai langkah
+-- 1 buat mematikan chip tanggalnya, supaya customer tidak memilih tanggal,
+-- masuk katalog, lalu menemukan semuanya "Penuh" dan harus mundur lagi.
+--
+-- Dihitung di sini, bukan di browser, karena jawabannya butuh SEMUA produk
+-- dikali SEMUA tanggal dalam rentang: mengerjakannya di klien berarti langkah
+-- 1 harus mengambil daftar produk dan pemakaian tiap tanggal lebih dulu,
+-- padahal yang dibutuhkannya cuma satu daftar tanggal.
+--
+-- "Masih bisa" = stoknya bukan nol DAN kuota tanggal itu belum penuh. Produk
+-- tanpa stok terlacak (NULL) dianggap selalu ada, sama seperti di tempat lain.
+-- Toko yang belum punya produk tampil sama sekali tidak menghasilkan tanggal
+-- penuh: secara harfiah memang tidak ada yang bisa dipesan, tapi mematikan
+-- seluruh kalender di toko yang katalognya masih kosong cuma bikin bingung,
+-- bukan memberi tahu apa pun.
+CREATE OR REPLACE FUNCTION get_full_dates(p_from DATE, p_to DATE)
+RETURNS TABLE (full_date DATE)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  WITH days AS (
+    SELECT generate_series(p_from, LEAST(p_to, p_from + 60), '1 day'::INTERVAL)::DATE AS d
+  ),
+  prods AS (
+    SELECT id, stock_qty, daily_capacity FROM products WHERE is_visible = true
+  )
+  SELECT days.d
+  FROM days
+  WHERE EXISTS (SELECT 1 FROM prods)
+    AND NOT EXISTS (
+      SELECT 1 FROM prods p
+      WHERE COALESCE(p.stock_qty, 1) > 0
+        AND (
+          p.daily_capacity IS NULL
+          OR p.daily_capacity > COALESCE(
+               (SELECT SUM(a.qty) FROM active_order_item_qty(days.d) a WHERE a.product_id = p.id),
+               0)
+        )
+    )
+  ORDER BY days.d;
+$$;
+
+GRANT EXECUTE ON FUNCTION get_full_dates(DATE, DATE) TO anon;
+GRANT EXECUTE ON FUNCTION get_full_dates(DATE, DATE) TO authenticated;
 
 
 -- Dipanggil dari browser lewat supabase.rpc('place_order', ...) sebagai
