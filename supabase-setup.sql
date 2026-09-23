@@ -379,6 +379,14 @@ GRANT EXECUTE ON FUNCTION get_capacity_usage(DATE) TO authenticated;
 --
 -- Libur diperiksa lebih dulu dan menang: tanggal yang libur DAN penuh tetap
 -- dilaporkan sebagai libur, karena itu sebab yang lebih mendasar.
+-- DROP dulu, bukan cuma CREATE OR REPLACE. Function ini pernah mengembalikan
+-- (full_date) saja, dan Postgres menolak mengubah tipe balikan lewat REPLACE:
+-- "cannot change return type of existing function". Tanpa DROP, file ini jalan
+-- mulus di instance baru tapi GAGAL di instance yang sudah punya versi lama,
+-- yaitu justru semua instance yang sedang dipakai. GRANT-nya ikut hilang
+-- bersama function lama, makanya diberikan ulang di bawah.
+DROP FUNCTION IF EXISTS get_full_dates(DATE, DATE);
+
 CREATE OR REPLACE FUNCTION get_full_dates(p_from DATE, p_to DATE)
 RETURNS TABLE (full_date DATE, reason TEXT)
 LANGUAGE sql
