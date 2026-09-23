@@ -7,19 +7,45 @@ export function formatPrice(price) {
   }).format(price);
 }
 
-// Returns the next 7 days as { value: 'YYYY-MM-DD', label, isToday, isTomorrow, day, date, month }
-export function buildDateChips() {
+// Tanggal yang boleh dipilih customer, sebagai
+// { value: 'YYYY-MM-DD', label, isToday, isTomorrow, day, date, month }.
+//
+// leadDays  : tenggang sebelum tanggal paling awal (toko PO yang butuh H-2
+//             mengirim 2, jadi hari ini dan besok tidak pernah ditawarkan).
+// horizonDays: berapa hari ke depan yang ditawarkan dari tanggal paling awal.
+//
+// Keduanya datang dari tabel `settings`, dan defaultnya persis perilaku lama
+// (mulai hari ini, 7 hari) supaya toko yang tidak mengisi apa pun tidak
+// berubah.
+export function buildDateChips({ leadDays = 0, horizonDays = 7 } = {}) {
+  // Satu aturan untuk dua-duanya: nilai yang tidak masuk akal (negatif, nol,
+  // bukan angka) jatuh ke default, nilai yang masuk akal dipotong di batas
+  // atas. Tanpa aturan tunggal ini, `0` dan `-5` bisa berakhir beda sendiri:
+  // yang satu jatuh ke default lewat `||`, yang satu terjepit jadi 1 hari.
+  const rawLead = Number(leadDays);
+  const lead = Number.isFinite(rawLead) && rawLead > 0 ? Math.min(60, Math.floor(rawLead)) : 0;
+  const rawHorizon = Number(horizonDays);
+  const horizon = Number.isFinite(rawHorizon) && rawHorizon > 0 ? Math.min(60, Math.floor(rawHorizon)) : 7;
+
   const today = new Date();
+  // Dibandingkan sebagai tanggal, bukan sebagai posisi ke-0 dan ke-1 dalam
+  // daftar: begitu ada tenggang, chip pertama bukan lagi hari ini, dan
+  // menamainya "Hari ini" akan menyesatkan.
+  const todayValue = dateKeyOf(today);
+  const tomorrowDate = new Date(today);
+  tomorrowDate.setDate(today.getDate() + 1);
+  const tomorrowValue = dateKeyOf(tomorrowDate);
+
   const chips = [];
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < horizon; i++) {
     const d = new Date(today);
-    d.setDate(today.getDate() + i);
+    d.setDate(today.getDate() + lead + i);
     // dateKeyOf, not toISOString(), which converts to UTC first: in WIB (UTC+7)
     // a visit before 07:00 would key every chip to the previous calendar day, so
     // the chip reading "Hari ini" would store yesterday as the order date.
     const value = dateKeyOf(d);
-    const isToday = i === 0;
-    const isTomorrow = i === 1;
+    const isToday = value === todayValue;
+    const isTomorrow = value === tomorrowValue;
     const label = isToday
       ? `Hari ini, ${d.getDate()} ${MONTHS[d.getMonth()]}`
       : isTomorrow
