@@ -224,6 +224,52 @@ END $$;
 
 
 -- ----------------------------------------------------------------
+-- 6b. TANGGAL LIBUR
+-- ----------------------------------------------------------------
+-- Tanggal toko tutup. Beda dari kuota yang habis: kuota penuh itu "hari ini
+-- sudah penuh pesanan", libur itu "hari ini memang tidak menerima pesanan".
+-- Customer perlu melihat bedanya, jadi get_full_dates() di §7 mengembalikan
+-- alasannya, bukan cuma daftar tanggal.
+--
+-- Level TOKO, bukan per produk. Yang dibutuhkan toko adalah "Minggu saya
+-- libur", dan itu menutup semua produk sekaligus. Kuota per produk per tanggal
+-- belum dibuat karena belum ada yang membutuhkannya dan ada jalan keluarnya
+-- (admin ubah daily_capacity produk itu sehari itu).
+CREATE TABLE IF NOT EXISTS closed_dates (
+  closed_date DATE        PRIMARY KEY,
+  note        TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE closed_dates IS 'Tanggal toko tutup. Ditegakkan place_order() (§7), bukan cuma disembunyikan di kalender, supaya menutup tanggal tidak jadi kosmetik.';
+
+ALTER TABLE closed_dates ENABLE ROW LEVEL SECURITY;
+
+-- anon SENGAJA tidak dikasih policy SELECT. Customer memang melihat tanggal
+-- liburnya, tapi lewat get_full_dates() yang SECURITY DEFINER dan sudah
+-- melaporkan alasannya, jadi SELECT langsung ke tabel ini tidak pernah
+-- dibutuhkan. Pola yang sama dengan `orders` dan `lookup_order()`: satu jalan
+-- sempit, bukan policy terbuka. Kalau nanti kalender mau menampilkan `note`
+-- ("Libur Lebaran"), tambahkan kolomnya ke balikan get_full_dates(), jangan
+-- buka SELECT-nya.
+DROP POLICY IF EXISTS "Public read closed dates" ON closed_dates;
+
+DROP POLICY IF EXISTS "Admin full access closed dates" ON closed_dates;
+CREATE POLICY "Admin full access closed dates"
+  ON closed_dates FOR ALL TO authenticated
+  USING (true) WITH CHECK (true);
+
+-- GRANT eksplisit, tidak seperti tabel lain di file ini yang mengandalkan
+-- default privileges Supabase. Tabel-tabel itu lahir bersamaan dengan
+-- instance-nya; `closed_dates` lahir belakangan di instance yang sudah jalan,
+-- dan default privileges bisa saja sudah diubah sejak itu. Policy RLS mengatur
+-- BARIS mana yang boleh dibaca, GRANT mengatur boleh menyentuh tabelnya sama
+-- sekali; tanpa keduanya, tab Pengaturan gagal membaca dan menulis tanggal
+-- libur padahal policy-nya sudah benar.
+GRANT SELECT, INSERT, UPDATE, DELETE ON closed_dates TO authenticated;
+
+
+-- ----------------------------------------------------------------
 -- 7. KUOTA HARIAN + FUNCTION place_order()
 -- ----------------------------------------------------------------
 -- Dua konsep berbeda dipakai bareng di sini:
@@ -326,8 +372,15 @@ GRANT EXECUTE ON FUNCTION get_capacity_usage(DATE) TO authenticated;
 -- penuh: secara harfiah memang tidak ada yang bisa dipesan, tapi mematikan
 -- seluruh kalender di toko yang katalognya masih kosong cuma bikin bingung,
 -- bukan memberi tahu apa pun.
+-- `reason` membedakan dua sebab yang buat customer artinya beda jauh:
+-- 'closed' = toko memang libur tanggal itu, 'full' = tanggalnya sudah penuh
+-- pesanan. Menyamakan keduanya bikin customer mengira toko kehabisan padahal
+-- cuma libur, atau sebaliknya menunggu padahal memang sudah penuh.
+--
+-- Libur diperiksa lebih dulu dan menang: tanggal yang libur DAN penuh tetap
+-- dilaporkan sebagai libur, karena itu sebab yang lebih mendasar.
 CREATE OR REPLACE FUNCTION get_full_dates(p_from DATE, p_to DATE)
-RETURNS TABLE (full_date DATE)
+RETURNS TABLE (full_date DATE, reason TEXT)
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
@@ -339,19 +392,24 @@ AS $$
   prods AS (
     SELECT id, stock_qty, daily_capacity FROM products WHERE is_visible = true
   )
-  SELECT days.d
+  SELECT days.d,
+         CASE WHEN EXISTS (SELECT 1 FROM closed_dates c WHERE c.closed_date = days.d)
+              THEN 'closed' ELSE 'full' END
   FROM days
-  WHERE EXISTS (SELECT 1 FROM prods)
-    AND NOT EXISTS (
-      SELECT 1 FROM prods p
-      WHERE COALESCE(p.stock_qty, 1) > 0
-        AND (
-          p.daily_capacity IS NULL
-          OR p.daily_capacity > COALESCE(
-               (SELECT SUM(a.qty) FROM active_order_item_qty(days.d) a WHERE a.product_id = p.id),
-               0)
-        )
-    )
+  WHERE EXISTS (SELECT 1 FROM closed_dates c WHERE c.closed_date = days.d)
+     OR (
+       EXISTS (SELECT 1 FROM prods)
+       AND NOT EXISTS (
+         SELECT 1 FROM prods p
+         WHERE COALESCE(p.stock_qty, 1) > 0
+           AND (
+             p.daily_capacity IS NULL
+             OR p.daily_capacity > COALESCE(
+                  (SELECT SUM(a.qty) FROM active_order_item_qty(days.d) a WHERE a.product_id = p.id),
+                  0)
+           )
+       )
+     )
   ORDER BY days.d;
 $$;
 
@@ -396,7 +454,15 @@ DECLARE
   v_capacity INTEGER;
   v_used INTEGER;
 BEGIN
-  -- Cek kuota harian dulu, sebelum stok dikurangi, supaya pesanan yang lewat
+  -- Tanggal libur ditolak paling awal. Kalendernya memang sudah mematikan chip
+  -- tanggal itu, tapi tanpa penegakan di sini menutup tanggal cuma kosmetik:
+  -- tanggal bisa ditutup setelah customer memilihnya, dan pesanan yang sudah
+  -- terlanjur dibuka tetap bisa lolos.
+  IF EXISTS (SELECT 1 FROM closed_dates WHERE closed_date = v_order_date) THEN
+    RAISE EXCEPTION 'TOKO_TUTUP: Toko libur di tanggal itu, pilih tanggal lain ya';
+  END IF;
+
+  -- Cek kuota harian, sebelum stok dikurangi, supaya pesanan yang lewat
   -- kuota tidak sempat menyentuh stock_qty sama sekali.
   --
   -- Diagregasi per produk (bukan diiterasi per baris stock_items seperti loop
@@ -473,6 +539,69 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION place_order(JSONB, JSONB) TO anon;
+
+
+-- Membatalkan pesanan DAN mengembalikan stoknya, dalam satu transaksi.
+--
+-- Kenapa harus function, bukan update biasa dari browser seperti sebelumnya:
+-- `updateOrderStatus()` cuma membalik kolom status dan tidak pernah
+-- mengembalikan apa pun, jadi tiap pembatalan menghanguskan stok secara
+-- permanen. Kuota harian tidak kena karena dihitung ulang dari tabel orders
+-- (lihat §7), tapi products.stock_qty itu counter sungguhan yang sudah
+-- terlanjur dikurangi place_order().
+--
+-- Idempoten, dan itu bukan kemewahan: tombol Batalkan bisa tertekan dua kali,
+-- dan tanpa syarat `status <> 'cancelled'` stoknya akan bertambah dua kali.
+-- Transisi pertama yang menang, sisanya tidak mengubah apa-apa.
+--
+-- Produk dengan stock_qty NULL dilewati karena memang tidak pernah dikurangi.
+-- Item tanpa `pid` (baris yang ditulis sebelum cartSnapshot() menyimpan id
+-- produk) juga dilewati: tidak ada cara mencocokkannya ke produk yang bisa
+-- diandalkan, dan menebak lewat nama akan salah begitu produknya di-rename.
+--
+-- Batasan yang diterima sadar: kalau sebuah produk diubah dari tak terbatas
+-- (NULL) menjadi terlacak SETELAH pesanannya masuk, pembatalan akan menambah
+-- stok yang sebenarnya tidak pernah diambil. Mencatat persis apa yang dikurangi
+-- saat order dibuat akan menutup celah ini, tapi itu kolom baru untuk kasus
+-- yang jarang, dan angka stok yang diubah manual admin memang sudah menimpa
+-- hitungan otomatis.
+CREATE OR REPLACE FUNCTION cancel_order(p_order_id UUID)
+RETURNS SETOF orders
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_items JSONB;
+BEGIN
+  UPDATE orders
+  SET status = 'cancelled', updated_at = now()
+  WHERE id = p_order_id AND status <> 'cancelled'
+  RETURNING items INTO v_items;
+
+  IF FOUND THEN
+    UPDATE products p
+    SET stock_qty = p.stock_qty + agg.qty
+    FROM (
+      SELECT (item->>'pid')::UUID AS pid, SUM((item->>'qty')::INTEGER) AS qty
+      FROM jsonb_array_elements(
+        CASE WHEN jsonb_typeof(v_items) = 'array' THEN v_items ELSE '[]'::jsonb END
+      ) AS item
+      WHERE item->>'pid' IS NOT NULL
+      GROUP BY 1
+    ) agg
+    WHERE p.id = agg.pid AND p.stock_qty IS NOT NULL;
+  END IF;
+
+  RETURN QUERY SELECT * FROM orders WHERE id = p_order_id;
+END;
+$$;
+
+-- Hanya admin. anon tidak pernah membatalkan pesanan siapa pun, dan tanpa
+-- REVOKE ini Postgres memberi EXECUTE ke PUBLIC secara default sehingga siapa
+-- saja yang punya id pesanan bisa membatalkannya sekaligus menambah stok.
+REVOKE EXECUTE ON FUNCTION cancel_order(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION cancel_order(UUID) TO authenticated;
 
 
 -- ----------------------------------------------------------------
