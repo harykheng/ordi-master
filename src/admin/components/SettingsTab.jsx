@@ -9,6 +9,7 @@ import AdminErrorState from './AdminErrorState.jsx';
 const EMPTY_FORM = {
   brandName: '', brandIcon: '🏪', storeAddress: '', storeHours: '', storeMapsUrl: '',
   bannerTitle: '', bannerSubtitle: '', instagramUrl: '', tiktokUrl: '',
+  storeMode: 'sameday', preorderLeadDays: '0', orderHorizonDays: '7',
 };
 
 export default function SettingsTab() {
@@ -38,6 +39,9 @@ export default function SettingsTab() {
       bannerSubtitle: settings.banner_subtitle || '',
       instagramUrl: settings.instagram_url || '',
       tiktokUrl: settings.tiktok_url || '',
+      storeMode: settings.store_mode === 'preorder' ? 'preorder' : 'sameday',
+      preorderLeadDays: String(settings.preorder_lead_days ?? 0),
+      orderHorizonDays: String(settings.order_horizon_days ?? 7),
     });
     setExistingLogoUrl(settings.logo_url || null);
     setExistingLogoTextUrl(settings.logo_text_url || null);
@@ -60,6 +64,9 @@ export default function SettingsTab() {
         bannerSubtitle: form.bannerSubtitle.trim(),
         instagramUrl: form.instagramUrl.trim(),
         tiktokUrl: form.tiktokUrl.trim(),
+        storeMode: form.storeMode,
+        preorderLeadDays: form.preorderLeadDays,
+        orderHorizonDays: form.orderHorizonDays,
         logoFile,
         logoTextFile,
         faviconFile,
@@ -165,6 +172,51 @@ export default function SettingsTab() {
             <label htmlFor="settingStoreMapsUrl">Link Google Maps</label>
             <input type="url" id="settingStoreMapsUrl" placeholder="https://maps.google.com/..." value={form.storeMapsUrl} onChange={(e) => setForm((f) => ({ ...f, storeMapsUrl: e.target.value }))} />
             <p className="form-hint">URL yang terbuka saat pelanggan tap "Lihat di Maps"</p>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <div className="settings-section-title">Cara Pesan</div>
+          <div className="form-group">
+            <label htmlFor="settingStoreMode">Mode Toko</label>
+            <select
+              id="settingStoreMode"
+              value={form.storeMode}
+              onChange={(e) => setForm((f) => ({ ...f, storeMode: e.target.value }))}
+            >
+              <option value="sameday">Siap hari itu juga</option>
+              <option value="preorder">Pre-order (PO)</option>
+            </select>
+            <p className="form-hint">
+              Yang berubah cuma kalender di halaman pertama dan kalimat di sekitarnya. Menu, keranjang, dan
+              pembayaran sama persis di dua mode.
+            </p>
+          </div>
+          {form.storeMode === 'preorder' && (
+            <div className="form-group">
+              <label htmlFor="settingLeadDays">Tenggang Pesanan (hari)</label>
+              <input
+                type="number" id="settingLeadDays" min="0" max="60" step="1"
+                value={form.preorderLeadDays}
+                onChange={(e) => setForm((f) => ({ ...f, preorderLeadDays: e.target.value }))}
+              />
+              <p className="form-hint">
+                Berapa hari kamu butuh sebelum pesanan siap. Isi 2 kalau pesanan hari ini paling cepat
+                diambil lusa. Tanggal yang lebih awal tidak akan ditawarkan ke pelanggan.
+              </p>
+            </div>
+          )}
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label htmlFor="settingHorizonDays">Tanggal yang Dibuka (hari)</label>
+            <input
+              type="number" id="settingHorizonDays" min="1" max="60" step="1"
+              value={form.orderHorizonDays}
+              onChange={(e) => setForm((f) => ({ ...f, orderHorizonDays: e.target.value }))}
+            />
+            <p className="form-hint">
+              Berapa hari ke depan yang boleh dipilih pelanggan, dihitung dari tanggal paling awal. Default 7.
+              Naikkan kalau kamu menerima pesanan jauh hari, misal hampers.
+            </p>
           </div>
         </div>
 
