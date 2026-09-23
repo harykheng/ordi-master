@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CartProvider, useCart } from './CartContext.jsx';
 import { useSettings } from '../shared/hooks/useSettings.js';
 import { useFavicon } from '../shared/hooks/useFavicon.js';
@@ -7,6 +7,7 @@ import { config } from '../shared/lib/config.js';
 import { trackVisit } from '../shared/lib/visits.js';
 import { cartTotal, getDiscountAmount, cartFinalTotal, cartSnapshot, cartStockItems } from '../shared/lib/cart.js';
 import { useCapacity } from '../shared/hooks/useCapacity.js';
+import { findCapacityBlocker } from '../shared/lib/capacity.js';
 import { qrisToDynamic } from '../shared/lib/qris.js';
 import OrderTypeStep from './components/OrderTypeStep.jsx';
 import CatalogStep from './components/CatalogStep.jsx';
@@ -27,7 +28,8 @@ function AppShell() {
   // Satu fetch buat tanggal yang dipilih, dipakai bareng katalog dan sheet
   // varian: dua-duanya harus membatasi dari angka yang sama, kalau dipanggil
   // sendiri-sendiri keduanya bisa melihat sisa slot yang berbeda.
-  const { usage: capacityUsage } = useCapacity(state.selectedDate);
+  const { usage: capacityUsage, refetch: refetchCapacity } = useCapacity(state.selectedDate);
+  const submittingRef = useRef(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [pendingOrder, setPendingOrder] = useState(null);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
@@ -41,7 +43,18 @@ function AppShell() {
     trackVisit();
   }, []);
 
-  function handleSubmitQris() {
+  // Async karena kuota dicek ULANG ke server tepat sebelum QR dibuka, bukan
+  // memakai angka yang sudah ada di layar. Bedanya mahal: di alur ini customer
+  // memindai dan membayar DULU, order baru di-insert setelah dia menekan
+  // konfirmasi. Kalau slotnya keburu diambil orang lain di sela itu,
+  // place_order() menolak dengan KUOTA_HABIS setelah uangnya terlanjur
+  // ditransfer. Satu round trip di sini jauh lebih murah daripada itu.
+  //
+  // Ini pemanggil ketiga yang boleh ada tanpa melanggar pola "jangan reaktif":
+  // pemicunya tekan tombol bayar, sekali jalan, bukan useEffect yang mengawasi
+  // keranjang.
+  async function handleSubmitQris() {
+    if (submittingRef.current) return;
     if (!state.isProfileFilled) {
       showToast('Isi detail pemesan dulu ya!', 'error');
       setProfileOpen(true);
@@ -59,6 +72,23 @@ function AppShell() {
     if (state.orderType === 'delivery' && !state.selectedShipping) {
       showToast('Pilih opsi ongkir dulu ya!', 'error');
       return;
+    }
+
+    submittingRef.current = true;
+    try {
+      const freshUsage = await refetchCapacity();
+      const blocker = findCapacityBlocker(state.cart, freshUsage);
+      if (blocker) {
+        showToast(
+          blocker.remaining > 0
+            ? `${blocker.name} tinggal ${blocker.remaining} lagi untuk tanggal ini. Kurangi jumlahnya dulu ya!`
+            : `${blocker.name} sudah penuh untuk tanggal ini. Ganti tanggal atau hapus dari keranjang ya!`,
+          'error',
+        );
+        return;
+      }
+    } finally {
+      submittingRef.current = false;
     }
 
     const rawTotal = cartTotal(state.cart);
