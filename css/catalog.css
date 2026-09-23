@@ -200,6 +200,47 @@
 .date-chip.chip-today,
 .date-chip.chip-tomorrow { min-width: 80px; }
 
+/* Tanggal yang sudah penuh. Diredam pakai warna eksplisit, bukan opacity:
+   opacity menurunkan kontras teksnya di bawah ambang yang dipakai repo ini,
+   sedangkan kata "Penuh" justru harus terbaca. --text-soft di --latte-xlight
+   4.93:1 (lihat catatan token di main.css). */
+.date-chip.chip-full {
+  cursor: not-allowed;
+  background: var(--latte-xlight);
+  border-color: var(--border);
+}
+
+.date-chip.chip-full:hover {
+  background: var(--latte-xlight);
+  border-color: var(--border);
+}
+
+.date-chip.chip-full .dc-day,
+.date-chip.chip-full .dc-date,
+.date-chip.chip-full .dc-label { color: var(--text-soft); }
+
+.date-chip.chip-full .dc-month,
+.date-chip.chip-full .dc-sublabel { color: var(--text-soft); font-weight: 700; }
+
+.date-section-hint {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-soft);
+  line-height: 1.5;
+  margin: -4px 0 10px;
+}
+
+.date-section-empty {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-mid);
+  line-height: 1.5;
+  background: var(--latte-xlight);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin: 0;
+}
+
 /* STEP 1 CTA */
 .ob-footer { margin-top: auto; padding: 20px 20px 0; }
 

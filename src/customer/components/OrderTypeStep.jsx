@@ -1,12 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useCart } from '../CartContext.jsx';
 import { config } from '../../shared/lib/config.js';
 import { buildDateChips } from '../../shared/lib/format.js';
+import { useFullDates } from '../../shared/hooks/useFullDates.js';
 import { waLink } from '../../shared/lib/whatsapp.js';
 
 export default function OrderTypeStep({ settings }) {
   const { state, dispatch } = useCart();
-  const [dateChips] = useState(buildDateChips);
+
+  // Mode toko cuma mengubah kalender di layar ini dan kalimat di sekitarnya.
+  // Alur, tabel, dan checkout-nya sama persis untuk keduanya: yang bikin
+  // customer paham ini toko PO adalah kalendernya yang tidak menawarkan hari
+  // ini, bukan paragraf penjelasan yang toh tidak dibaca.
+  const isPreorder = settings?.store_mode === 'preorder';
+  const leadDays = isPreorder ? (settings?.preorder_lead_days || 0) : 0;
+  const horizonDays = settings?.order_horizon_days || 7;
+
+  // Dihitung ulang saat settings datang, bukan sekali di mount: settings
+  // di-fetch async, jadi render pertama selalu memakai default.
+  const dateChips = useMemo(
+    () => buildDateChips({ leadDays, horizonDays }),
+    [leadDays, horizonDays],
+  );
+
+  const { fullDates } = useFullDates(
+    dateChips[0]?.value,
+    dateChips[dateChips.length - 1]?.value,
+  );
+
+  const selectableChips = dateChips.filter((chip) => !fullDates.has(chip.value));
+  const allFull = dateChips.length > 0 && selectableChips.length === 0;
 
   const brandName = settings?.brand_name || config.storeName;
   const logoUrl = settings?.logo_url;
@@ -19,6 +42,17 @@ export default function OrderTypeStep({ settings }) {
   useEffect(() => {
     document.title = brandName;
   }, [brandName]);
+
+  // Settings dan daftar tanggal penuh datang setelah render pertama, jadi
+  // tanggal yang sudah terpilih bisa hilang dari daftar di belakang layar
+  // (mode berubah jadi preorder, atau tanggal itu keburu penuh). Tanpa ini,
+  // pilihan lama tetap tersimpan dan customer bisa lanjut membawa tanggal
+  // yang tidak lagi ditawarkan.
+  useEffect(() => {
+    if (!state.selectedDate) return;
+    if (selectableChips.some((chip) => chip.value === state.selectedDate)) return;
+    dispatch({ type: 'SET_DATE', value: null, label: null });
+  }, [state.selectedDate, selectableChips, dispatch]);
 
   const waHelpUrl = waLink(config.adminWhatsapp, `Halo ${brandName}, saya butuh bantuan untuk pemesanan!`);
 
@@ -63,7 +97,11 @@ export default function OrderTypeStep({ settings }) {
         </div>
 
         <h1 className="ob-headline">Mau pickup<br />atau delivery?</h1>
-        <p className="ob-sub">Pilih dulu, baru lihat menu.</p>
+        <p className="ob-sub">
+          {isPreorder
+            ? 'Semua pesanan dibuat per tanggal. Pilih tanggalnya dulu, baru lihat menu.'
+            : 'Pilih dulu, baru lihat menu.'}
+        </p>
 
         <div className="order-type-grid">
           <button
@@ -106,30 +144,46 @@ export default function OrderTypeStep({ settings }) {
           <div className="date-section-label">
             {state.orderType === 'pickup' ? 'Pilih Tanggal Pickup' : 'Pilih Tanggal Delivery'}
           </div>
-          <div className="date-chips-wrap">
-            {dateChips.map((chip) => (
-              <button
-                type="button"
-                key={chip.value}
-                className={`date-chip${chip.isToday ? ' chip-today' : chip.isTomorrow ? ' chip-tomorrow' : ''}${state.selectedDate === chip.value ? ' selected' : ''}`}
-                aria-pressed={state.selectedDate === chip.value}
-                onClick={() => selectDate(chip)}
-              >
-                {chip.isToday || chip.isTomorrow ? (
-                  <>
-                    <span className="dc-label">{chip.isToday ? 'Hari ini' : 'Besok'}</span>
-                    <span className="dc-sublabel">{chip.date} {chip.month}</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="dc-day">{chip.day}</span>
-                    <span className="dc-date">{chip.date}</span>
-                    <span className="dc-month">{chip.month}</span>
-                  </>
-                )}
-              </button>
-            ))}
-          </div>
+          {isPreorder && leadDays > 0 && selectableChips.length > 0 && (
+            <p className="date-section-hint">
+              Pesanan butuh waktu {leadDays} hari, jadi paling cepat {selectableChips[0].label}.
+            </p>
+          )}
+          {allFull ? (
+            <p className="date-section-empty">
+              Semua tanggal terdekat sudah penuh.
+              {waHelpUrl ? ' Chat kami dulu buat cari tanggal lain.' : ''}
+            </p>
+          ) : (
+            <div className="date-chips-wrap">
+              {dateChips.map((chip) => {
+                const isFull = fullDates.has(chip.value);
+                return (
+                  <button
+                    type="button"
+                    key={chip.value}
+                    className={`date-chip${chip.isToday ? ' chip-today' : chip.isTomorrow ? ' chip-tomorrow' : ''}${state.selectedDate === chip.value ? ' selected' : ''}${isFull ? ' chip-full' : ''}`}
+                    aria-pressed={state.selectedDate === chip.value}
+                    disabled={isFull}
+                    onClick={() => selectDate(chip)}
+                  >
+                    {chip.isToday || chip.isTomorrow ? (
+                      <>
+                        <span className="dc-label">{chip.isToday ? 'Hari ini' : 'Besok'}</span>
+                        <span className="dc-sublabel">{isFull ? 'Penuh' : `${chip.date} ${chip.month}`}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="dc-day">{chip.day}</span>
+                        <span className="dc-date">{chip.date}</span>
+                        <span className="dc-month">{isFull ? 'Penuh' : chip.month}</span>
+                      </>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="ob-footer">
