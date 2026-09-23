@@ -8,6 +8,23 @@ Repo ini adalah copy dari codebase klien asli (Breva Coffee, toko kopi) yang sek
 
 **Status saat ini**: semua fitur F&B same-day (pickup/delivery + tanggal, ongkir Biteship, QRIS dinamis, stok, tracking, dashboard admin lengkap) sudah selesai dan ada di `main` — ini jadi base buat branch `tier-1`/`tier-2`/`tier-3` (WA-only / +ongkir / +QRIS). Konsep "tier-4" buat toko online umum (flow beda, kurir reguler kayak JNT, kemungkinan repo/branch terpisah) sempat dibahas tapi **ditunda**, fokus F&B dulu.
 
+**Dukungan PO (pre-order) selesai, tahap 1 sampai 5**, ada di `main` dan sudah di-cherry-pick ke ketiga branch tier. Ordi tidak butuh alur terpisah untuk toko PO: tanggal memang sudah dipilih duluan di langkah 1, jadi yang ditambahkan cuma batas per tanggal dan cara toko mengumumkannya. Urutannya:
+
+1. `pid` (id produk) disimpan di tiap baris `orders.items`, prasyarat semua agregasi per produk.
+2. Filter tanggal + rekap produksi di tab Pesanan, plus export CSV yang ikut tanggal.
+3. Kuota harian (`products.daily_capacity`) ditegakkan atomic di `place_order()`, sisa slot tampil di katalog.
+4. Mode toko (`settings.store_mode`) + tenggang + horizon, dan tanggal yang penuh dimatikan di langkah 1.
+5. Guard yang mencegat checkout lewat kuota sebelum QR dibuka, kartu produksi di dashboard, print label batch.
+
+Rinciannya ada di bagian "Stok, Kuota Harian & `place_order()`", "Step 1", dan "Tab Pesanan" di bawah.
+
+**Tahap 6 berikutnya: tanggal libur dan stok yang balik saat pesanan dibatalkan.** Dua lubang nyata yang tersisa:
+
+- **Belum ada cara menutup satu tanggal.** `daily_capacity` berlaku ke SEMUA tanggal, jadi toko yang mau libur satu hari tidak bisa mengaturnya dari mana pun. Butuh tabel `capacity_overrides (product_id, date, capacity)` plus tanggal-tutup tingkat toko; `get_full_dates()` tinggal ikut membacanya.
+- **`updateOrderStatus()` tidak pernah mengembalikan `stock_qty`** saat pesanan dibatalkan. Kuota aman karena dihitung ulang dari `orders`, tapi produk yang memakai `stock_qty` tetap kehilangan stoknya permanen tiap pembatalan. Butuh `cancel_order()` di Postgres, bukan update dari browser.
+
+**DP (uang muka) sengaja ditunda**, bukan terlewat: klien Ordi sejauh ini bayar penuh di muka. Kalau nanti dibutuhkan, jangan tambahkan status DP ke enum `orders.status` (itu sumbu berbeda dari tahap pesanan dan bakal merusak filter tab admin serta `REVENUE_STATUSES`); pakai kolom terpisah `dp_amount` + `payment_status`. QRIS-nya sendiri tidak butuh apa-apa yang baru karena `qrisToDynamic()` deterministik, sisa tagihan bisa digenerate ulang di browser kapan saja.
+
 ---
 
 ## Peta File
