@@ -29,6 +29,8 @@ export default function OrderTypeStep({ settings }) {
   );
 
   const selectableChips = dateChips.filter((chip) => !fullDates.has(chip.value));
+  const allClosed = dateChips.length > 0
+    && dateChips.every((chip) => fullDates.get(chip.value) === 'closed');
   const allFull = dateChips.length > 0 && selectableChips.length === 0;
 
   const brandName = settings?.brand_name || config.storeName;
@@ -151,13 +153,20 @@ export default function OrderTypeStep({ settings }) {
           )}
           {allFull ? (
             <p className="date-section-empty">
-              Semua tanggal terdekat sudah penuh.
+              {allClosed
+                ? 'Toko sedang libur di semua tanggal terdekat.'
+                : 'Semua tanggal terdekat sudah penuh.'}
               {waHelpUrl ? ' Chat kami dulu buat cari tanggal lain.' : ''}
             </p>
           ) : (
             <div className="date-chips-wrap">
               {dateChips.map((chip) => {
-                const isFull = fullDates.has(chip.value);
+                const reason = fullDates.get(chip.value);
+                const isFull = Boolean(reason);
+                // "Libur" dan "Penuh" sengaja beda kata. Libur berarti toko
+                // memang tidak menerima pesanan tanggal itu, penuh berarti
+                // kuotanya sudah habis diambil orang lain.
+                const blockedLabel = reason === 'closed' ? 'Libur' : 'Penuh';
                 return (
                   <button
                     type="button"
@@ -170,13 +179,13 @@ export default function OrderTypeStep({ settings }) {
                     {chip.isToday || chip.isTomorrow ? (
                       <>
                         <span className="dc-label">{chip.isToday ? 'Hari ini' : 'Besok'}</span>
-                        <span className="dc-sublabel">{isFull ? 'Penuh' : `${chip.date} ${chip.month}`}</span>
+                        <span className="dc-sublabel">{isFull ? blockedLabel : `${chip.date} ${chip.month}`}</span>
                       </>
                     ) : (
                       <>
                         <span className="dc-day">{chip.day}</span>
                         <span className="dc-date">{chip.date}</span>
-                        <span className="dc-month">{isFull ? 'Penuh' : chip.month}</span>
+                        <span className="dc-month">{isFull ? blockedLabel : chip.month}</span>
                       </>
                     )}
                   </button>
