@@ -179,7 +179,7 @@ Function ini juga menegakkan `daily_capacity` untuk tanggal pengambilan yang dip
 
 #### `get_capacity_usage()` — sisa slot buat katalog
 
-Dipanggil katalog customer lewat `supabase.rpc('get_capacity_usage', { p_date })` buat menampilkan sisa slot per produk di tanggal yang dipilih. Balikannya sengaja sempit: cuma `(product_id, used)` dan cuma untuk produk yang `daily_capacity`-nya memang diisi, jadi tidak ada data pesanan yang ikut keluar dan `orders` tetap tanpa policy SELECT untuk `anon` (pola yang sama dengan `lookup_order()`).
+Dipanggil katalog customer lewat `supabase.rpc('get_capacity_usage', { p_date })` buat menampilkan sisa slot per produk di tanggal yang dipilih. Balikannya sengaja sempit: cuma `(product_id, used)` dan cuma untuk produk yang `daily_capacity`-nya memang diisi, jadi tidak ada data pesanan yang ikut keluar dan `orders` tetap tanpa policy SELECT untuk `anon` (pola yang sama dengan `lookup_order()`). Helper internalnya (`active_order_item_qty()`) di-`REVOKE` dari `PUBLIC`, karena tanpa itu Postgres memberi EXECUTE ke semua orang secara default dan penyempitan di atas bisa dilewati dengan memanggil helper-nya langsung.
 
 #### `get_full_dates()` — tanggal yang sudah tidak bisa dipesan
 

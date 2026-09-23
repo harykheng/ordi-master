@@ -276,6 +276,15 @@ AS $$
     AND item->>'pid' IS NOT NULL;
 $$;
 
+-- Helper internal, BUKAN buat dipanggil browser. Postgres memberi EXECUTE ke
+-- PUBLIC secara default untuk function baru, jadi tanpa REVOKE ini anon bisa
+-- memanggilnya langsung dan melewati penyempitan di get_capacity_usage() di
+-- bawah: balikannya mencakup SEMUA produk, termasuk yang kuotanya tidak diisi
+-- dan karena itu sengaja tidak diumumkan. get_capacity_usage(), get_full_dates()
+-- dan place_order() tetap bisa memakainya karena ketiganya SECURITY DEFINER
+-- dan berjalan sebagai pemilik function ini.
+REVOKE EXECUTE ON FUNCTION active_order_item_qty(DATE) FROM PUBLIC;
+
 
 -- Dipanggil browser lewat rpc() buat menampilkan sisa slot di katalog.
 -- Balikannya SENGAJA sempit: cuma (product_id, terpakai) untuk satu tanggal,
