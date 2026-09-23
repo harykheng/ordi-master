@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { useSettings } from '../../shared/hooks/useSettings.js';
 import { useToast } from '../../shared/components/Toast.jsx';
 import { saveSettings } from '../../shared/lib/settings.js';
+import { useClosedDates } from '../../shared/hooks/useClosedDates.js';
+import { addClosedDate, removeClosedDate } from '../../shared/lib/closedDates.js';
+import { formatDateKey, todayKey } from '../../shared/lib/format.js';
 import ImageUploadDropzone from './ImageUploadDropzone.jsx';
 import AdminErrorState from './AdminErrorState.jsx';
 
@@ -24,6 +27,50 @@ export default function SettingsTab() {
   const [bannerImageFile, setBannerImageFile] = useState(null);
   const [existingBannerImageUrl, setExistingBannerImageUrl] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  // Tanggal libur disimpan langsung saat ditambah atau dihapus, bukan ikut
+  // tombol Simpan di bawah. Tabelnya terpisah dari `settings`, dan menahannya
+  // sampai submit bikin admin mengira liburnya sudah aktif padahal belum.
+  const { closedDates, loading: closedLoading, error: closedError, refetch: refetchClosed } = useClosedDates();
+  const [newClosedDate, setNewClosedDate] = useState('');
+  const [newClosedNote, setNewClosedNote] = useState('');
+  const [closedBusy, setClosedBusy] = useState(false);
+
+  async function handleAddClosedDate() {
+    if (guardDemoWrite()) return;
+    if (!newClosedDate) {
+      showToast('Pilih tanggalnya dulu ya', 'error');
+      return;
+    }
+    setClosedBusy(true);
+    try {
+      await addClosedDate(newClosedDate, newClosedNote.trim());
+      setNewClosedDate('');
+      setNewClosedNote('');
+      showToast('Tanggal libur ditambahkan', 'success');
+      await refetchClosed();
+    } catch (err) {
+      console.error('addClosedDate error:', err);
+      showToast('Gagal menambah tanggal libur: ' + (err.message || 'Coba lagi'), 'error');
+    } finally {
+      setClosedBusy(false);
+    }
+  }
+
+  async function handleRemoveClosedDate(dateKey) {
+    if (guardDemoWrite()) return;
+    setClosedBusy(true);
+    try {
+      await removeClosedDate(dateKey);
+      showToast('Tanggal libur dihapus', 'success');
+      await refetchClosed();
+    } catch (err) {
+      console.error('removeClosedDate error:', err);
+      showToast('Gagal menghapus: ' + (err.message || 'Coba lagi'), 'error');
+    } finally {
+      setClosedBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (!settings) return;
@@ -215,6 +262,70 @@ export default function SettingsTab() {
               Naikkan kalau kamu menerima pesanan jauh hari, misal hampers.
             </p>
           </div>
+        </div>
+
+        <div className="settings-section">
+          <div className="settings-section-title">Tanggal Libur</div>
+          <p className="form-hint" style={{ marginTop: 0 }}>
+            Tanggal yang kamu tutup. Pelanggan tidak bisa memilihnya di halaman pertama, dan pesanan
+            untuk tanggal itu ditolak walaupun sudah sempat dipilih sebelum kamu menutupnya.
+          </p>
+
+          <div className="closed-date-add">
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label htmlFor="closedDateInput">Tanggal</label>
+              <input
+                type="date" id="closedDateInput" min={todayKey()}
+                value={newClosedDate}
+                onChange={(e) => setNewClosedDate(e.target.value)}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label htmlFor="closedNoteInput">Alasan <span style={{ fontWeight: 500, color: 'var(--text-soft)' }}>(opsional)</span></label>
+              <input
+                type="text" id="closedNoteInput" placeholder="Libur Lebaran"
+                value={newClosedNote}
+                onChange={(e) => setNewClosedNote(e.target.value)}
+              />
+            </div>
+            <button
+              type="button" className="btn btn-secondary"
+              onClick={handleAddClosedDate} disabled={closedBusy}
+            >
+              Tambah
+            </button>
+          </div>
+
+          {closedLoading && <p className="form-hint">Memuat tanggal libur...</p>}
+          {!closedLoading && closedError && (
+            <p className="form-hint" style={{ color: 'var(--danger)' }}>
+              Daftar tanggal libur gagal dimuat. Coba muat ulang halaman.
+            </p>
+          )}
+          {!closedLoading && !closedError && closedDates.length === 0 && (
+            <p className="form-hint">Belum ada tanggal libur. Toko buka di semua tanggal.</p>
+          )}
+          {!closedLoading && !closedError && closedDates.length > 0 && (
+            <ul className="closed-date-list">
+              {closedDates.map((row) => {
+                const key = String(row.closed_date).slice(0, 10);
+                return (
+                  <li className="closed-date-item" key={key}>
+                    <div>
+                      <div className="closed-date-label">{formatDateKey(key)}</div>
+                      <div className="closed-date-sub">{key}{row.note ? ` · ${row.note}` : ''}</div>
+                    </div>
+                    <button
+                      type="button" className="btn-sm btn-delete"
+                      onClick={() => handleRemoveClosedDate(key)} disabled={closedBusy}
+                    >
+                      Hapus
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
 
         <div className="settings-section">
