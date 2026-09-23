@@ -10,7 +10,21 @@ export async function insertOrder(payload, stockItems) {
   if (error) throw error;
 }
 
+// Pembatalan lewat cancel_order(), status lain lewat update biasa.
+//
+// Bukan karena rapi, tapi karena membatalkan pesanan harus MENGEMBALIKAN
+// products.stock_qty yang sudah dikurangi place_order(). Update kolom status
+// dari browser tidak bisa melakukannya (anon maupun admin tidak pernah
+// menyentuh stock_qty langsung), dan sebelum ini stok memang hangus permanen
+// tiap ada pembatalan. Function-nya idempoten, jadi klik dua kali tidak
+// menambah stok dua kali. Lihat supabase-setup.sql §7.
 export async function updateOrderStatus(orderId, newStatus) {
+  if (newStatus === 'cancelled') {
+    const { error } = await supabase.rpc('cancel_order', { p_order_id: orderId });
+    if (error) throw error;
+    return;
+  }
+
   const { error } = await supabase
     .from('orders')
     .update({ status: newStatus, updated_at: new Date().toISOString() })
