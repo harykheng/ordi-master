@@ -146,6 +146,22 @@
   padding: 18px 20px;
 }
 
+/* Kartu angka yang bisa ditekan. Dibuat <button>, bukan <div> dengan onClick,
+   supaya bisa dijangkau Tab dan ditekan Enter/Space. Reset default tombol
+   dulu, lalu ikut tampilan kartu yang sama persis. */
+.dash-stat-card-action {
+  border: 0;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.dash-stat-card-action:hover  { box-shadow: var(--shadow-md); }
+.dash-stat-card-action:active { transform: translateY(1px); }
+.dash-stat-card-action:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
 .dash-stat-label { font-size: 12px; font-weight: 700; color: var(--text-soft); }
 .dash-stat-value { font-size: 22px; font-weight: 800; color: var(--primary); margin-top: 4px; }
 .dash-stat-sub   { font-size: 11px; font-weight: 600; color: var(--text-soft); margin-top: 2px; }
@@ -1168,10 +1184,14 @@ img.admin-product-img { font-size: inherit; }
 
 @media print {
   body > *:not(#printLabel) { display: none !important; }
+  /* position: static, BUKAN fixed. Elemen fixed cuma tercetak di halaman
+     pertama, jadi begitu label dicetak sekaligus per tanggal, label kedua dan
+     seterusnya hilang tanpa jejak. Sebagai blok biasa isinya mengalir ke
+     halaman berikutnya seperti seharusnya. Satu label tetap tampil sama, yang
+     memusatkannya `margin: 0 auto` di bawah, bukan inset. */
   #printLabel {
     display: block !important;
-    position: fixed;
-    inset: 0;
+    position: static;
     background: #fff;
     padding: 24px;
     font-family: 'Nunito', sans-serif;
@@ -1184,6 +1204,14 @@ img.admin-product-img { font-size: inherit; }
     padding: 24px;
     max-width: 360px;
     margin: 0 auto;
+    break-inside: avoid;
+  }
+
+  /* Satu label satu halaman. Dipasang di `+` supaya label pertama tidak
+     didahului halaman kosong. */
+  .print-label-inner + .print-label-inner {
+    break-before: page;
+    margin-top: 24px;
   }
 
   .print-label-brand {

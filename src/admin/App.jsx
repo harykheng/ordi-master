@@ -24,12 +24,21 @@ function Dashboard() {
   const { session, logout } = useAuth();
   const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [ordersDate, setOrdersDate] = useState(null);
   const newOrders = useNewOrderAlerts();
   useFavicon(settings?.favicon_url);
 
   function selectTab(key) {
     setActiveTab(key);
+    // Dinolkan tiap pindah tab supaya tanggal dari klik dashboard sebelumnya
+    // tidak nyangkut waktu admin membuka tab Pesanan lewat tab bar.
+    setOrdersDate(null);
     if (key === 'orders') newOrders.clear();
+  }
+
+  function goToOrders(dateKey) {
+    selectTab('orders');
+    if (dateKey) setOrdersDate(dateKey);
   }
 
   return (
@@ -67,7 +76,7 @@ function Dashboard() {
         </div>
 
         <div id="tab-dashboard" className="tab-panel" style={{ display: activeTab === 'dashboard' ? '' : 'none' }}>
-          {activeTab === 'dashboard' && <DashboardTab onGoToOrders={() => selectTab('orders')} />}
+          {activeTab === 'dashboard' && <DashboardTab onGoToOrders={goToOrders} />}
         </div>
         <div id="tab-products" className="tab-panel" style={{ display: activeTab === 'products' ? '' : 'none' }}>
           {activeTab === 'products' && <ProductsTab />}
@@ -76,7 +85,7 @@ function Dashboard() {
           {activeTab === 'promo' && <PromoTab />}
         </div>
         <div id="tab-orders" className="tab-panel" style={{ display: activeTab === 'orders' ? '' : 'none' }}>
-          {activeTab === 'orders' && <OrdersTab />}
+          {activeTab === 'orders' && <OrdersTab initialDate={ordersDate} />}
         </div>
         <div id="tab-settings" className="tab-panel" style={{ display: activeTab === 'settings' ? '' : 'none' }}>
           {activeTab === 'settings' && <SettingsTab />}
