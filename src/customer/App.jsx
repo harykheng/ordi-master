@@ -8,6 +8,7 @@ import { trackVisit } from '../shared/lib/visits.js';
 import { cartTotal, getDiscountAmount, cartFinalTotal, cartSnapshot, cartStockItems } from '../shared/lib/cart.js';
 import { insertOrder } from '../shared/lib/orders.js';
 import { useCapacity } from '../shared/hooks/useCapacity.js';
+import { findCapacityBlocker } from '../shared/lib/capacity.js';
 import { buildOrderConfirmMessage, waLink } from '../shared/lib/whatsapp.js';
 import OrderTypeStep from './components/OrderTypeStep.jsx';
 import CatalogStep from './components/CatalogStep.jsx';
@@ -26,7 +27,7 @@ function AppShell() {
 
   // Satu fetch buat tanggal yang dipilih, dipakai bareng katalog dan sheet
   // varian: dua-duanya harus membatasi dari angka yang sama.
-  const { usage: capacityUsage } = useCapacity(state.selectedDate);
+  const { usage: capacityUsage, refetch: refetchCapacity } = useCapacity(state.selectedDate);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
   const [checkingOut, setCheckingOut] = useState(false);
@@ -54,6 +55,22 @@ function AppShell() {
     if (state.orderType === 'delivery' && !state.profile.address) {
       showToast('Masukkan alamat pengiriman dulu ya!', 'error');
       setProfileOpen(true);
+      return;
+    }
+
+    // Kuota dicek ulang ke server sebelum order dikirim. Di tier ini order
+    // memang di-insert lebih dulu sehingga penolakan tidak sampai membuat
+    // customer terlanjur transfer, tapi pesannya di sini bisa menyebut berapa
+    // sisa yang masih muat, bukan cuma "sudah penuh".
+    const freshUsage = await refetchCapacity();
+    const blocker = findCapacityBlocker(state.cart, freshUsage);
+    if (blocker) {
+      showToast(
+        blocker.remaining > 0
+          ? `${blocker.name} tinggal ${blocker.remaining} lagi untuk tanggal ini. Kurangi jumlahnya dulu ya!`
+          : `${blocker.name} sudah penuh untuk tanggal ini. Ganti tanggal atau hapus dari keranjang ya!`,
+        'error',
+      );
       return;
     }
 
