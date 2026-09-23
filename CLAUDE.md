@@ -8,6 +8,22 @@ Repo ini adalah copy dari codebase klien asli (Breva Coffee, toko kopi) yang sek
 
 **Status saat ini**: semua fitur F&B same-day (pickup/delivery + tanggal, ongkir Biteship, QRIS dinamis, stok, tracking, dashboard admin lengkap) sudah selesai dan ada di `main` — ini jadi base buat branch `tier-1`/`tier-2`/`tier-3` (WA-only / +ongkir / +QRIS). Konsep "tier-4" buat toko online umum (flow beda, kurir reguler kayak JNT, kemungkinan repo/branch terpisah) sempat dibahas tapi **ditunda**, fokus F&B dulu.
 
+**Dukungan PO (pre-order) selesai, tahap 1 sampai 5**, ada di `main` dan sudah di-cherry-pick ke ketiga branch tier. Ordi tidak butuh alur terpisah untuk toko PO: tanggal memang sudah dipilih duluan di langkah 1, jadi yang ditambahkan cuma batas per tanggal dan cara toko mengumumkannya. Urutannya:
+
+1. `pid` (id produk) disimpan di tiap baris `orders.items`, prasyarat semua agregasi per produk.
+2. Filter tanggal + rekap produksi di tab Pesanan, plus export CSV yang ikut tanggal.
+3. Kuota harian (`products.daily_capacity`) ditegakkan atomic di `place_order()`, sisa slot tampil di katalog.
+4. Mode toko (`settings.store_mode`) + tenggang + horizon, dan tanggal yang penuh dimatikan di langkah 1.
+5. Guard yang mencegat checkout lewat kuota sebelum QR dibuka, kartu produksi di dashboard, print label batch.
+
+Rinciannya ada di bagian "Stok, Kuota Harian & `place_order()`", "Step 1", dan "Tab Pesanan" di bawah.
+
+**Tahap 6 selesai juga**: tanggal libur (`closed_dates`) dan pembatalan yang mengembalikan stok (`cancel_order()`). Rinciannya di bagian "Tanggal libur" dan "Pembatalan & stok" di bawah.
+
+Yang masih terbuka dan sengaja ditunda: kuota per produk per tanggal (`capacity_overrides`), kuota tingkat toko ("total 50 item per hari apa pun produknya"), edit kuota cepat tanpa membuka form produk penuh, dan lead time per produk. Semuanya punya jalan keluar manual, jadi jangan dikerjakan sebelum ada klien yang benar-benar meminta.
+
+**DP (uang muka) sengaja ditunda**, bukan terlewat: klien Ordi sejauh ini bayar penuh di muka. Kalau nanti dibutuhkan, jangan tambahkan status DP ke enum `orders.status` (itu sumbu berbeda dari tahap pesanan dan bakal merusak filter tab admin serta `REVENUE_STATUSES`); pakai kolom terpisah `dp_amount` + `payment_status`. QRIS-nya sendiri tidak butuh apa-apa yang baru karena `qrisToDynamic()` deterministik, sisa tagihan bisa digenerate ulang di browser kapan saja.
+
 ---
 
 ## Peta File
@@ -19,8 +35,8 @@ Repo ini adalah copy dari codebase klien asli (Breva Coffee, toko kopi) yang sek
 | `src/customer/` | Aplikasi React customer: `App.jsx` (step switcher + modal orchestration), `CartContext.jsx` (state global order flow via `useReducer`, profile di-persist ke `localStorage`), `components/`, `hooks/useShipping.js` |
 | `src/admin/` | Aplikasi React admin: `App.jsx` (tab shell + live order alert), `AuthContext.jsx` (Supabase Auth session), `hooks/useNewOrderAlerts.js` (Realtime), `components/` |
 | `src/tracking/` | Aplikasi React lacak pesanan: `App.jsx` (form kode+WA), `components/OrderStatusCard.jsx` |
-| `src/shared/lib/` | Pure functions dipakai ketiga app: `qris.js` (crc16/qrisToDynamic), `shipping.js` (Haversine), `cart.js` (cart math + `cartStockItems`), `format.js`, `whatsapp.js` (message builder + `ORDER_STATUS_LABELS`), `csv.js` (hand-rolled parse/download, no library), `production.js` (rekap produksi per tanggal, pure function di atas baris `orders`), `capacity.js` (hitung sisa slot, pure), `config.js` (baca env var `VITE_*`), `supabaseClient.js`, `products.js`/`promos.js`/`orders.js`/`settings.js`/`visits.js` (mutation & RPC call functions ke Supabase) |
-| `src/shared/hooks/` | `useProducts`, `usePromos`, `useOrders`, `useSettings`, `useDailyVisits`, `useCapacity`, `useFullDates` — data-fetching hooks dipakai lintas app. Plus `useFavicon` (pasang `settings.favicon_url` ke `<link rel="icon">` saat runtime, dipanggil ketiga app) |
+| `src/shared/lib/` | Pure functions dipakai ketiga app: `qris.js` (crc16/qrisToDynamic), `shipping.js` (Haversine), `cart.js` (cart math + `cartStockItems`), `format.js`, `whatsapp.js` (message builder + `ORDER_STATUS_LABELS`), `csv.js` (hand-rolled parse/download, no library), `production.js` (rekap produksi per tanggal, pure function di atas baris `orders`), `capacity.js` (hitung sisa slot, pure), `config.js` (baca env var `VITE_*`), `supabaseClient.js`, `products.js`/`promos.js`/`orders.js`/`settings.js`/`visits.js`/`closedDates.js` (mutation & RPC call functions ke Supabase) |
+| `src/shared/hooks/` | `useProducts`, `usePromos`, `useOrders`, `useSettings`, `useDailyVisits`, `useCapacity`, `useFullDates`, `useClosedDates` — data-fetching hooks dipakai lintas app. Plus `useFavicon` (pasang `settings.favicon_url` ke `<link rel="icon">` saat runtime, dipanggil ketiga app) |
 | `src/shared/components/` | `Modal.jsx` (shell generik modal admin), `Toast.jsx` (+ `useToast()`), `ConfirmDialog.jsx` (+ `useConfirmDialog()`) |
 | `css/main.css` / `catalog.css` / `admin.css` | Style dari versi vanilla, di-import apa adanya sebagai global stylesheet, semua class name sama persis |
 | `css/tracking.css` | Style halaman lacak pesanan (baru, gak ada padanan di versi vanilla — reuse var/class dari `main.css`/`catalog.css`) |
@@ -51,7 +67,9 @@ Tanpa argumen, `buildDateChips()` berperilaku persis seperti dulu, jadi toko yan
 
 Chip dihitung lewat `useMemo` atas nilai settings (bukan sekali di mount) karena settings di-fetch async. Ada juga efek yang **melepas tanggal yang sudah terpilih** kalau tanggal itu hilang dari daftar (mode berubah di belakang layar, atau tanggalnya keburu penuh) — tanpa itu customer bisa lanjut bawa tanggal yang gak lagi ditawarkan.
 
-**Tanggal penuh** (`useFullDates` → `get_full_dates()`, `supabase-setup.sql` §7): tanggal yang gak punya satu pun produk tersisa di-disable dan ditandai "Penuh", biar customer gak pilih tanggal, masuk katalog, nemu semuanya penuh, lalu harus mundur. Kalau SEMUA tanggal penuh, kalendernya diganti satu kalimat, bukan dibiarin jadi deretan chip mati.
+**Tanggal yang gak bisa dipesan** (`useFullDates` → `get_full_dates()`, `supabase-setup.sql` §7): di-disable, biar customer gak pilih tanggal, masuk katalog, nemu semuanya penuh, lalu harus mundur. Kalau SEMUA tanggal kena, kalendernya diganti satu kalimat, bukan dibiarin jadi deretan chip mati.
+
+Hook-nya balikin **Map tanggal → alasan**, bukan Set, dan chip-nya nulis beda: **"Libur"** (toko tutup tanggal itu, `closed_dates`) vs **"Penuh"** (kuotanya habis diambil orang lain). Jangan disamain — "Penuh" padahal toko libur bikin customer ngira kehabisan lalu nungguin tanggal itu dibuka lagi. Kalimat "semua tanggal" juga ikut bedanya. Libur dicek duluan dan menang kalau dua-duanya berlaku.
 
 ### Step 2 — `CatalogStep.jsx` + `ProductCard.jsx` + `VariantSheet.jsx`
 - `useProducts({ onlyVisible: true })` ambil dari tabel `products` (RLS sudah filter `is_visible=true` juga, filter di query cuma optimisasi).
@@ -130,7 +148,7 @@ CRUD ke `promo_codes` lewat `savePromo()`/`deletePromo()`. Tipe diskon `percent`
   - **Rekapnya sengaja gak ikut filter status di atasnya.** Yang harus diproduksi gak berubah gara-gara admin kebetulan lagi buka tab Selesai. Kalimat di bawah judul rekap menyebutkan ini, jadi kalau perilakunya diubah, kalimatnya ikut.
   - **`pending` tetap dihitung**, beda dari `REVENUE_STATUSES` di `DashboardTab.jsx` yang mengecualikannya. Buat duit itu benar (belum diverifikasi), buat dapur enggak: pesanan yang belum dikonfirmasi tetap kerjaan yang mungkin mendarat. Yang dibuang cuma `cancelled`.
   - Dikelompokkan per `nm`, **bukan** per `pid`, walau `cartSnapshot()` sekarang nyimpen `pid`. Alasannya baris lama belum punya `pid` sama sekali, jadi `pid || nm` bakal nyetak produk yang sama dua kali (sekali dari baris lama, sekali dari yang baru). `pid` disiapkan buat cek kuota per tanggal yang nanti jalan di Postgres atas baris baru doang.
-- `OrderDetailModal` aksi: **Konfirmasi/Selesai/Batalkan** → `updateOrderStatus()`; **Print Label** → `window.print()` (lihat catatan portal di bawah); **WA Customer** → `buildAdminOrderSummaryMessage()` (`shared/lib/whatsapp.js`) buka `wa.me/{customer_wa}` terisi otomatis.
+- `OrderDetailModal` aksi: **Konfirmasi/Selesai/Batalkan** → `updateOrderStatus()`, yang merutekan status `cancelled` ke `cancel_order()` dan status lain ke update kolom biasa (lihat "Pembatalan & stok" di bawah); **Print Label** → `window.print()` (lihat catatan portal di bawah); **WA Customer** → `buildAdminOrderSummaryMessage()` (`shared/lib/whatsapp.js`) buka `wa.me/{customer_wa}` terisi otomatis.
 - **`PrintLabel.jsx` pakai React Portal** (`createPortal`) ke `#printLabel`, `<div>` direct child `<body>` di `admin/index.html` (bukan di dalam `#root`) — CSS `@media print` di `admin.css` pakai selector `body > *:not(#printLabel)`. Kalau `#printLabel` dipindah ke dalam tree React normal, print CSS-nya rusak. `PrintLabel` selalu terima **array** (`orders`), modal detail ngirim `[order]`, biar satu label dan sekumpulan label gak mungkin beda tata letak cetaknya.
 - **Print label batch** — tombol "Print N Label" di header tab nyetak SEMUA yang lagi ke-filter (status + tanggal), jumlahnya disebut di tombolnya biar gak ada yang gak sengaja ngirim ratusan halaman. Dua hal yang jangan dibalik: `#printLabel` harus `position: static`, **bukan** `fixed` (elemen fixed cuma kecetak di halaman pertama, jadi label kedua dst hilang tanpa jejak), dan `window.print()` dipanggil dari `useEffect` setelah render, bukan langsung di handler tombol (portal-nya belum ke-commit, yang kecetak halaman kosong).
 - **Export CSV** — `downloadCsv()` (`shared/lib/csv.js`, hand-rolled: proper escaping koma/kutip + BOM prefix biar Excel buka UTF-8 dengan benar) export list yang lagi ke-filter di tab, status maupun tanggal, dan nama filenya ikut tanggal yang dipilih.
@@ -176,6 +194,26 @@ Di customer: `useCapacity(dateKey)` fetch sekali di `src/customer/App.jsx`, dite
 Gagal fetch kuota sengaja gak mblokir katalog (produk tampil tanpa batas), karena yang nolak beneran tetap `place_order()` di server.
 
 **Guard sebelum bayar** — `App.jsx`'s `handleSubmitQris()` fetch kuota **ULANG** ke server sebelum buka QR, bukan pakai angka yang udah ada di layar, lalu cegat lewat `findCapacityBlocker()` (`shared/lib/capacity.js`). Ini bukan paranoia: di alur ini customer mindai dan **bayar DULU**, order baru ke-insert pas dia tekan konfirmasi. Kalau slotnya keburu diambil orang lain di sela itu, `place_order()` nolak `KUOTA_HABIS` setelah duitnya terlanjur ditransfer. Satu round trip jauh lebih murah dari itu. Ini pemanggil ketiga yang boleh ada tanpa ngelanggar pola "jangan reaktif" (lihat "Kenapa begini" soal ongkir): pemicunya tekan tombol, sekali jalan, bukan `useEffect` yang watch keranjang. `useCapacity().refetch()` balikin Map-nya (bukan cuma set state) khusus buat ini, dan kalau fetch-nya gagal dia balikin Map kosong biar gangguan jaringan gak berubah jadi customer yang gak bisa bayar sama sekali.
+
+### Tanggal libur (`closed_dates`)
+
+Tabel kecil berisi tanggal toko tutup, diatur dari **Admin > Pengaturan > Tanggal Libur**. Level **TOKO**, bukan per produk: yang dibutuhkan toko itu "Minggu saya libur", dan itu nutup semua produk sekaligus. Kuota per produk per tanggal (`capacity_overrides`) sengaja belum dibuat — belum ada yang butuh, ada jalan keluarnya (admin ubah `daily_capacity` produk itu sehari itu), dan bikin tabel tanpa UI cuma nambah beban.
+
+**Ditegakkan `place_order()`** (error `TOKO_TUTUP:`), bukan cuma disembunyiin dari kalender. Tanpa itu nutup tanggal jadi kosmetik: tanggal bisa ditutup SETELAH customer milihnya.
+
+`anon` sengaja gak dikasih policy SELECT. Customer lihat tanggal liburnya lewat `get_full_dates()` yang SECURITY DEFINER dan udah bawa alasannya, jadi SELECT langsung gak pernah dibutuhin. Kalau nanti kalender mau nampilin `note` ("Libur Lebaran"), tambahin kolomnya ke balikan `get_full_dates()`, **jangan** buka SELECT-nya.
+
+GRANT-nya ditulis eksplisit, beda dari tabel lain di file itu yang ngandelin default privileges Supabase: tabel lain lahir bareng instance-nya, `closed_dates` lahir belakangan di instance yang udah jalan.
+
+### Pembatalan & stok (`cancel_order()`)
+
+`updateOrderStatus()` (`shared/lib/orders.js`) **merutekan status `cancelled` ke `cancel_order()`**, status lain tetap update kolom biasa. Ini yang bikin stok beneran balik — update dari browser gak bisa nyentuh `stock_qty`.
+
+**Idempoten dan itu wajib**: tombol Batalkan bisa ketekan dua kali, dan tanpa syarat `status <> 'cancelled'` stoknya nambah dua kali. Cuma transisi pertama yang memulihkan.
+
+Produk `stock_qty NULL` dilewati (emang gak pernah dikurangi), item tanpa `pid` juga. Batasan yang diterima sadar: produk yang diubah dari NULL jadi terlacak SETELAH pesanannya masuk bakal kelebihan stok saat dibatalkan. Nutupnya butuh nyatat persis apa yang dikurangi saat order dibuat, dan itu kolom baru buat kasus yang jarang.
+
+Kuota harian gak kena masalah ini sama sekali, karena dihitung ulang dari tabel `orders` — lihat alasannya di atas.
 
 ### Validasi
 
