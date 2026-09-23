@@ -73,9 +73,12 @@ export default function QrisModal({ pendingOrder, settings, onClose, onConfirmed
       onConfirmed({ ...o, waUrl: waLink(config.adminWhatsapp, waMessage) });
     } catch (err) {
       console.error('Confirm QRIS error:', err);
-      const stokHabisMatch = /STOK_HABIS: (.+)/.exec(err.message || '');
-      if (stokHabisMatch) {
-        showToast(stokHabisMatch[1], 'error');
+      // Dua penolakan yang punya pesan sendiri dari place_order(): stok kurang
+      // dan kuota tanggal penuh. Keduanya sudah menjelaskan produk mana yang
+      // bermasalah, jadi diteruskan apa adanya, bukan diganti pesan generik.
+      const blockedMatch = /(?:STOK_HABIS|KUOTA_HABIS): (.+)/.exec(err.message || '');
+      if (blockedMatch) {
+        showToast(blockedMatch[1], 'error');
         onClose();
       } else {
         showToast('Gagal menyimpan pesanan. Coba lagi ya!', 'error');
