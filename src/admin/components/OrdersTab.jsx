@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useOrders } from '../../shared/hooks/useOrders.js';
 import { formatPrice, formatOrderDate, formatDateKey, todayKey } from '../../shared/lib/format.js';
 import { buildOrderDateOptions, buildProductionRecap, orderDateKey } from '../../shared/lib/production.js';
@@ -6,6 +6,7 @@ import { useToast } from '../../shared/components/Toast.jsx';
 import { updateOrderStatus } from '../../shared/lib/orders.js';
 import { downloadCsv } from '../../shared/lib/csv.js';
 import OrderDetailModal from './OrderDetailModal.jsx';
+import PrintLabel from './PrintLabel.jsx';
 import AdminErrorState from './AdminErrorState.jsx';
 
 const FILTERS = [
@@ -55,12 +56,20 @@ function orderToCsvRow(o) {
   ];
 }
 
-export default function OrdersTab() {
+export default function OrdersTab({ initialDate }) {
   const { orders, loading, error, refetch } = useOrders();
   const showToast = useToast();
-  const [filter, setFilter] = useState('pending');
-  const [dateFilter, setDateFilter] = useState('all');
+  // Datang dari kartu dashboard berarti admin bertanya "tanggal ini isinya
+  // apa", bukan "mana yang perlu dikonfirmasi", jadi statusnya dibuka semua.
+  // Kalau tetap 'pending', tanggal yang semua pesanannya sudah dikonfirmasi
+  // akan terlihat kosong padahal justru penuh.
+  const [filter, setFilter] = useState(initialDate ? 'all' : 'pending');
+  // Dipakai sebagai nilai awal saja, bukan disinkronkan lewat efek: tab ini
+  // di-unmount tiap kali admin pindah tab (lihat admin/App.jsx), jadi selalu
+  // mount ulang dengan tanggal yang baru diklik.
+  const [dateFilter, setDateFilter] = useState(initialDate || 'all');
   const [detailOrder, setDetailOrder] = useState(null);
+  const [printQueue, setPrintQueue] = useState(null);
 
   const pendingCount = orders.filter((o) => o.status === 'pending').length;
 
@@ -90,6 +99,23 @@ export default function OrdersTab() {
     }
   }
 
+  // Cetak baru dipanggil SETELAH render, bukan di dalam handler tombol: label
+  // dirender lewat portal ke #printLabel, dan window.print() yang dipanggil
+  // sebelum React sempat commit akan mencetak halaman yang masih kosong.
+  useEffect(() => {
+    if (!printQueue) return;
+    window.print();
+    setPrintQueue(null);
+  }, [printQueue]);
+
+  function printLabels() {
+    if (filtered.length === 0) {
+      showToast('Tidak ada pesanan buat di-print', 'error');
+      return;
+    }
+    setPrintQueue(filtered);
+  }
+
   function exportCsv() {
     if (filtered.length === 0) {
       showToast('Tidak ada pesanan buat di-export', 'error');
@@ -114,7 +140,14 @@ export default function OrdersTab() {
                 : `${orders.length} pesanan`}
           </p>
         </div>
-        <button className="btn btn-secondary" onClick={exportCsv} disabled={loading}>Export CSV</button>
+        <div className="admin-page-header-actions">
+          {!loading && !error && filtered.length > 0 && (
+            <button className="btn btn-secondary" onClick={printLabels}>
+              Print {filtered.length} Label
+            </button>
+          )}
+          <button className="btn btn-secondary" onClick={exportCsv} disabled={loading}>Export CSV</button>
+        </div>
       </div>
 
       <div className="orders-filter-bar" role="group" aria-label="Filter status pesanan">
@@ -248,6 +281,8 @@ export default function OrdersTab() {
           })}
         </div>
       )}
+
+      <PrintLabel orders={printQueue} />
 
       <OrderDetailModal
         isOpen={Boolean(detailOrder)}
