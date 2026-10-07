@@ -18,7 +18,7 @@ Repo ini adalah copy dari codebase klien asli (Breva Coffee, toko kopi) yang sek
 
 Rinciannya ada di bagian "Stok, Kuota Harian & `place_order()`", "Step 1", dan "Tab Pesanan" di bawah.
 
-**Tahap 6 selesai juga**: tanggal libur (`closed_dates`) dan pembatalan yang mengembalikan stok (`cancel_order()`). Rinciannya di bagian "Tanggal libur" dan "Pembatalan & stok" di bawah.
+**Tahap 6 selesai juga**: tanggal libur (`closed_dates`) dan pembatalan yang mengembalikan stok (`cancel_order()`), sudah di-cherry-pick ke ketiga branch tier juga. Di `tier-1`/`tier-2` penanganan `TOKO_TUTUP:` duduk di `src/customer/App.jsx`, bukan di `QrisModal.jsx` yang cuma ada di `tier-3` dan `main`. Rinciannya di bagian "Tanggal libur" dan "Pembatalan & stok" di bawah.
 
 Yang masih terbuka dan sengaja ditunda: kuota per produk per tanggal (`capacity_overrides`), kuota tingkat toko ("total 50 item per hari apa pun produknya"), edit kuota cepat tanpa membuka form produk penuh, dan lead time per produk. Semuanya punya jalan keluar manual, jadi jangan dikerjakan sebelum ada klien yang benar-benar meminta.
 
