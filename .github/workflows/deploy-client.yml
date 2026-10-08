@@ -1,0 +1,180 @@
+# Kirim isi satu branch tier (default tier-3) ke repo GitHub milik klien.
+# Cloudflare yang terhubung ke repo klien akan build ulang otomatis setelah push.
+#
+# Dijalankan manual: tab Actions > "Deploy ke repo klien" > Run workflow.
+# File ini harus ada di `main`, GitHub hanya menampilkan workflow_dispatch dari
+# branch default. Isi yang dikirim tetap diambil dari branch `source_branch`.
+#
+# Prasyarat (sekali saja):
+#   1. Repo klien sudah dibuat (boleh kosong, sebaiknya private).
+#   2. Secret repo ini `CLIENT_DEPLOY_TOKEN` berisi fine-grained PAT dengan izin
+#      Contents: Read and write ke repo-repo klien. GITHUB_TOKEN bawaan Actions
+#      tidak bisa push ke repo lain.
+#
+# Yang dikirim adalah SNAPSHOT, bukan riwayat commit ordi-master: tiap sync jadi
+# satu commit baru di atas riwayat repo klien sendiri, tanpa force push. Riwayat
+# ordi-master (termasuk sisa identitas klien lama) tidak pernah ikut pindah.
+# Perubahan manual di repo klien akan tertimpa sync berikutnya, tapi tetap bisa
+# dilihat dan dipulihkan dari riwayat commit-nya.
+
+name: Deploy ke repo klien
+
+on:
+  workflow_dispatch:
+    inputs:
+      client_repo:
+        description: "Repo klien, format owner/nama-repo (contoh: harykheng/ordi-tokokue)"
+        required: true
+        type: string
+      source_branch:
+        description: "Branch sumber (paket klien)"
+        required: true
+        default: tier-3
+        type: choice
+        options:
+          - tier-3
+          - tier-2
+          - tier-1
+      worker_name:
+        description: "Nama project Cloudflare (huruf kecil, angka, tanda minus). Kosong = nama repo klien"
+        required: false
+        type: string
+      dry_run:
+        description: "Uji coba: tampilkan perubahan tanpa push"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: deploy-client-${{ inputs.client_repo }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      CLIENT_REPO: ${{ inputs.client_repo }}
+      SOURCE_BRANCH: ${{ inputs.source_branch }}
+      WORKER_NAME_INPUT: ${{ inputs.worker_name }}
+      DRY_RUN: ${{ inputs.dry_run }}
+      CLIENT_DEPLOY_TOKEN: ${{ secrets.CLIENT_DEPLOY_TOKEN }}
+      # Catatan internal Ordi, tidak perlu dan tidak boleh terbaca klien.
+      INTERNAL_PATHS: "CLAUDE.md DESIGN.md PROMO.md anti-slop .claude .github"
+    steps:
+      - name: Validasi input
+        id: validate
+        run: |
+          set -euo pipefail
+
+          if [ -z "$CLIENT_DEPLOY_TOKEN" ]; then
+            echo "::error::Secret CLIENT_DEPLOY_TOKEN belum diisi. Settings > Secrets and variables > Actions > New repository secret."
+            exit 1
+          fi
+
+          if ! printf '%s' "$CLIENT_REPO" | grep -Eq '^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$'; then
+            echo "::error::client_repo harus berformat owner/nama-repo, dapat: '$CLIENT_REPO'"
+            exit 1
+          fi
+
+          # Jangan sampai repo master ini sendiri yang ketimpa.
+          if [ "${CLIENT_REPO,,}" = "${GITHUB_REPOSITORY,,}" ]; then
+            echo "::error::client_repo tidak boleh repo ini sendiri ($GITHUB_REPOSITORY)."
+            exit 1
+          fi
+
+          worker="${WORKER_NAME_INPUT:-${CLIENT_REPO#*/}}"
+          worker="$(printf '%s' "$worker" | tr '[:upper:]_.' '[:lower:]--')"
+          if ! printf '%s' "$worker" | grep -Eq '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$'; then
+            echo "::error::Nama project Cloudflare '$worker' tidak valid (huruf kecil, angka, tanda minus, maks 63, tidak diawali/diakhiri minus)."
+            exit 1
+          fi
+          echo "worker=$worker" >> "$GITHUB_OUTPUT"
+
+      - name: Ambil branch sumber
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_branch }}
+          path: src
+          persist-credentials: false
+
+      - name: Ambil repo klien
+        run: |
+          set -euo pipefail
+          if ! git clone --quiet "https://x-access-token:${CLIENT_DEPLOY_TOKEN}@github.com/${CLIENT_REPO}.git" dest; then
+            echo "::error::Repo $CLIENT_REPO tidak bisa diakses. Pastikan repo-nya sudah dibuat dan CLIENT_DEPLOY_TOKEN punya izin Contents: Read and write ke repo itu."
+            exit 1
+          fi
+
+          cd dest
+          if git rev-parse --verify --quiet refs/remotes/origin/main >/dev/null; then
+            git checkout --quiet -B main origin/main
+          else
+            # Repo kosong (atau belum punya main): commit pertama jadi awal branch main.
+            git symbolic-ref HEAD refs/heads/main
+          fi
+
+      - name: Salin isi branch sumber
+        env:
+          WORKER_NAME: ${{ steps.validate.outputs.worker }}
+        run: |
+          set -euo pipefail
+
+          for p in $INTERNAL_PATHS; do
+            rm -rf "src/$p"
+          done
+
+          # Kosongkan repo klien kecuali .git, lalu salin ulang. File yang sudah
+          # dihapus di sumber ikut hilang di repo klien.
+          find dest -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          tar -C src --exclude=./.git -cf - . | tar -C dest -xf -
+
+          if [ ! -f dest/wrangler.jsonc ]; then
+            echo "::error::wrangler.jsonc tidak ada di branch $SOURCE_BRANCH."
+            exit 1
+          fi
+          sed -i -E "s/^([[:space:]]*\"name\":[[:space:]]*)\"[^\"]*\"/\1\"${WORKER_NAME}\"/" dest/wrangler.jsonc
+          if ! grep -Eq "^[[:space:]]*\"name\":[[:space:]]*\"${WORKER_NAME}\"" dest/wrangler.jsonc; then
+            echo "::error::Gagal mengganti \"name\" di wrangler.jsonc."
+            exit 1
+          fi
+
+      - name: Commit dan push
+        env:
+          WORKER_NAME: ${{ steps.validate.outputs.worker }}
+        run: |
+          set -euo pipefail
+          src_sha="$(git -C src rev-parse --short HEAD)"
+          cd dest
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Tidak ada perubahan: $CLIENT_REPO sudah sama dengan $SOURCE_BRANCH@$src_sha." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          git -c user.name="ordi-deploy" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit --quiet -m "Sync dari ordi-master $SOURCE_BRANCH@$src_sha"
+
+          {
+            echo "### $CLIENT_REPO ← $SOURCE_BRANCH@$src_sha"
+            echo
+            echo "Nama project Cloudflare: \`$WORKER_NAME\`"
+            echo
+            echo '```'
+            git show --stat --format='%s' HEAD | head -n 60
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "Uji coba: tidak ada yang di-push." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # Tanpa --force: kalau repo klien berubah selama workflow jalan, push ditolak
+          # dan workflow gagal, bukan diam-diam menimpa.
+          git push --quiet origin main
+          echo "Terkirim. Cloudflare yang terhubung ke repo ini akan build ulang otomatis." | tee -a "$GITHUB_STEP_SUMMARY"

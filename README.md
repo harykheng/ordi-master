@@ -374,6 +374,27 @@ Dashboard Cloudflare sekarang menggabungkan flow "Pages" ke dalam "Workers" (`Cr
 
 > Dashboard admin ada di `/admin/` (bukan lagi `/admin.html`) — ketiga platform di atas otomatis resolve `dist/admin/index.html` ke path `/admin/` (directory index resolution bawaan), jadi biasanya langsung jalan tanpa rewrite tambahan. Kalau ternyata 404, tambah satu baris rewrite (`vercel.json`/`netlify.toml`/`_redirects` tergantung platform) yang mengarahkan `/admin` ke `/admin/index.html`.
 
+### Deploy klien dari branch tier (`deploy-client.yml`)
+
+Klien sungguhan tidak di-deploy dari repo ini, tapi dari repo GitHub miliknya sendiri yang isinya dikirim dari salah satu branch `tier-1`/`tier-2`/`tier-3` lewat workflow `.github/workflows/deploy-client.yml`.
+
+**Sekali saja (per akun):**
+1. Buat fine-grained Personal Access Token di GitHub (**Settings → Developer settings → Fine-grained tokens**), Repository access ke repo-repo klien, permission **Contents: Read and write**.
+2. Di repo `ordi-master`: **Settings → Secrets and variables → Actions → New repository secret**, nama `CLIENT_DEPLOY_TOKEN`, isi token tadi.
+
+**Per klien:**
+1. Buat repo kosong untuk klien (private), misalnya `ordi-tokokue`. Kalau token-nya dibatasi per repo, tambahkan repo ini ke token.
+2. Setup Supabase klien (§1, jalankan `supabase-setup.sql`, **ganti email + password admin di §10 file itu dulu**) dan Edge Function ongkir (§3).
+3. Tab **Actions → Deploy ke repo klien → Run workflow**: isi `client_repo` (`harykheng/ordi-tokokue`), pilih `source_branch`, `worker_name` boleh kosong (dipakai nama repo). Centang **dry_run** dulu kalau mau lihat daftar perubahan tanpa push.
+4. Hubungkan repo klien ke Cloudflare (langkah "Alternatif Cloudflare" di atas), isi env var klien, **tanpa** `VITE_DEMO_MODE`.
+
+**Update klien** setelah branch tier diperbaiki: jalankan workflow yang sama lagi. Cloudflare build ulang otomatis.
+
+Yang dilakukan workflow ini:
+- Mengirim **snapshot** isi branch, bukan riwayat commit `ordi-master`. Tiap sync jadi satu commit `Sync dari ordi-master tier-3@<sha>` di repo klien, tanpa force push.
+- Membuang catatan internal (`CLAUDE.md`, `DESIGN.md`, `PROMO.md`, `anti-slop/`, `.claude/`, `.github/`) dan mengganti `"name"` di `wrangler.jsonc` jadi nama project klien.
+- **Menimpa** perubahan manual di repo klien. Kustomisasi per klien taruh di env var Cloudflare atau Admin > Pengaturan, bukan di kode repo klien.
+
 ---
 
 ## 5. Struktur File
