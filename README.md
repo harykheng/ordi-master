@@ -189,7 +189,13 @@ Dipanggil halaman pertama lewat `supabase.rpc('get_full_dates', { p_from, p_to }
 
 Dipanggil dashboard admin lewat `supabase.rpc('cancel_order', { p_order_id })` saat pesanan dibatalkan, menggantikan update kolom status biasa. Sebelum ini `updateOrderStatus()` cuma membalik kolom status dan tidak pernah mengembalikan apa pun, jadi tiap pembatalan menghanguskan `stock_qty` secara permanen. Kuota harian tidak kena karena dihitung ulang dari tabel `orders`, tapi stok itu counter sungguhan yang sudah terlanjur dikurangi.
 
-Idempoten: tombol Batalkan yang tertekan dua kali tidak menambah stok dua kali, karena hanya transisi pertama (`status <> 'cancelled'`) yang memulihkan. Produk dengan `stock_qty NULL` dilewati (tidak pernah dikurangi), begitu juga item tanpa `pid`. Hanya `authenticated`; `anon` di-`REVOKE` karena tidak pernah membatalkan pesanan siapa pun.
+Idempoten: tombol Batalkan yang tertekan dua kali tidak menambah stok dua kali, karena hanya transisi pertama (`status <> 'cancelled'`) yang memulihkan. Produk dengan `stock_qty NULL` dilewati (tidak pernah dikurangi), begitu juga item tanpa `pid`. Hanya `authenticated`; `anon` di-`REVOKE` karena tidak pernah membatalkan pesanan siapa pun. Pengembaliannya sendiri ada di helper `restore_order_stock()` yang dipakai bersama `expire_stale_orders()` di bawah, dan helper itu di-`REVOKE` dari semua role karena menambah stok tanpa syarat.
+
+#### `expire_stale_orders()` — batalkan pending kedaluwarsa + kembalikan stok
+
+`place_order()` memotong `stock_qty` saat pesanan dibuat, bukan saat dikonfirmasi. Pesanan `pending` yang lewat 24 jam tanpa dikonfirmasi (orang yang menekan "Konfirmasi Pesanan" lalu tidak pernah membayar) sebelumnya hanya disembunyikan dari dashboard, jadi stoknya hangus dan admin bahkan tidak bisa membatalkannya. Function ini membatalkan semuanya sekaligus dan mengembalikan stoknya.
+
+Dipanggil tanpa jadwal server: tiap katalog dibuka (`src/customer/App.jsx`) dan tiap daftar pesanan admin dimuat (`useOrders.js`). Aman dipanggil bersamaan (`FOR UPDATE SKIP LOCKED`, syarat `status = 'pending'` diperiksa ulang) dan cuma membalikkan boolean, jadi boleh untuk `anon`. Pesanan yang dibatalkan dengan cara ini muncul di filter **Dibatalkan** di dashboard. Instance yang belum menjalankan ulang `supabase-setup.sql` tetap jalan seperti sebelumnya: panggilannya gagal diam-diam dan pending kedaluwarsa tetap disembunyikan.
 
 #### `closed_dates` — tanggal toko tutup
 
@@ -459,7 +465,7 @@ Klik **+ Tambah Produk** → isi nama, deskripsi, harga, stok (opsional), upload
 Klik **+ Tambah Promo** → isi kode, tipe diskon (persen/nominal), minimum order, tanggal berlaku (opsional), status aktif → **Simpan Promo**.
 
 ### Tab Pesanan
-Daftar pesanan masuk, bisa difilter per status: **Menunggu** (pending) → **Diproses** (confirmed) → **Selesai** (done), atau **Dibatalkan**.
+Daftar pesanan masuk, bisa difilter per status: **Menunggu** (pending) → **Diproses** (confirmed) → **Selesai** (done), atau **Dibatalkan**. Pesanan Menunggu yang lewat 24 jam tanpa dikonfirmasi otomatis pindah ke **Dibatalkan** dan stoknya dikembalikan (lihat `expire_stale_orders()` di §1), jadi konfirmasi pesanan yang sudah dibayar sebelum 24 jam.
 Klik **📋 Detail** pada satu pesanan untuk:
 - Lihat rincian lengkap (item, ongkir, diskon, alamat, catatan)
 - **✅ Konfirmasi** / **✅ Selesai** / **❌ Batalkan** — ubah status pesanan

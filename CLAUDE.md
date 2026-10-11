@@ -143,7 +143,7 @@ Tab default saat login. Sebagian besar angka dihitung client-side di `useMemo` d
 CRUD ke `promo_codes` lewat `savePromo()`/`deletePromo()`. Tipe diskon `percent` atau `flat`, opsional `min_order` dan `expires_at`.
 
 ### Tab Pesanan — `OrdersTab.jsx` + `OrderDetailModal.jsx` + `PrintLabel.jsx`
-- `useOrders()` ambil semua row `orders` (RLS: hanya `authenticated` boleh SELECT), filter client-side pesanan `pending` yang sudah lewat 24 jam (disembunyikan dari list, bukan dihapus).
+- `useOrders()` manggil `expireStaleOrders()` dulu (pending lewat 24 jam dibatalkan di server + stoknya balik, lihat "Pending kedaluwarsa" di bawah), baru ambil semua row `orders` (RLS: hanya `authenticated` boleh SELECT). Filter client-side pending > 24 jam masih ada, cuma jadi cadangan buat instance yang belum re-run `supabase-setup.sql`.
 - Filter status via tab: `pending` (default) → `confirmed` → `done`, atau `cancelled`.
 - **Filter tanggal** — baris chip kedua di bawah filter status, isinya tanggal yang memang punya pesanan plus jumlahnya (`buildOrderDateOptions()` di `shared/lib/production.js`). Yang akan datang duluan (menaik), yang lewat menyusul dengan terbaru dulu, biar toko dengan riwayat panjang gak perlu scroll jauh cuma buat sampai ke besok. Labelnya **dihitung ulang** dari `order_date` lewat `formatDateKey()` (`shared/lib/format.js`), sengaja bukan `order_date_label` yang tersimpan di row: label itu dibekukan pas pesanan dibuat, jadi pesanan kemarin buat keesokan harinya tetap berbunyi "Besok" padahal hari ini udah jadi "Hari ini". Helper tanggalnya (`dateKeyOf`/`todayKey`) baca bagian tanggal lokal, **bukan** `toISOString()` yang geser ke UTC dan salah sehari buat zona timur pas dini hari.
 - **Rekap produksi** — muncul pas satu tanggal dipilih (`buildProductionRecap()`): total tiap produk untuk tanggal itu, dipecah per kombinasi varian, urut dari yang paling banyak. Ini jawaban buat pertanyaan yang tabel pesanan gak pernah jawab, "tanggal ini bikin apa, berapa". Dua keputusan yang jangan dibalik tanpa alasan:
@@ -185,7 +185,7 @@ Ini yang bikin Ordi bisa dipakai toko PO tanpa flow terpisah: tanggal sudah dipi
 2. Order `pending` yang gak pernah diverifikasi ikut lepas sendiri lewat batas 24 jam, jadi yang buka QRIS terus kabur gak ngunci slot selamanya.
 3. Angka terpakai gak bisa drift dari kenyataan.
 
-Batas 24 jam itu **sengaja sama** dengan `PENDING_EXPIRE_MS` di `useOrders.js`. Ubah salah satu = ubah dua-duanya, kalau enggak ada pesanan yang ngunci kuota padahal adminnya sendiri udah gak lihat di daftar.
+Batas 24 jam itu **sengaja sama** di tiga tempat: `active_order_item_qty()`, `expire_stale_orders()`, dan `PENDING_EXPIRE_MS` di `useOrders.js`. Ubah salah satu = ubah ketiganya.
 
 `active_order_item_qty()` (`supabase-setup.sql` §7) jadi SATU-SATUNYA definisi "item yang masih menghitung", dipakai bareng `get_capacity_usage()` (buat browser) dan `place_order()` (buat cek atomic), biar dua sisi gak mungkin punya definisi yang beda. Helper ini **di-`REVOKE` dari `PUBLIC`** dan itu wajib: Postgres ngasih EXECUTE ke semua orang secara default buat function baru, jadi tanpa REVOKE, `anon` bisa manggil helper-nya langsung dan ngelewatin penyempitan di `get_capacity_usage()` (helper-nya balikin SEMUA produk, termasuk yang kuotanya gak diisi dan sengaja gak diumumkan). Kalau nambah helper SECURITY DEFINER lain di file ini, inget pola yang sama. Item tanpa `pid` (baris sebelum `cartSnapshot()` nyimpen id produk) gak ikut terhitung.
 
@@ -216,6 +216,20 @@ GRANT-nya ditulis eksplisit, beda dari tabel lain di file itu yang ngandelin def
 Produk `stock_qty NULL` dilewati (emang gak pernah dikurangi), item tanpa `pid` juga. Batasan yang diterima sadar: produk yang diubah dari NULL jadi terlacak SETELAH pesanannya masuk bakal kelebihan stok saat dibatalkan. Nutupnya butuh nyatat persis apa yang dikurangi saat order dibuat, dan itu kolom baru buat kasus yang jarang.
 
 Kuota harian gak kena masalah ini sama sekali, karena dihitung ulang dari tabel `orders` — lihat alasannya di atas.
+
+Pengembaliannya duduk di helper `restore_order_stock()`, dipakai bareng `cancel_order()` dan `expire_stale_orders()` biar dua jalan pembatalan gak bisa punya aturan beda. Helper-nya diproses **urut per `product_id`** (sama kayak penguncian di `place_order()`, biar gak ada deadlock sama checkout yang jalan barengan), **bukan** SECURITY DEFINER, dan di-`REVOKE` dari `PUBLIC`: dia nambah stok tanpa syarat, jadi gak boleh kepanggil langsung.
+
+### Pending kedaluwarsa (`expire_stale_orders()`)
+
+`place_order()` motong stok pas pesanan dibuat, bukan pas dikonfirmasi. Dulu pending yang lewat 24 jam cuma disembunyiin dari daftar admin: kuotanya lepas sendiri (dihitung ulang), tapi **stoknya hangus** dan admin gak bisa ngebatalin karena pesanannya udah gak kelihatan. Sekarang `expire_stale_orders()` ngebatalin semuanya + balikin stok, dan pesanannya muncul di filter Dibatalkan.
+
+- **Dipanggil "malas", bukan pg_cron**: tiap katalog dibuka (`src/customer/App.jsx`, tiap page load, bukan sekali per sesi kayak `trackVisit`) dan tiap `useOrders()` refetch. Stok cuma penting dilihat di dua momen itu, dan gak perlu nyalain extension per instance. Kalau balikannya `true`, `App.jsx` naikin `stockVersion` biar kalender langkah 1 (`useFullDates`) ambil ulang, karena hitungan "Penuh" ikut baca stok.
+- **Jangan dipanggil dari dalam `place_order()`.** Sweep ngunci baris produk milik pesanan lain; digabung sama kunci produk checkout dalam satu transaksi, urutan kuncinya gak seragam lagi dan jadi celah deadlock pas orang lagi bayar.
+- Aman barengan: `FOR UPDATE SKIP LOCKED` + `status = 'pending'` dicek ulang di UPDATE. Balikannya cuma boolean karena `anon` boleh manggil. Ada partial index `orders_pending_created_at_idx` karena ini kepanggil tiap katalog dibuka.
+- **`updateOrderStatus()` non-batal pakai `.neq('status', 'cancelled')`** dan lempar error `ORDER_ALREADY_CANCELLED` kalau 0 baris. Tanpa itu, admin yang layarnya dimuat sebelum sweep bisa mengonfirmasi pesanan yang stoknya udah dilepas, dan stok yang sama kejual dua kali. `OrdersTab`/`OrderDetailModal` refetch daftarnya kalau kena error ini.
+- Fungsi `get_full_dates()`/`useFullDates()` gak manggil sweep sendiri; mereka cuma diminta ambil ulang lewat `stockVersion`.
+
+Divalidasi ke Postgres 16 lokal: pending kedaluwarsa dibatalkan + stok balik (varian produk sama dijumlahin), pending baru dan pesanan confirmed gak kesentuh, stok NULL dan item tanpa `pid` dilewati, sweep kedua no-op, pembatalan admin sebelum sweep gak bikin stok balik dua kali, `anon`/`authenticated` ditolak manggil `restore_order_stock()`, dua sweep barengan gak saling nunggu, sweep vs `cancel_order()` barengan tetap cuma balikin sekali, dan stress test 12 klien checkout + sweep selama 8 detik (~10 ribu transaksi): 0 deadlock, stok akhir cocok persis dengan hitungan pesanan.
 
 ### Validasi
 

@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient.js';
+import { expireStaleOrders } from '../lib/orders.js';
 
+// Sama dengan batas 24 jam di supabase-setup.sql §7 (active_order_item_qty()
+// dan expire_stale_orders()). Ubah satu, ubah semuanya.
 const PENDING_EXPIRE_MS = 24 * 60 * 60 * 1000;
 
-// Admin-only. Hides pending orders older than 24h (never confirmed), same as the
-// original loadOrders() behavior, customer never reads this table (RLS insert-only).
+// Admin-only, customer never reads this table (RLS insert-only).
+//
+// Sweep dulu, baru baca: pending yang lewat 24 jam dibatalkan di server dan
+// stoknya kembali, jadi muncul di filter Dibatalkan alih-alih menghilang.
+// Filter PENDING_EXPIRE_MS di bawah tetap dipertahankan sebagai cadangan buat
+// instance yang belum menjalankan ulang supabase-setup.sql, di mana sweep-nya
+// gagal diam-diam dan perilaku lama (disembunyikan) yang berlaku.
 export function useOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,6 +22,7 @@ export function useOrders() {
     setLoading(true);
     setError(null);
     try {
+      await expireStaleOrders();
       const { data, error: err } = await supabase
         .from('orders')
         .select('*')

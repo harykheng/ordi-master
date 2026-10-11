@@ -16,7 +16,10 @@ import { supabase } from '../lib/supabaseClient.js';
 // Gagal fetch tidak memblokir apa pun: Map balik kosong dan semua tanggal tetap
 // bisa dipilih. Yang menolak beneran tetap place_order() di server, jadi
 // kegagalan di sini bikin customer baru tahu belakangan, bukan bikin oversell.
-export function useFullDates(fromKey, toKey) {
+//
+// `stockVersion` cuma pemicu ambil ulang: naik saat expire_stale_orders()
+// baru saja mengembalikan stok, karena hitungan "penuh" ikut membaca stok.
+export function useFullDates(fromKey, toKey, stockVersion = 0) {
   const [fullDates, setFullDates] = useState(() => new Map());
   const [loading, setLoading] = useState(Boolean(fromKey && toKey));
 
@@ -41,7 +44,8 @@ export function useFullDates(fromKey, toKey) {
     } finally {
       setLoading(false);
     }
-  }, [fromKey, toKey]);
+    // stockVersion sengaja ikut dependency walau tidak dibaca di dalam.
+  }, [fromKey, toKey, stockVersion]);
 
   useEffect(() => { refetch(); }, [refetch]);
 

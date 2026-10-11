@@ -185,9 +185,11 @@ Batasannya:
 
 ### 6.8 Pesanan Menunggu yang tidak pernah dibayar
 
-Pesanan Menunggu yang berumur lebih dari 24 jam **disembunyikan dari daftar** dan slot kuotanya dilepas otomatis. Tapi **stoknya tidak kembali**, dan karena pesanannya sudah tidak terlihat, kamu tidak bisa membatalkannya lagi.
+Pesanan Menunggu yang lewat 24 jam tanpa dikonfirmasi **dibatalkan otomatis**: stoknya dikembalikan, slot kuotanya dilepas, dan pesanannya pindah ke filter **Dibatalkan**. Pelanggan yang mengecek di halaman Lacak Pesanan juga melihat status Dibatalkan.
 
-Aturan praktisnya: **pesanan Menunggu yang tidak mengirim bukti transfer dalam sehari, batalkan sendiri sebelum lewat 24 jam.** Kalau tidak, stok produk itu berkurang padahal tidak terjual, dan harus kamu koreksi manual lewat Edit produk.
+Akibatnya, **pesanan yang sudah dibayar harus dikonfirmasi dalam 24 jam.** Lewat dari itu, pesanannya sudah dibatalkan dan tidak bisa dikonfirmasi lagi. Kalau kamu tetap menekan Konfirmasi pada pesanan yang baru saja dibatalkan otomatis, muncul pemberitahuan bahwa pesanan itu sudah dibatalkan dan daftarnya dimuat ulang.
+
+Kamu tetap boleh membatalkan sendiri lebih cepat pesanan yang jelas tidak akan dibayar, supaya stoknya kembali sebelum 24 jam.
 
 ---
 
@@ -318,7 +320,7 @@ Ingat tekan **Simpan Pengaturan** di paling bawah setelah mengubah isian apa pun
 **Setiap hari**
 - Buka tab Dashboard, cek **Menunggu konfirmasi kamu**.
 - Cocokkan bukti transfer dengan mutasi, lalu Konfirmasi.
-- Batalkan pesanan Menunggu yang tidak mengirim bukti dalam sehari (lihat 6.8).
+- Pastikan semua pesanan yang sudah dibayar dikonfirmasi sebelum 24 jam (lihat 6.8).
 - Tandai **Selesai** pesanan yang sudah diambil atau sampai.
 
 **Sehari sebelum produksi**
@@ -365,8 +367,8 @@ Cek di tab Promo: masih Aktif, belum lewat Berlaku Hingga, dan belanja pelanggan
 **Ada pesanan masuk tapi tidak ada notifikasi.**
 Notifikasi hanya muncul selama dashboard terbuka (lihat 6.7). Pesanannya tetap ada, muat ulang halaman.
 
-**Pesanan Menunggu hilang dari daftar.**
-Umurnya sudah lewat 24 jam tanpa dikonfirmasi (lihat 6.8). Kalau pelanggan ternyata sudah bayar, minta mereka memesan ulang lalu langsung konfirmasi. Koreksi stoknya kalau perlu.
+**Pesanan Menunggu pindah ke Dibatalkan padahal pelanggan sudah bayar.**
+Pesanannya lewat 24 jam tanpa dikonfirmasi (lihat 6.8), dan stoknya sudah dikembalikan. Minta pelanggan memesan ulang tanpa membayar lagi, lalu langsung konfirmasi pesanan barunya.
 
 ---
 

@@ -202,6 +202,12 @@ CREATE POLICY "Admin full access orders"
   ON orders FOR ALL TO authenticated
   USING (true) WITH CHECK (true);
 
+-- Buat expire_stale_orders() di §7, yang dipanggil tiap katalog dibuka. Partial
+-- karena yang dicari cuma baris `pending`, yang jumlahnya selalu kecil
+-- dibanding seluruh riwayat pesanan.
+CREATE INDEX IF NOT EXISTS orders_pending_created_at_idx
+  ON orders (created_at) WHERE status = 'pending';
+
 
 -- ----------------------------------------------------------------
 -- 6. REALTIME — buat notifikasi "pesanan baru" live di dashboard admin
@@ -290,10 +296,13 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON closed_dates TO authenticated;
 --   3. Angka terpakai tidak bisa melenceng dari kenyataan, karena cuma ada
 --      satu sumber.
 --
--- Batas 24 jam itu SENGAJA sama dengan PENDING_EXPIRE_MS di
--- src/shared/hooks/useOrders.js, yang menyembunyikan pending kedaluwarsa dari
--- daftar admin. Kalau salah satunya diubah, ubah dua-duanya, kalau tidak
--- pesanan bisa mengunci kuota padahal adminnya sendiri sudah tidak melihatnya.
+-- Batas 24 jam itu SENGAJA sama di tiga tempat: di sini, di
+-- expire_stale_orders() (yang membatalkan pending kedaluwarsa sekaligus
+-- mengembalikan stoknya), dan PENDING_EXPIRE_MS di
+-- src/shared/hooks/useOrders.js (yang menyembunyikannya dari daftar admin
+-- selama sweep belum jalan). Kalau salah satunya diubah, ubah ketiganya, kalau
+-- tidak pesanan bisa mengunci kuota atau stok padahal adminnya sendiri sudah
+-- tidak melihatnya.
 
 -- Baris item pesanan yang masih menghitung untuk satu tanggal. Dipakai
 -- get_capacity_usage() di bawah DAN place_order(), supaya browser dan cek
@@ -549,6 +558,48 @@ $$;
 GRANT EXECUTE ON FUNCTION place_order(JSONB, JSONB) TO anon;
 
 
+-- Mengembalikan stok untuk satu daftar item pesanan. Satu-satunya tempat yang
+-- menambah products.stock_qty secara otomatis, dipakai cancel_order() dan
+-- expire_stale_orders() supaya dua jalan pembatalan tidak mungkin punya aturan
+-- pengembalian yang berbeda.
+--
+-- Diagregasi per produk lalu diproses URUT per product_id, sama seperti
+-- penguncian di place_order(). Bukan gaya: sweep pesanan kedaluwarsa bisa
+-- berjalan bersamaan dengan checkout, dan dua transaksi yang mengunci baris
+-- produk dalam urutan berbeda bisa saling menunggu sampai salah satunya
+-- digagalkan Postgres sebagai deadlock.
+--
+-- Sengaja BUKAN SECURITY DEFINER dan di-REVOKE dari PUBLIC: function ini
+-- menambah stok tanpa syarat apa pun, jadi tidak boleh bisa dipanggil langsung.
+-- Pemanggilnya SECURITY DEFINER dan berjalan sebagai pemilik, jadi tetap bisa.
+CREATE OR REPLACE FUNCTION restore_order_stock(p_items JSONB)
+RETURNS VOID
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_pid UUID;
+  v_qty INTEGER;
+BEGIN
+  FOR v_pid, v_qty IN
+    SELECT (item->>'pid')::UUID, SUM((item->>'qty')::INTEGER)
+    FROM jsonb_array_elements(
+      CASE WHEN jsonb_typeof(p_items) = 'array' THEN p_items ELSE '[]'::jsonb END
+    ) AS item
+    WHERE item->>'pid' IS NOT NULL
+    GROUP BY 1
+    ORDER BY 1
+  LOOP
+    UPDATE products
+    SET stock_qty = stock_qty + v_qty
+    WHERE id = v_pid AND stock_qty IS NOT NULL;
+  END LOOP;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION restore_order_stock(JSONB) FROM PUBLIC;
+
+
 -- Membatalkan pesanan DAN mengembalikan stoknya, dalam satu transaksi.
 --
 -- Kenapa harus function, bukan update biasa dari browser seperti sebelumnya:
@@ -588,17 +639,7 @@ BEGIN
   RETURNING items INTO v_items;
 
   IF FOUND THEN
-    UPDATE products p
-    SET stock_qty = p.stock_qty + agg.qty
-    FROM (
-      SELECT (item->>'pid')::UUID AS pid, SUM((item->>'qty')::INTEGER) AS qty
-      FROM jsonb_array_elements(
-        CASE WHEN jsonb_typeof(v_items) = 'array' THEN v_items ELSE '[]'::jsonb END
-      ) AS item
-      WHERE item->>'pid' IS NOT NULL
-      GROUP BY 1
-    ) agg
-    WHERE p.id = agg.pid AND p.stock_qty IS NOT NULL;
+    PERFORM restore_order_stock(v_items);
   END IF;
 
   RETURN QUERY SELECT * FROM orders WHERE id = p_order_id;
@@ -610,6 +651,80 @@ $$;
 -- saja yang punya id pesanan bisa membatalkannya sekaligus menambah stok.
 REVOKE EXECUTE ON FUNCTION cancel_order(UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION cancel_order(UUID) TO authenticated;
+
+
+-- Membatalkan semua pesanan `pending` yang lewat 24 jam tanpa dikonfirmasi,
+-- dan mengembalikan stoknya.
+--
+-- Kenapa perlu: place_order() memotong stock_qty saat pesanan dibuat, bukan
+-- saat dikonfirmasi. Kuota harian melepas pending kedaluwarsa dengan sendirinya
+-- (dihitung ulang dari tabel orders), tapi stok itu counter, jadi tanpa ini
+-- tiap orang yang menekan "Konfirmasi Pesanan" lalu tidak pernah membayar
+-- menghanguskan stok selamanya. Sebelumnya pesanan seperti itu juga hilang dari
+-- daftar admin (PENDING_EXPIRE_MS di useOrders.js), jadi admin bahkan tidak bisa
+-- membatalkannya manual.
+--
+-- Dipanggil "malas" dari dua tempat, bukan lewat pg_cron: tiap katalog dibuka
+-- (src/customer/App.jsx) dan tiap daftar pesanan admin dimuat (useOrders.js).
+-- Stok cuma penting dilihat di dua momen itu, dan cara ini tidak butuh
+-- extension atau jadwal yang harus diaktifkan per instance. Sengaja TIDAK
+-- dipanggil dari dalam place_order(): sweep mengunci baris produk milik
+-- pesanan lain, dan menggabungkannya dengan kunci produk checkout dalam satu
+-- transaksi membuat urutan kuncinya tidak lagi seragam, alias celah deadlock
+-- di tengah orang membayar.
+--
+-- Aman dipanggil bersamaan dan berulang:
+--   - FOR UPDATE SKIP LOCKED: dua sweep tidak pernah memproses pesanan yang
+--     sama, dan sweep tidak menunggu pesanan yang sedang dipegang admin.
+--   - Syarat status = 'pending' diperiksa ulang di UPDATE, jadi pesanan yang
+--     baru saja dikonfirmasi atau dibatalkan admin tidak ikut tersapu, dan
+--     stoknya tidak dikembalikan dua kali.
+--
+-- Balikannya cuma boolean "ada yang dibatalkan", bukan jumlah atau datanya:
+-- anon boleh memanggil ini, dan tidak perlu tahu lebih dari itu.
+CREATE OR REPLACE FUNCTION expire_stale_orders()
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_count INTEGER;
+  v_items JSONB;
+BEGIN
+  WITH expired AS (
+    UPDATE orders o
+    SET status = 'cancelled', updated_at = now()
+    WHERE o.status = 'pending'
+      AND o.id IN (
+        SELECT id FROM orders
+        WHERE status = 'pending'
+          AND created_at < now() - INTERVAL '24 hours'
+        FOR UPDATE SKIP LOCKED
+      )
+    RETURNING o.items
+  )
+  SELECT
+    (SELECT COUNT(*) FROM expired),
+    COALESCE((
+      SELECT jsonb_agg(item)
+      FROM expired x
+      CROSS JOIN LATERAL jsonb_array_elements(
+        CASE WHEN jsonb_typeof(x.items) = 'array' THEN x.items ELSE '[]'::jsonb END
+      ) AS item
+    ), '[]'::jsonb)
+  INTO v_count, v_items;
+
+  IF v_count > 0 THEN
+    PERFORM restore_order_stock(v_items);
+  END IF;
+
+  RETURN v_count > 0;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION expire_stale_orders() TO anon;
+GRANT EXECUTE ON FUNCTION expire_stale_orders() TO authenticated;
 
 
 -- ----------------------------------------------------------------
@@ -767,6 +882,8 @@ UNION ALL
 SELECT 'place_order function', COALESCE((SELECT 'ada' FROM pg_proc WHERE proname = 'place_order'), 'TIDAK ADA')
 UNION ALL
 SELECT 'lookup_order function', COALESCE((SELECT 'ada' FROM pg_proc WHERE proname = 'lookup_order'), 'TIDAK ADA')
+UNION ALL
+SELECT 'expire_stale_orders function', COALESCE((SELECT 'ada' FROM pg_proc WHERE proname = 'expire_stale_orders'), 'TIDAK ADA')
 UNION ALL
 SELECT 'storage bucket',   COALESCE((SELECT name FROM storage.buckets WHERE id = 'product-images'), 'TIDAK ADA')
 UNION ALL

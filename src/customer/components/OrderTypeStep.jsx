@@ -5,7 +5,7 @@ import { buildDateChips } from '../../shared/lib/format.js';
 import { useFullDates } from '../../shared/hooks/useFullDates.js';
 import { waLink } from '../../shared/lib/whatsapp.js';
 
-export default function OrderTypeStep({ settings }) {
+export default function OrderTypeStep({ settings, stockVersion }) {
   const { state, dispatch } = useCart();
 
   // Mode toko cuma mengubah kalender di layar ini dan kalimat di sekitarnya.
@@ -26,6 +26,7 @@ export default function OrderTypeStep({ settings }) {
   const { fullDates } = useFullDates(
     dateChips[0]?.value,
     dateChips[dateChips.length - 1]?.value,
+    stockVersion,
   );
 
   const selectableChips = dateChips.filter((chip) => !fullDates.has(chip.value));

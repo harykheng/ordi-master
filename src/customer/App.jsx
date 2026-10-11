@@ -5,6 +5,7 @@ import { useFavicon } from '../shared/hooks/useFavicon.js';
 import { useToast } from '../shared/components/Toast.jsx';
 import { config } from '../shared/lib/config.js';
 import { trackVisit } from '../shared/lib/visits.js';
+import { expireStaleOrders } from '../shared/lib/orders.js';
 import { cartTotal, getDiscountAmount, cartFinalTotal, cartSnapshot, cartStockItems } from '../shared/lib/cart.js';
 import { useCapacity } from '../shared/hooks/useCapacity.js';
 import { findCapacityBlocker } from '../shared/lib/capacity.js';
@@ -43,6 +44,20 @@ function AppShell() {
     if (sessionStorage.getItem('ordi_visit_tracked_v1')) return;
     sessionStorage.setItem('ordi_visit_tracked_v1', '1');
     trackVisit();
+  }, []);
+
+  // Tiap halaman dibuka (bukan sekali per sesi seperti trackVisit): ini yang
+  // mengembalikan stok yang dipegang pesanan pending lewat 24 jam, dan katalog
+  // harus melihat stok yang benar. Kalau ada yang dikembalikan, kalender
+  // langkah 1 diminta ambil ulang karena hitungan tanggal penuh ikut membaca
+  // stok. Katalog sendiri baru fetch saat langkah 2 dibuka, jadi tidak perlu.
+  const [stockVersion, setStockVersion] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    expireStaleOrders().then((changed) => {
+      if (changed && !cancelled) setStockVersion((v) => v + 1);
+    });
+    return () => { cancelled = true; };
   }, []);
 
   // Async karena kuota dicek ULANG ke server tepat sebelum QR dibuka, bukan
@@ -137,7 +152,7 @@ function AppShell() {
 
   return (
     <>
-      {state.step === 1 && <OrderTypeStep settings={settings} />}
+      {state.step === 1 && <OrderTypeStep settings={settings} stockVersion={stockVersion} />}
       {state.step === 2 && <CatalogStep settings={settings} capacityUsage={capacityUsage} onPickVariant={setVariantProduct} />}
       {state.step === 3 && (
         <CheckoutStep

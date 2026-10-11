@@ -25,11 +25,44 @@ export async function updateOrderStatus(orderId, newStatus) {
     return;
   }
 
-  const { error } = await supabase
+  // `.neq('cancelled')` menutup balapan dengan expire_stale_orders(): pesanan
+  // pending yang masih tampil di layar admin bisa keburu dibatalkan otomatis
+  // (dan stoknya dikembalikan) sebelum tombol Konfirmasi ditekan. Tanpa syarat
+  // ini, pesanan yang stoknya sudah dilepas bisa hidup lagi jadi Diproses, dan
+  // stok yang sama terjual dua kali. UI memang tidak pernah menawarkan jalan
+  // keluar dari Dibatalkan, jadi syarat ini tidak menutup apa pun yang sah.
+  const { data, error } = await supabase
     .from('orders')
     .update({ status: newStatus, updated_at: new Date().toISOString() })
-    .eq('id', orderId);
+    .eq('id', orderId)
+    .neq('status', 'cancelled')
+    .select('id');
   if (error) throw error;
+  if (!data || data.length === 0) {
+    const err = new Error('Pesanan ini sudah dibatalkan, otomatis karena lewat 24 jam tanpa konfirmasi atau oleh admin lain.');
+    err.code = 'ORDER_ALREADY_CANCELLED';
+    throw err;
+  }
+}
+
+// Membatalkan pesanan pending yang lewat 24 jam dan mengembalikan stoknya,
+// lewat expire_stale_orders() (supabase-setup.sql §7). Dipanggil tiap katalog
+// dibuka dan tiap daftar pesanan admin dimuat, jadi stok yang dipegang orang
+// yang tidak pernah membayar balik sendiri tanpa jadwal di server.
+//
+// Tidak pernah melempar: kalau function-nya belum ada (instance yang belum
+// menjalankan ulang supabase-setup.sql) atau jaringan gagal, katalog dan
+// dashboard tetap harus jalan. Balikan true = ada pesanan yang dibatalkan,
+// tanda angka stok yang sudah di-fetch sebelumnya basi.
+export async function expireStaleOrders() {
+  try {
+    const { data, error } = await supabase.rpc('expire_stale_orders');
+    if (error) throw error;
+    return data === true;
+  } catch (e) {
+    console.error('expireStaleOrders error:', e);
+    return false;
+  }
 }
 
 // Used by /tracking/, orders has no anon SELECT policy (see CLAUDE.md), so

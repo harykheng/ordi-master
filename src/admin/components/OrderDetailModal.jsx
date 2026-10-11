@@ -27,6 +27,10 @@ export default function OrderDetailModal({ isOpen, order, onClose, onStatusChang
       await onStatusChanged();
     } catch (err) {
       showToast('Gagal ubah status: ' + err.message, 'error');
+      if (err.code === 'ORDER_ALREADY_CANCELLED') {
+        onClose();
+        await onStatusChanged();
+      }
     }
   }
 

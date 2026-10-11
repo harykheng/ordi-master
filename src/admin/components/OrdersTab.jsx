@@ -96,6 +96,7 @@ export default function OrdersTab({ initialDate }) {
       await refetch();
     } catch (err) {
       showToast('Gagal ubah status: ' + err.message, 'error');
+      if (err.code === 'ORDER_ALREADY_CANCELLED') await refetch();
     }
   }
 
